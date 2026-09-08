@@ -28,11 +28,10 @@ export function HeroSlideshow({ images }: { images: string[] }) {
           src={src}
           alt=""
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[2000ms] ease-in-out"
-          style={{ opacity: i === active ? 0.35 : 0 }}
+          style={{ opacity: i === active ? 0.55 : 0 }}
         />
       ))}
-      <div className="absolute inset-0 bg-navy-950/80" />
-      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/40 via-navy-950/70 to-navy-950" />
+      <div className="absolute inset-0 bg-navy-950/60" />
     </div>
   );
 }
