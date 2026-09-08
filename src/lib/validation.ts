@@ -137,6 +137,7 @@ export const contentItemSchema = z.object({
   imageUrl: z.string().optional(),
   fileUrl: z.string().optional(),
   status: z.enum(CONTENT_STATUSES),
+  publishedAt: z.string().optional(),
   eventDate: z.string().optional(),
   eventLocation: z.string().optional(),
   isMemberOnly: z.boolean().optional(),

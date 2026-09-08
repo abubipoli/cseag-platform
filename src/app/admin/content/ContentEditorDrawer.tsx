@@ -35,6 +35,7 @@ export default function ContentEditorDrawer({
     summary: "",
     body: "",
     status: "draft" as "draft" | "published",
+    publishedAt: "",
     eventDate: "",
     eventLocation: "",
     isMemberOnly: false,
@@ -59,6 +60,7 @@ export default function ContentEditorDrawer({
         summary: item.summary || "",
         body: item.body,
         status: item.status,
+        publishedAt: item.publishedAt ? item.publishedAt.slice(0, 16) : "",
         eventDate: item.eventDate ? item.eventDate.slice(0, 16) : "",
         eventLocation: item.eventLocation || "",
         isMemberOnly: item.isMemberOnly,
@@ -74,6 +76,7 @@ export default function ContentEditorDrawer({
         summary: "",
         body: "",
         status: "draft",
+        publishedAt: "",
         eventDate: "",
         eventLocation: "",
         isMemberOnly: false,
@@ -113,7 +116,12 @@ export default function ContentEditorDrawer({
   async function handleSave() {
     setSaving(true);
     setError(null);
-    const payload = { ...form, eventDate: form.eventDate || undefined, eventLocation: form.eventLocation || undefined };
+    const payload = {
+      ...form,
+      publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : undefined,
+      eventDate: form.eventDate || undefined,
+      eventLocation: form.eventLocation || undefined,
+    };
     const res = await fetch(item ? `/api/admin/content/${item.id}` : "/api/admin/content", {
       method: item ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -164,6 +172,12 @@ export default function ContentEditorDrawer({
             </Select>
           </FieldWrap>
         </div>
+
+        {form.status === "published" && (
+          <FieldWrap label="Published date" hint="Shown on the site as the article date. Leave blank to use now.">
+            <Input type="datetime-local" value={form.publishedAt} onChange={(e) => setForm((f) => ({ ...f, publishedAt: e.target.value }))} />
+          </FieldWrap>
+        )}
 
         <FieldWrap label="Title" required>
           <Input

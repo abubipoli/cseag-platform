@@ -33,7 +33,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .set({
       ...input,
       publishedAt:
-        input.status === "published" ? existingItem.publishedAt || new Date().toISOString() : existingItem.publishedAt,
+        input.status === "published"
+          ? input.publishedAt || existingItem.publishedAt || new Date().toISOString()
+          : existingItem.publishedAt,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(contentItems.id, id));

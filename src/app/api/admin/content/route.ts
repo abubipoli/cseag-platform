@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     id,
     ...input,
     authorId: session.userId,
-    publishedAt: input.status === "published" ? new Date().toISOString() : null,
+    publishedAt: input.status === "published" ? input.publishedAt || new Date().toISOString() : null,
   });
 
   await recordAudit({ actorUserId: session.userId, action: "content.created", targetType: "content_item", targetId: id });

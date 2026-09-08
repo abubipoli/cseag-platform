@@ -21,6 +21,7 @@ export interface ContentItem {
   imageUrl: string | null;
   fileUrl: string | null;
   status: "draft" | "published";
+  publishedAt: string | null;
   eventDate: string | null;
   eventLocation: string | null;
   isMemberOnly: boolean;
