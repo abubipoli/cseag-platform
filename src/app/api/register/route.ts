@@ -66,6 +66,8 @@ export async function POST(req: NextRequest) {
     highestCertificate: input.highestCertificate,
     areasOfExpertise: JSON.stringify(input.areasOfExpertise),
     certifications: JSON.stringify(input.certifications || []),
+    csaAccredited: input.csaAccredited,
+    csaAccreditationTier: input.csaAccredited ? input.csaAccreditationTier : undefined,
     bio: input.bio,
     membershipCategory: input.membershipCategory,
   });

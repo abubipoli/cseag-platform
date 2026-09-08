@@ -44,6 +44,8 @@ export async function PATCH(req: NextRequest) {
     "currentRole",
     "yearsOfExperience",
     "highestCertificate",
+    "csaAccredited",
+    "csaAccreditationTier",
     "bio",
     "photoUrl",
     "bioIsPublic",

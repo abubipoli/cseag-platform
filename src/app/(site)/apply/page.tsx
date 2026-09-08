@@ -2,7 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AREAS_OF_EXPERTISE, MEMBERSHIP_CATEGORY_LABELS, TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS } from "@/lib/constants";
+import {
+  AREAS_OF_EXPERTISE,
+  MEMBERSHIP_CATEGORY_LABELS,
+  TITLE_OPTIONS,
+  AGE_GROUPS,
+  GHANA_REGIONS,
+  CSA_ACCREDITATION_TIERS,
+  CSA_ACCREDITATION_TIER_LABELS,
+} from "@/lib/constants";
 import { PageHero } from "@/components/marketing/PageHero";
 import { Card, CardBody } from "@/components/ui/Card";
 import { FieldWrap, Input, Select, Checkbox } from "@/components/ui/Field";
@@ -21,6 +29,7 @@ export default function ApplyPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [expertise, setExpertise] = useState<string[]>([]);
   const [isEmployed, setIsEmployed] = useState(true);
+  const [csaAccredited, setCsaAccredited] = useState(false);
 
   const [fields, setFields] = useState({
     title: "",
@@ -35,6 +44,7 @@ export default function ApplyPage() {
     yearsOfExperience: "",
     highestCertificate: "",
     certifications: "",
+    csaAccreditationTier: "",
     membershipCategory: "associate",
     codeOfConductAccepted: false,
     privacyConsentAccepted: false,
@@ -63,6 +73,7 @@ export default function ApplyPage() {
     if (step === 1) {
       const e: string[] = [];
       if (!fields.highestCertificate.trim()) e.push("Enter your highest certificate obtained.");
+      if (csaAccredited && !fields.csaAccreditationTier) e.push("Select your Cyber Security Authority accreditation tier.");
       if (expertise.length === 0) e.push("Select at least one area of expertise.");
       return e;
     }
@@ -73,7 +84,7 @@ export default function ApplyPage() {
       return e;
     }
     return [];
-  }, [step, fields, expertise]);
+  }, [step, fields, expertise, csaAccredited]);
 
   function goNext() {
     if (stepErrors.length > 0) {
@@ -112,6 +123,8 @@ export default function ApplyPage() {
       certifications: fields.certifications
         ? fields.certifications.split(",").map((c) => c.trim()).filter(Boolean)
         : [],
+      csaAccredited,
+      csaAccreditationTier: csaAccredited ? fields.csaAccreditationTier : undefined,
       areasOfExpertise: expertise,
       membershipCategory: fields.membershipCategory,
       codeOfConductAccepted: fields.codeOfConductAccepted,
@@ -299,6 +312,38 @@ export default function ApplyPage() {
                     <Input value={fields.certifications} onChange={(e) => set("certifications", e.target.value)} />
                   </FieldWrap>
                 </div>
+                <FieldWrap label="Are you accredited by the Cyber Security Authority?">
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input type="radio" name="csaAccredited" checked={csaAccredited} onChange={() => setCsaAccredited(true)} />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="radio"
+                        name="csaAccredited"
+                        checked={!csaAccredited}
+                        onChange={() => {
+                          setCsaAccredited(false);
+                          set("csaAccreditationTier", "");
+                        }}
+                      />
+                      No
+                    </label>
+                  </div>
+                </FieldWrap>
+                {csaAccredited && (
+                  <FieldWrap label="Accreditation tier" required>
+                    <Select value={fields.csaAccreditationTier} onChange={(e) => set("csaAccreditationTier", e.target.value)}>
+                      <option value="">Select</option>
+                      {CSA_ACCREDITATION_TIERS.map((tier) => (
+                        <option key={tier} value={tier}>
+                          {CSA_ACCREDITATION_TIER_LABELS[tier]}
+                        </option>
+                      ))}
+                    </Select>
+                  </FieldWrap>
+                )}
                 <FieldWrap label="Areas of expertise" required hint={`${expertise.length} selected`}>
                   <div className="grid max-h-56 grid-cols-1 gap-1 overflow-y-auto rounded-lg border border-slate-200 p-3 scrollbar-thin sm:grid-cols-2">
                     {AREAS_OF_EXPERTISE.map((area) => (

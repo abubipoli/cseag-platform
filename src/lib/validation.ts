@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MEMBERSHIP_CATEGORIES, ROLES, CONTENT_TYPES, CONTENT_STATUSES, SERVICE_REQUEST_STATUSES } from "@/db/schema";
-import { TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS } from "@/lib/constants";
+import { TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS, CSA_ACCREDITATION_TIERS } from "@/lib/constants";
 
 export const registrationSchema = z.object({
   title: z.enum(TITLE_OPTIONS, { message: "Select a title" }),
@@ -19,6 +19,8 @@ export const registrationSchema = z.object({
   highestCertificate: z.string().min(1, "Enter your highest certificate obtained"),
   areasOfExpertise: z.array(z.string()).min(1, "Select at least one area of expertise"),
   certifications: z.array(z.string()).optional().default([]),
+  csaAccredited: z.boolean().optional().default(false),
+  csaAccreditationTier: z.enum(CSA_ACCREDITATION_TIERS).optional(),
   membershipCategory: z.enum(MEMBERSHIP_CATEGORIES),
   bio: z.string().max(3000).optional(),
   statementOfInterest: z.string().max(2000).optional(),
@@ -52,6 +54,8 @@ export const profileUpdateSchema = z.object({
   highestCertificate: z.string().optional(),
   areasOfExpertise: z.array(z.string()).optional(),
   certifications: z.array(z.string()).optional(),
+  csaAccredited: z.boolean().optional(),
+  csaAccreditationTier: z.enum(CSA_ACCREDITATION_TIERS).optional(),
   bio: z.string().max(3000).optional(),
   photoUrl: z.string().url().optional().or(z.literal("")),
 

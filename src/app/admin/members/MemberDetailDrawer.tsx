@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Field";
-import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS } from "@/lib/constants";
+import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
 
 interface Detail {
   user: { id: string; email: string; role: string; isActive: boolean; lastLoginAt: string | null };
@@ -20,6 +20,8 @@ interface Detail {
     currentRole: string | null;
     yearsOfExperience: number | null;
     highestCertificate: string | null;
+    csaAccredited: boolean;
+    csaAccreditationTier: string | null;
     region: string | null;
     bio: string | null;
     membershipCategory: string | null;
@@ -121,6 +123,14 @@ export default function MemberDetailDrawer({
             <div>
               <dt className="text-xs text-slate-400">Highest certificate</dt>
               <dd className="font-medium text-navy-900">{detail.profile.highestCertificate || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-400">CSA accreditation</dt>
+              <dd className="font-medium text-navy-900">
+                {detail.profile.csaAccredited
+                  ? CSA_ACCREDITATION_TIER_LABELS[detail.profile.csaAccreditationTier || ""] || "Accredited"
+                  : "Not accredited"}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-slate-400">Public directory</dt>

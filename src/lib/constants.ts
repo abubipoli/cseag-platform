@@ -60,6 +60,16 @@ export const TITLE_OPTIONS = ["Mr.", "Mrs.", "Miss", "Ms", "Dr", "Professor", "H
 
 export const AGE_GROUPS = ["18-20", "21-30", "31-40", "41-50", "Above 50"] as const;
 
+// Cyber Security Authority (Ghana) accreditation tier, for members who hold one.
+export const CSA_ACCREDITATION_TIERS = ["tier_1", "tier_2", "tier_3", "general"] as const;
+
+export const CSA_ACCREDITATION_TIER_LABELS: Record<string, string> = {
+  tier_1: "Tier 1",
+  tier_2: "Tier 2",
+  tier_3: "Tier 3",
+  general: "General",
+};
+
 export const MEMBERSHIP_CATEGORY_LABELS: Record<string, string> = {
   student: "Student",
   associate: "Associate",

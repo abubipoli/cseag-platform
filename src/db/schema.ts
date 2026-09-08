@@ -5,6 +5,7 @@
 // runtime, which has no persistent local filesystem for SQLite.
 
 import { pgTable, text, integer, boolean } from "drizzle-orm/pg-core";
+import { CSA_ACCREDITATION_TIERS } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
 // Roles (Section 4 of the SRS)
@@ -76,6 +77,8 @@ export const memberProfiles = pgTable("member_profiles", {
   yearsOfExperience: integer("years_of_experience"),
   highestCertificate: text("highest_certificate"), // general academic qualification, e.g. "BSc Computer Science"
   certifications: text("certifications"), // JSON-encoded string array — cybersecurity certifications
+  csaAccredited: boolean("csa_accredited").notNull().default(false),
+  csaAccreditationTier: text("csa_accreditation_tier", { enum: CSA_ACCREDITATION_TIERS }),
   areasOfExpertise: text("areas_of_expertise"), // JSON-encoded string array
   bio: text("bio"),
   photoUrl: text("photo_url"),
