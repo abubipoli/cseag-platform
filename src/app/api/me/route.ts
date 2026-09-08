@@ -35,12 +35,15 @@ export async function PATCH(req: NextRequest) {
 
   const update: Record<string, unknown> = { updatedAt: new Date().toISOString() };
   for (const key of [
+    "title",
     "fullName",
     "phone",
+    "ageGroup",
     "region",
     "employer",
     "currentRole",
     "yearsOfExperience",
+    "highestCertificate",
     "bio",
     "photoUrl",
     "bioIsPublic",

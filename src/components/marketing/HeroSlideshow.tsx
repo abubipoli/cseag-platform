@@ -1,0 +1,38 @@
+"use client";
+
+// Auto-advancing, cross-fading background slideshow for the homepage hero.
+// Sits behind the hero copy with a dark overlay so white text stays legible
+// (SRS-adjacent: uses real CSEAG event photography rather than stock art).
+
+import { useEffect, useState } from "react";
+
+const INTERVAL_MS = 5500;
+
+export function HeroSlideshow({ images }: { images: string[] }) {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const id = setInterval(() => {
+      setActive((i) => (i + 1) % images.length);
+    }, INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [images.length]);
+
+  return (
+    <div className="absolute inset-0" aria-hidden>
+      {images.map((src, i) => (
+        // eslint-disable-next-line @next/next/no-img-element -- static hero background photo
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[2000ms] ease-in-out"
+          style={{ opacity: i === active ? 0.35 : 0 }}
+        />
+      ))}
+      <div className="absolute inset-0 bg-navy-950/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-navy-950/40 via-navy-950/70 to-navy-950" />
+    </div>
+  );
+}

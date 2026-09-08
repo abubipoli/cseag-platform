@@ -35,6 +35,31 @@ export const AREAS_OF_EXPERTISE = [
   "Penetration Testing (Ethical Hacking)",
 ] as const;
 
+// Ghana's 16 administrative regions (current, post-2019 split).
+export const GHANA_REGIONS = [
+  "Ahafo",
+  "Ashanti",
+  "Bono",
+  "Bono East",
+  "Central",
+  "Eastern",
+  "Greater Accra",
+  "North East",
+  "Northern",
+  "Oti",
+  "Savannah",
+  "Upper East",
+  "Upper West",
+  "Volta",
+  "Western",
+  "Western North",
+] as const;
+
+// Mirrors the CSEAG membership application form (Microsoft Forms).
+export const TITLE_OPTIONS = ["Mr.", "Mrs.", "Miss", "Ms", "Dr", "Professor", "Honorable", "Other"] as const;
+
+export const AGE_GROUPS = ["18-20", "21-30", "31-40", "41-50", "Above 50"] as const;
+
 export const MEMBERSHIP_CATEGORY_LABELS: Record<string, string> = {
   student: "Student",
   associate: "Associate",

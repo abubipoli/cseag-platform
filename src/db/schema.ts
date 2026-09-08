@@ -61,10 +61,12 @@ export const memberProfiles = pgTable("member_profiles", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().unique(),
 
+  title: text("title"), // salutation: Mr./Mrs./Dr/etc — mirrors the membership application form
   fullName: text("full_name").notNull(),
   dateOfBirth: text("date_of_birth"), // never eligible for public display
   nationalIdNumber: text("national_id_number"), // never eligible for public display
   gender: text("gender"),
+  ageGroup: text("age_group"),
   phone: text("phone").notNull(),
   physicalAddress: text("physical_address"), // never eligible for public display
   region: text("region"),
@@ -72,7 +74,8 @@ export const memberProfiles = pgTable("member_profiles", {
   employer: text("employer"),
   currentRole: text("current_role"),
   yearsOfExperience: integer("years_of_experience"),
-  certifications: text("certifications"), // JSON-encoded string array
+  highestCertificate: text("highest_certificate"), // general academic qualification, e.g. "BSc Computer Science"
+  certifications: text("certifications"), // JSON-encoded string array — cybersecurity certifications
   areasOfExpertise: text("areas_of_expertise"), // JSON-encoded string array
   bio: text("bio"),
   photoUrl: text("photo_url"),

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AREAS_OF_EXPERTISE, MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
+import { AREAS_OF_EXPERTISE, MEMBERSHIP_CATEGORY_LABELS, TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS } from "@/lib/constants";
 import { PageHero } from "@/components/marketing/PageHero";
 import { Card, CardBody } from "@/components/ui/Card";
 import { FieldWrap, Input, Select, Textarea, Checkbox } from "@/components/ui/Field";
@@ -22,16 +22,21 @@ export default function ApplyPage() {
   const [expertise, setExpertise] = useState<string[]>([]);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentName, setDocumentName] = useState<string | null>(null);
+  const [isEmployed, setIsEmployed] = useState(true);
 
   const [fields, setFields] = useState({
+    title: "",
     fullName: "",
     email: "",
     password: "",
     phone: "",
+    ageGroup: "",
     region: "",
     employer: "",
     currentRole: "",
     yearsOfExperience: "",
+    highestCertificate: "",
+    certifications: "",
     membershipCategory: "associate",
     bio: "",
     statementOfInterest: "",
@@ -50,14 +55,20 @@ export default function ApplyPage() {
   const stepErrors = useMemo(() => {
     if (step === 0) {
       const e: string[] = [];
+      if (!fields.title) e.push("Select a title.");
       if (fields.fullName.trim().length < 2) e.push("Enter your full name.");
       if (!/^\S+@\S+\.\S+$/.test(fields.email)) e.push("Enter a valid email address.");
       if (fields.password.length < 8) e.push("Password must be at least 8 characters.");
       if (fields.phone.trim().length < 9) e.push("Enter a valid mobile number.");
+      if (!fields.ageGroup) e.push("Select an age group.");
+      if (!fields.region) e.push("Select a region.");
       return e;
     }
     if (step === 1) {
-      return expertise.length === 0 ? ["Select at least one area of expertise."] : [];
+      const e: string[] = [];
+      if (!fields.highestCertificate.trim()) e.push("Enter your highest certificate obtained.");
+      if (expertise.length === 0) e.push("Select at least one area of expertise.");
+      return e;
     }
     if (step === 3) {
       const e: string[] = [];
@@ -107,14 +118,20 @@ export default function ApplyPage() {
     setSubmitting(true);
 
     const payload = {
+      title: fields.title,
       fullName: fields.fullName,
       email: fields.email,
       password: fields.password,
       phone: fields.phone,
-      region: fields.region || undefined,
-      employer: fields.employer || undefined,
-      currentRole: fields.currentRole || undefined,
+      ageGroup: fields.ageGroup,
+      region: fields.region,
+      employer: isEmployed ? fields.employer || undefined : undefined,
+      currentRole: isEmployed ? fields.currentRole || undefined : undefined,
       yearsOfExperience: fields.yearsOfExperience ? Number(fields.yearsOfExperience) : undefined,
+      highestCertificate: fields.highestCertificate,
+      certifications: fields.certifications
+        ? fields.certifications.split(",").map((c) => c.trim()).filter(Boolean)
+        : [],
       areasOfExpertise: expertise,
       membershipCategory: fields.membershipCategory,
       bio: fields.bio || undefined,
@@ -202,9 +219,21 @@ export default function ApplyPage() {
           <CardBody>
             {step === 0 && (
               <div className="space-y-4">
-                <FieldWrap label="Full name" required>
-                  <Input value={fields.fullName} onChange={(e) => set("fullName", e.target.value)} required />
-                </FieldWrap>
+                <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
+                  <FieldWrap label="Title" required>
+                    <Select value={fields.title} onChange={(e) => set("title", e.target.value)}>
+                      <option value="">Select</option>
+                      {TITLE_OPTIONS.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </Select>
+                  </FieldWrap>
+                  <FieldWrap label="Full name" required>
+                    <Input value={fields.fullName} onChange={(e) => set("fullName", e.target.value)} required />
+                  </FieldWrap>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FieldWrap label="Email address" required>
                     <Input type="email" value={fields.email} onChange={(e) => set("email", e.target.value)} required />
@@ -216,22 +245,55 @@ export default function ApplyPage() {
                 <FieldWrap label="Create a password" required hint="At least 8 characters.">
                   <Input type="password" value={fields.password} onChange={(e) => set("password", e.target.value)} required minLength={8} />
                 </FieldWrap>
-                <FieldWrap label="Region">
-                  <Input value={fields.region} onChange={(e) => set("region", e.target.value)} placeholder="e.g. Greater Accra" />
-                </FieldWrap>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FieldWrap label="Age group" required>
+                    <Select value={fields.ageGroup} onChange={(e) => set("ageGroup", e.target.value)}>
+                      <option value="">Select</option>
+                      {AGE_GROUPS.map((a) => (
+                        <option key={a} value={a}>
+                          {a}
+                        </option>
+                      ))}
+                    </Select>
+                  </FieldWrap>
+                  <FieldWrap label="Region" required>
+                    <Select value={fields.region} onChange={(e) => set("region", e.target.value)}>
+                      <option value="">Select</option>
+                      {GHANA_REGIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </Select>
+                  </FieldWrap>
+                </div>
               </div>
             )}
 
             {step === 1 && (
               <div className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FieldWrap label="Current employer">
-                    <Input value={fields.employer} onChange={(e) => set("employer", e.target.value)} />
-                  </FieldWrap>
-                  <FieldWrap label="Current role / title">
-                    <Input value={fields.currentRole} onChange={(e) => set("currentRole", e.target.value)} />
-                  </FieldWrap>
-                </div>
+                <FieldWrap label="Are you currently working for an institution?">
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input type="radio" name="isEmployed" checked={isEmployed} onChange={() => setIsEmployed(true)} />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input type="radio" name="isEmployed" checked={!isEmployed} onChange={() => setIsEmployed(false)} />
+                      No
+                    </label>
+                  </div>
+                </FieldWrap>
+                {isEmployed && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FieldWrap label="Which institution?">
+                      <Input value={fields.employer} onChange={(e) => set("employer", e.target.value)} />
+                    </FieldWrap>
+                    <FieldWrap label="Current position in the institution">
+                      <Input value={fields.currentRole} onChange={(e) => set("currentRole", e.target.value)} />
+                    </FieldWrap>
+                  </div>
+                )}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FieldWrap label="Years of cybersecurity experience">
                     <Input
@@ -250,6 +312,14 @@ export default function ApplyPage() {
                         </option>
                       ))}
                     </Select>
+                  </FieldWrap>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FieldWrap label="Highest certificate obtained" required hint="e.g. BSc Computer Science">
+                    <Input value={fields.highestCertificate} onChange={(e) => set("highestCertificate", e.target.value)} />
+                  </FieldWrap>
+                  <FieldWrap label="Cyber security certificate(s) obtained" hint="Comma-separated, e.g. CEH, CompTIA Security+">
+                    <Input value={fields.certifications} onChange={(e) => set("certifications", e.target.value)} />
                   </FieldWrap>
                 </div>
                 <FieldWrap label="Areas of expertise" required hint={`${expertise.length} selected`}>

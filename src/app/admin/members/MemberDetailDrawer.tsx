@@ -11,12 +11,15 @@ import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS } fr
 interface Detail {
   user: { id: string; email: string; role: string; isActive: boolean; lastLoginAt: string | null };
   profile: {
+    title: string | null;
     fullName: string;
     phone: string;
     photoUrl: string | null;
+    ageGroup: string | null;
     employer: string | null;
     currentRole: string | null;
     yearsOfExperience: number | null;
+    highestCertificate: string | null;
     region: string | null;
     bio: string | null;
     membershipCategory: string | null;
@@ -83,7 +86,10 @@ export default function MemberDetailDrawer({
           <div className="flex items-center gap-3">
             <Avatar name={detail.profile.fullName} photoUrl={detail.profile.photoUrl} size="lg" />
             <div>
-              <p className="font-semibold text-navy-900">{detail.profile.fullName}</p>
+              <p className="font-semibold text-navy-900">
+                {detail.profile.title ? `${detail.profile.title} ` : ""}
+                {detail.profile.fullName}
+              </p>
               <p className="text-sm text-slate-500">{detail.user.email} · {detail.profile.phone}</p>
             </div>
             <Badge tone={detail.user.isActive ? "accent" : "red"} className="ml-auto">
@@ -107,6 +113,14 @@ export default function MemberDetailDrawer({
             <div>
               <dt className="text-xs text-slate-400">Region</dt>
               <dd className="font-medium text-navy-900">{detail.profile.region || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-400">Age group</dt>
+              <dd className="font-medium text-navy-900">{detail.profile.ageGroup || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-400">Highest certificate</dt>
+              <dd className="font-medium text-navy-900">{detail.profile.highestCertificate || "—"}</dd>
             </div>
             <div>
               <dt className="text-xs text-slate-400">Public directory</dt>

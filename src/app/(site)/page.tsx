@@ -8,8 +8,11 @@ import {
   IconTarget,
 } from "@/components/ui/icons";
 import { getBaseUrl } from "@/lib/base-url";
+import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 
 export const dynamic = "force-dynamic";
+
+const HERO_IMAGES = ["/hero/summit-1.jpg", "/hero/summit-2.jpg", "/hero/summit-3.jpg", "/hero/summit-4.jpg", "/hero/summit-5.jpg"];
 
 const VALUES = [
   ["Integrity", "Honesty, transparency, and accountability in cybersecurity practice."],
@@ -46,7 +49,7 @@ export default async function HomePage() {
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden bg-navy-950 text-white">
-        <div className="bg-grid absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
+        <HeroSlideshow images={HERO_IMAGES} />
         <div className="absolute -top-32 right-[-10%] h-96 w-96 rounded-full bg-accent-500/20 blur-3xl" aria-hidden />
         <div className="absolute -bottom-32 left-[-10%] h-96 w-96 rounded-full bg-sky-500/10 blur-3xl" aria-hidden />
 

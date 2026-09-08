@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { MEMBERSHIP_CATEGORIES, ROLES, CONTENT_TYPES, CONTENT_STATUSES, SERVICE_REQUEST_STATUSES } from "@/db/schema";
+import { TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS } from "@/lib/constants";
 
 export const registrationSchema = z.object({
+  title: z.enum(TITLE_OPTIONS, { message: "Select a title" }),
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -9,10 +11,12 @@ export const registrationSchema = z.object({
     .string()
     .min(9, "Enter a valid phone number")
     .regex(/^\+?[0-9\s-]{9,15}$/, "Enter a valid phone number, e.g. +233241234567"),
-  region: z.string().optional(),
+  ageGroup: z.enum(AGE_GROUPS, { message: "Select an age group" }),
+  region: z.enum(GHANA_REGIONS, { message: "Select a region" }),
   employer: z.string().optional(),
   currentRole: z.string().optional(),
   yearsOfExperience: z.coerce.number().int().min(0).max(60).optional(),
+  highestCertificate: z.string().min(1, "Enter your highest certificate obtained"),
   areasOfExpertise: z.array(z.string()).min(1, "Select at least one area of expertise"),
   certifications: z.array(z.string()).optional().default([]),
   membershipCategory: z.enum(MEMBERSHIP_CATEGORIES),
@@ -37,12 +41,15 @@ export const decisionSchema = z.object({
 });
 
 export const profileUpdateSchema = z.object({
+  title: z.enum(TITLE_OPTIONS).optional(),
   fullName: z.string().min(2).optional(),
   phone: z.string().min(9).optional(),
-  region: z.string().optional(),
+  ageGroup: z.enum(AGE_GROUPS).optional(),
+  region: z.enum(GHANA_REGIONS).optional(),
   employer: z.string().optional(),
   currentRole: z.string().optional(),
   yearsOfExperience: z.coerce.number().int().min(0).max(60).optional(),
+  highestCertificate: z.string().optional(),
   areasOfExpertise: z.array(z.string()).optional(),
   certifications: z.array(z.string()).optional(),
   bio: z.string().max(3000).optional(),
