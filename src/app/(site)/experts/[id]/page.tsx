@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { IconBriefcase, IconMessageSquare } from "@/components/ui/icons";
+import { SidebarAd } from "@/components/marketing/SidebarAd";
 import RequestServiceModal from "./RequestServiceModal";
 
 interface Expert {
@@ -49,7 +50,7 @@ export default function ExpertProfilePage({ params }: { params: Promise<{ id: st
   return (
     <div className="bg-slate-50">
       <div className="h-32 bg-gradient-to-r from-navy-900 to-navy-700" />
-      <div className="mx-auto max-w-3xl px-4 pb-16 sm:px-6">
+      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-4 pb-16 sm:px-6 lg:grid-cols-[1fr_260px]">
         <div className="-mt-14 rounded-2xl border border-slate-200 bg-white p-6 shadow-[var(--shadow-card)] sm:p-8">
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-end sm:text-left">
             <Avatar name={expert.name} photoUrl={expert.photoUrl} size="xl" className="ring-4 ring-white" />
@@ -99,6 +100,10 @@ export default function ExpertProfilePage({ params }: { params: Promise<{ id: st
               <IconMessageSquare className="h-4 w-4" /> Request Service
             </Button>
           )}
+        </div>
+
+        <div className="lg:-mt-14">
+          <SidebarAd />
         </div>
       </div>
 
