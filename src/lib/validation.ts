@@ -130,6 +130,7 @@ export const adminMemberUpdateSchema = z.object({
   isActive: z.boolean().optional(),
   membershipCategory: z.enum(MEMBERSHIP_CATEGORIES).optional(),
   resetPassword: z.boolean().optional(),
+  email: z.string().email("Enter a valid email address").optional(),
 });
 
 export const contentItemSchema = z.object({

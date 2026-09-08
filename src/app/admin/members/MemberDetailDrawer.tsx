@@ -5,7 +5,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Field";
+import { Select, Input } from "@/components/ui/Field";
 import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
 
 interface Detail {
@@ -42,6 +42,7 @@ export default function MemberDetailDrawer({
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- resetting local view
@@ -55,7 +56,10 @@ export default function MemberDetailDrawer({
     /* eslint-enable react-hooks/set-state-in-effect */
     fetch(`/api/admin/members/${memberId}`)
       .then((r) => r.json())
-      .then(setDetail);
+      .then((d) => {
+        setDetail(d);
+        setEmailDraft(d?.user?.email || "");
+      });
   }, [memberId]);
 
   async function patch(body: Record<string, unknown>, successMessage: string) {
@@ -72,7 +76,10 @@ export default function MemberDetailDrawer({
       onChanged();
       fetch(`/api/admin/members/${memberId}`)
         .then((r) => r.json())
-        .then(setDetail);
+        .then((d) => {
+          setDetail(d);
+          setEmailDraft(d?.user?.email || "");
+        });
     } else {
       const data = await res.json().catch(() => ({}));
       setMessage(typeof data.error === "string" ? data.error : "That action isn't permitted.");
@@ -137,6 +144,26 @@ export default function MemberDetailDrawer({
               <dd className="font-medium text-navy-900">{detail.profile.isListedInDirectory ? "Listed" : "Not listed"}</dd>
             </div>
           </dl>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Email address</label>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                value={emailDraft}
+                disabled={busy}
+                onChange={(e) => setEmailDraft(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                disabled={busy || !emailDraft || emailDraft === detail.user.email}
+                onClick={() => patch({ email: emailDraft }, "Email address updated.")}
+              >
+                Update
+              </Button>
+            </div>
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>

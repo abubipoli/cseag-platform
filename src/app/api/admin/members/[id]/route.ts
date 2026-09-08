@@ -51,13 +51,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (input.role && (input.role === "admin" || input.role === "super_admin") && !roleAtLeast(session.role, "super_admin")) {
     return NextResponse.json({ error: "Only a super admin can grant administrator access." }, { status: 403 });
   }
-  if (!roleAtLeast(session.role, "admin") && (input.role || input.isActive !== undefined)) {
-    return NextResponse.json({ error: "Reviewers can view members but not change role or status." }, { status: 403 });
+  if (!roleAtLeast(session.role, "admin") && (input.role || input.isActive !== undefined || input.email)) {
+    return NextResponse.json({ error: "Reviewers can view members but not change role, status, or email." }, { status: 403 });
+  }
+
+  if (input.email && input.email !== target.email) {
+    const emailOwner = await db.query.users.findFirst({ where: eq(users.email, input.email) });
+    if (emailOwner && emailOwner.id !== id) {
+      return NextResponse.json({ error: "That email address is already in use by another account." }, { status: 409 });
+    }
   }
 
   const updates: Record<string, unknown> = {};
   if (input.role) updates.role = input.role;
   if (input.isActive !== undefined) updates.isActive = input.isActive;
+  if (input.email) updates.email = input.email;
   if (Object.keys(updates).length > 0) {
     await db.update(users).set(updates).where(eq(users.id, id));
   }
