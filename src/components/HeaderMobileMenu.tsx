@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { IconMenu, IconX } from "@/components/ui/icons";
 import { ButtonLink } from "@/components/ui/Button";
@@ -18,6 +19,11 @@ export default function HeaderMobileMenu({
   dashboardLabel: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className="lg:hidden">
@@ -29,9 +35,11 @@ export default function HeaderMobileMenu({
         <IconMenu className="h-6 w-6" />
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50">
-          <button aria-label="Close menu" onClick={() => setOpen(false)} className="absolute inset-0 bg-navy-950/40 backdrop-blur-[1px]" />
+      {open &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50">
+            <button aria-label="Close menu" onClick={() => setOpen(false)} className="absolute inset-0 bg-navy-950/40 backdrop-blur-[1px]" />
           <div className="absolute inset-y-0 right-0 flex w-full max-w-xs flex-col bg-white p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-navy-900">Menu</span>
@@ -71,8 +79,9 @@ export default function HeaderMobileMenu({
               )}
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </div>
   );
 }

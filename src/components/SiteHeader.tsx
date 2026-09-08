@@ -28,7 +28,7 @@ export default async function SiteHeader() {
           <BrandMark className="h-10 w-10" />
           <span className="leading-tight">
             <span className="block text-sm font-bold tracking-tight text-navy-900">{SITE_CONFIG.name}</span>
-            <span className="hidden text-[11px] text-slate-500 sm:block">{SITE_CONFIG.fullName}</span>
+            <span className="block text-[11px] text-slate-500">{SITE_CONFIG.fullName}</span>
           </span>
         </Link>
 
