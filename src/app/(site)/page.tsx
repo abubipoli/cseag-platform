@@ -58,10 +58,16 @@ export default async function HomePage() {
             <IconShieldCheck className="h-3.5 w-3.5" />
             Cyber Security Experts Association of Ghana
           </p>
-          <h1 className="font-serif-display mt-6 text-4xl leading-[1.1] tracking-tight sm:text-6xl">
+          <h1
+            className="font-serif-display mt-6 text-4xl leading-[1.1] tracking-tight sm:text-6xl"
+            style={{ textShadow: "0 2px 16px rgba(2, 6, 15, 0.65)" }}
+          >
             A united front of cybersecurity professionals, securing Ghana&rsquo;s digital future.
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
+          <p
+            className="mx-auto mt-5 max-w-xl text-base text-white/85 sm:text-lg"
+            style={{ textShadow: "0 1px 10px rgba(2, 6, 15, 0.6)" }}
+          >
             Join a trusted community of certified experts, share knowledge, and help shape a safer digital
             Ghana.
           </p>

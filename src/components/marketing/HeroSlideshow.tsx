@@ -30,10 +30,10 @@ export function HeroSlideshow({ images }: { images: string[] }) {
             src={src}
             alt=""
             className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[2000ms] ease-in-out"
-            style={{ opacity: i === active ? 0.55 : 0 }}
+            style={{ opacity: i === active ? 0.8 : 0 }}
           />
         ))}
-        <div className="absolute inset-0 bg-navy-950/60" />
+        <div className="absolute inset-0 bg-navy-950/45" />
       </div>
 
       {images.length > 1 && (
