@@ -253,3 +253,24 @@ export const auditLog = pgTable("audit_log", {
   details: text("details"), // JSON-encoded string
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
+
+// ---------------------------------------------------------------------------
+// App settings: a single row holding admin-configurable email/SMS provider
+// credentials, so they can be set from the UI instead of redeploying with
+// new environment variables. Env vars remain the fallback when a field here
+// is empty (see src/lib/settings.ts).
+// ---------------------------------------------------------------------------
+export const SMS_PROVIDERS = ["", "arkesel", "mnotify"] as const;
+
+export const appSettings = pgTable("app_settings", {
+  id: text("id").primaryKey(), // always "singleton"
+  smtpHost: text("smtp_host"),
+  smtpPort: text("smtp_port"),
+  smtpUser: text("smtp_user"),
+  smtpPass: text("smtp_pass"),
+  smtpFrom: text("smtp_from"),
+  smsProvider: text("sms_provider", { enum: SMS_PROVIDERS }),
+  smsApiKey: text("sms_api_key"),
+  smsSenderId: text("sms_sender_id"),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});

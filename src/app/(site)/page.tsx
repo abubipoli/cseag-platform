@@ -13,7 +13,17 @@ import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 
 export const dynamic = "force-dynamic";
 
-const HERO_IMAGES = ["/hero/summit-1.jpg", "/hero/summit-2.jpg", "/hero/summit-3.jpg", "/hero/summit-4.jpg", "/hero/summit-5.jpg"];
+const HERO_IMAGES = [
+  "/hero/summit-1.jpg",
+  "/hero/summit-2.jpg",
+  "/hero/summit-3.jpg",
+  "/hero/summit-4.jpg",
+  "/hero/summit-5.jpg",
+  "/hero/summit-6.jpg",
+  "/hero/summit-7.jpg",
+  "/hero/summit-8.jpg",
+  "/hero/summit-9.jpg",
+];
 
 const VALUES = [
   ["Integrity", "Honesty, transparency, and accountability in cybersecurity practice."],

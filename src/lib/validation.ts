@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { MEMBERSHIP_CATEGORIES, ROLES, CONTENT_TYPES, CONTENT_STATUSES, SERVICE_REQUEST_STATUSES } from "@/db/schema";
+import {
+  MEMBERSHIP_CATEGORIES,
+  ROLES,
+  CONTENT_TYPES,
+  CONTENT_STATUSES,
+  SERVICE_REQUEST_STATUSES,
+  SMS_PROVIDERS,
+} from "@/db/schema";
 import { TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS, CSA_ACCREDITATION_TIERS } from "@/lib/constants";
 
 export const registrationSchema = z.object({
@@ -149,4 +156,26 @@ export const broadcastSchema = z.object({
   channel: z.enum(["email", "sms", "both"]),
   subject: z.string().min(1).max(200),
   message: z.string().min(1).max(4000),
+});
+
+export const notificationSettingsSchema = z.object({
+  smtpHost: z.string().optional(),
+  smtpPort: z.string().optional(),
+  smtpUser: z.string().optional(),
+  smtpPass: z.string().optional(),
+  smtpFrom: z.string().optional(),
+  smsProvider: z.enum(SMS_PROVIDERS).optional(),
+  smsApiKey: z.string().optional(),
+  smsSenderId: z.string().optional(),
+});
+
+export const adminCreateUserSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
+  email: z.string().email("Enter a valid email address"),
+  phone: z
+    .string()
+    .min(9, "Enter a valid phone number")
+    .regex(/^\+?[0-9\s-]{9,15}$/, "Enter a valid phone number, e.g. +233241234567"),
+  role: z.enum(ROLES),
+  membershipCategory: z.enum(MEMBERSHIP_CATEGORIES).optional(),
 });

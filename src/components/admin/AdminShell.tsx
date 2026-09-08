@@ -17,12 +17,20 @@ import {
   IconMail,
   IconBarChart,
   IconHistory,
+  IconSettings,
   IconMenu,
   IconX,
   IconExternalLink,
 } from "@/components/ui/icons";
 
-const NAV = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: (p: { className?: string }) => React.ReactElement;
+  exact?: boolean;
+}
+
+const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: IconLayoutDashboard, exact: true },
   { href: "/admin/applications", label: "Applications", icon: IconClipboard },
   { href: "/admin/service-requests", label: "Service Requests", icon: IconMessageSquare },
@@ -32,6 +40,10 @@ const NAV = [
   { href: "/admin/reports", label: "Reports", icon: IconBarChart },
   { href: "/admin/audit-log", label: "Audit Log", icon: IconHistory },
 ];
+
+// Live email/SMS credentials — restricted to super admins, same as granting
+// admin access itself.
+const SUPER_ADMIN_NAV: NavItem[] = [{ href: "/admin/settings", label: "Settings", icon: IconSettings }];
 
 // The admin back office ("member management platform") pairs a dark
 // instrument-panel sidebar — in the spirit of Twingate's own product design
@@ -54,6 +66,7 @@ export function AdminShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string, exact?: boolean) => (exact ? pathname === href : pathname.startsWith(href));
+  const navItems = role === "super_admin" ? [...NAV, ...SUPER_ADMIN_NAV] : NAV;
 
   const sidebarContent = (
     <>
@@ -66,7 +79,7 @@ export function AdminShell({
       </Link>
 
       <nav className="flex-1 space-y-1 px-3">
-        {NAV.map((item) => {
+        {navItems.map((item) => {
           const active = isActive(item.href, item.exact);
           return (
             <Link

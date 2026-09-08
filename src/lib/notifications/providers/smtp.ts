@@ -1,8 +1,7 @@
 // Generic SMTP email provider (works with Google Workspace, Zoho Mail,
 // Microsoft 365, or any transactional email service that exposes SMTP —
-// which covers the large majority of providers). Configure via env vars:
-//
-//   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
+// which covers the large majority of providers). Configured either via env
+// vars or the admin Settings page (src/lib/settings.ts resolves both).
 //
 // If you use a provider with its own HTTP API instead (e.g. SendGrid,
 // Mailgun, Postmark, Resend) and want to use their API rather than SMTP,
@@ -12,23 +11,27 @@
 import nodemailer from "nodemailer";
 import type { EmailProvider, EmailMessage, SendResult } from "../types";
 
-export function createSmtpEmailProvider(): EmailProvider {
+export function createSmtpEmailProvider(config: {
+  host: string;
+  port: string;
+  user: string;
+  pass: string;
+  from: string;
+}): EmailProvider {
+  const port = Number(config.port || 587);
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: Number(process.env.SMTP_PORT) === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+    host: config.host,
+    port,
+    secure: port === 465,
+    auth: { user: config.user, pass: config.pass },
   });
 
   return {
-    name: `smtp (${process.env.SMTP_HOST})`,
+    name: `smtp (${config.host})`,
     async send(message: EmailMessage): Promise<SendResult> {
       try {
         const info = await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          from: config.from || config.user,
           to: message.to,
           replyTo: message.replyTo,
           subject: message.subject,

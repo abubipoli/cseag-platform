@@ -1,10 +1,10 @@
 // Arkesel SMS provider (popular Ghana-based SMS aggregator: arkesel.com).
-// Configure via env vars: SMS_API_KEY, SMS_SENDER_ID (max 11 chars, e.g. "CSEAG").
+// Configured either via env vars or the admin Settings page.
 // Docs: https://developers.arkesel.com/
 
 import type { SmsProvider, SmsMessage, SendResult } from "../types";
 
-export function createArkeselSmsProvider(): SmsProvider {
+export function createArkeselSmsProvider(config: { apiKey: string; senderId: string }): SmsProvider {
   return {
     name: "arkesel",
     async send(message: SmsMessage): Promise<SendResult> {
@@ -12,11 +12,11 @@ export function createArkeselSmsProvider(): SmsProvider {
         const res = await fetch("https://sms.arkesel.com/api/v2/sms/send", {
           method: "POST",
           headers: {
-            "api-key": process.env.SMS_API_KEY || "",
+            "api-key": config.apiKey,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            sender: process.env.SMS_SENDER_ID || "CSEAG",
+            sender: config.senderId || "CSEAG",
             message: message.body,
             recipients: [message.to],
           }),

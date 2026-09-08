@@ -7,9 +7,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Select } from "@/components/ui/Field";
-import { IconSearch, IconUsers } from "@/components/ui/icons";
+import { Button } from "@/components/ui/Button";
+import { IconSearch, IconUsers, IconPlus } from "@/components/ui/icons";
 import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS } from "@/lib/constants";
 import MemberDetailDrawer from "./MemberDetailDrawer";
+import AddUserDrawer from "./AddUserDrawer";
 
 export interface MemberRow {
   id: string;
@@ -31,6 +33,8 @@ export default function AdminMembersPage() {
   const [status, setStatus] = useState("");
   const [role, setRole] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [currentRole, setCurrentRole] = useState("member");
 
   async function load() {
     const params = new URLSearchParams();
@@ -48,6 +52,12 @@ export default function AdminMembersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, status, role]);
 
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((d) => d?.session?.role && setCurrentRole(d.session.role));
+  }, []);
+
   const totals = members
     ? {
         total: members.length,
@@ -58,7 +68,15 @@ export default function AdminMembersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Members" description="Search, review, and manage CSEAG member accounts." />
+      <PageHeader
+        title="Members"
+        description="Search, review, and manage CSEAG member accounts."
+        actions={
+          <Button onClick={() => setAddOpen(true)}>
+            <IconPlus className="h-4 w-4" /> Add user
+          </Button>
+        }
+      />
 
       {totals && (
         <div className="grid grid-cols-3 gap-4">
@@ -145,6 +163,7 @@ export default function AdminMembersPage() {
       </Card>
 
       <MemberDetailDrawer memberId={activeId} onClose={() => setActiveId(null)} onChanged={load} />
+      <AddUserDrawer open={addOpen} currentRole={currentRole} onClose={() => setAddOpen(false)} onCreated={load} />
     </div>
   );
 }

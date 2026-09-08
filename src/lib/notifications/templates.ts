@@ -11,6 +11,7 @@ export type TemplateKey =
   | "application_more_info"
   | "password_reset"
   | "password_reset_by_admin"
+  | "account_created_by_admin"
   | "contact_form_relay"
   | "service_request_received_admin"
   | "service_request_assigned_expert"
@@ -82,6 +83,14 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
         emailText: `Hi ${name},\n\nA CSEAG administrator has reset your account password. Your temporary password is:\n\n${data.tempPassword}\n\nPlease log in and change it as soon as possible.\n\n— CSEAG`,
         emailHtml: `<p>Hi ${name},</p><p>A CSEAG administrator has reset your account password. Your temporary password is:</p><p><strong>${data.tempPassword}</strong></p><p>Please log in and change it as soon as possible.</p><p>— CSEAG</p>`,
         sms: `CSEAG: Your account password was reset by an administrator. Temporary password: ${data.tempPassword}. Please log in and change it.`,
+      };
+
+    case "account_created_by_admin":
+      return {
+        emailSubject: "An account has been created for you on the CSEAG platform",
+        emailText: `Hi ${name},\n\nA CSEAG administrator has created a ${data.role} account for you.\n\nEmail: ${data.email}\nTemporary password: ${data.tempPassword}\n\nPlease log in and change your password as soon as possible.\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>A CSEAG administrator has created a <strong>${data.role}</strong> account for you.</p><p>Email: ${data.email}<br/>Temporary password: <strong>${data.tempPassword}</strong></p><p>Please log in and change your password as soon as possible.</p><p>— CSEAG</p>`,
+        sms: `CSEAG: An account was created for you (${data.role}). Email: ${data.email}. Temporary password: ${data.tempPassword}. Please log in and change it.`,
       };
 
     case "contact_form_relay":
