@@ -7,10 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession, roleAtLeast } from "@/lib/auth";
 import { getNotificationSettings } from "@/lib/settings";
-import { consoleEmailProvider, consoleSmsProvider } from "@/lib/notifications/providers/console";
-import { createSmtpEmailProvider } from "@/lib/notifications/providers/smtp";
-import { createArkeselSmsProvider } from "@/lib/notifications/providers/arkesel";
-import { createMnotifySmsProvider } from "@/lib/notifications/providers/mnotify";
+import { resolveEmailProvider, resolveSmsProvider } from "@/lib/notifications";
 
 const testSchema = z.object({ phone: z.string().optional() });
 
@@ -24,16 +21,7 @@ export async function POST(req: NextRequest) {
   const { phone } = testSchema.parse(body || {});
   const settings = await getNotificationSettings();
 
-  const emailProvider = settings.smtpHost
-    ? createSmtpEmailProvider({
-        host: settings.smtpHost,
-        port: settings.smtpPort,
-        user: settings.smtpUser,
-        pass: settings.smtpPass,
-        from: settings.smtpFrom,
-      })
-    : consoleEmailProvider;
-
+  const emailProvider = resolveEmailProvider(settings);
   const emailResult = await emailProvider.send({
     to: session.email,
     subject: "CSEAG notification settings — test email",
@@ -43,12 +31,7 @@ export async function POST(req: NextRequest) {
 
   let smsResult: { ok: boolean; error?: string } | null = null;
   if (phone) {
-    const smsProvider =
-      settings.smsProvider === "arkesel"
-        ? createArkeselSmsProvider({ apiKey: settings.smsApiKey, senderId: settings.smsSenderId })
-        : settings.smsProvider === "mnotify"
-          ? createMnotifySmsProvider({ apiKey: settings.smsApiKey, senderId: settings.smsSenderId })
-          : consoleSmsProvider;
+    const smsProvider = resolveSmsProvider(settings);
     smsResult = await smsProvider.send({ to: phone, body: "CSEAG notification settings test message." });
   }
 

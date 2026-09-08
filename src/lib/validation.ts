@@ -166,6 +166,7 @@ export const notificationSettingsSchema = z.object({
   smtpFrom: z.string().optional(),
   smsProvider: z.enum(SMS_PROVIDERS).optional(),
   smsApiKey: z.string().optional(),
+  smsApiSecret: z.string().optional(),
   smsSenderId: z.string().optional(),
 });
 

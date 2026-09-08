@@ -15,6 +15,7 @@ interface Settings {
   smsProvider: string;
   smsSenderId: string;
   smsApiKeySet: boolean;
+  smsApiSecretSet: boolean;
 }
 
 export default function SettingsPage() {
@@ -27,6 +28,7 @@ export default function SettingsPage() {
     smtpFrom: "",
     smsProvider: "",
     smsApiKey: "",
+    smsApiSecret: "",
     smsSenderId: "",
   });
   const [saving, setSaving] = useState(false);
@@ -66,7 +68,7 @@ export default function SettingsPage() {
     setSaving(false);
     if (res.ok) {
       setMessage("Settings saved.");
-      setForm((f) => ({ ...f, smtpPass: "", smsApiKey: "" }));
+      setForm((f) => ({ ...f, smtpPass: "", smsApiKey: "", smsApiSecret: "" }));
       load();
     } else {
       setMessage("Couldn't save settings. Check the fields and try again.");
@@ -145,7 +147,7 @@ export default function SettingsPage() {
         <CardBody className="space-y-4">
           <div>
             <h3 className="font-semibold text-navy-900">SMS</h3>
-            <p className="text-sm text-slate-500">Ghana-based SMS aggregators, both with free trial credits.</p>
+            <p className="text-sm text-slate-500">Ghana-based SMS aggregators.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <FieldWrap label="Provider">
@@ -153,15 +155,28 @@ export default function SettingsPage() {
                 <option value="">None (log to console)</option>
                 <option value="arkesel">Arkesel</option>
                 <option value="mnotify">mNotify</option>
+                <option value="kairos">Kairos Afrika</option>
               </Select>
             </FieldWrap>
             <FieldWrap label="Sender ID" hint="Max 11 characters, e.g. CSEAG">
               <Input value={form.smsSenderId} onChange={(e) => setForm((f) => ({ ...f, smsSenderId: e.target.value }))} maxLength={11} />
             </FieldWrap>
           </div>
-          <FieldWrap label="API key" hint={settings.smsApiKeySet ? "A key is already saved. Leave blank to keep it." : "Not set yet."}>
-            <Input type="password" value={form.smsApiKey} onChange={(e) => setForm((f) => ({ ...f, smsApiKey: e.target.value }))} placeholder={settings.smsApiKeySet ? "••••••••" : ""} />
-          </FieldWrap>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FieldWrap label="API key" hint={settings.smsApiKeySet ? "A key is already saved. Leave blank to keep it." : "Not set yet."}>
+              <Input type="password" value={form.smsApiKey} onChange={(e) => setForm((f) => ({ ...f, smsApiKey: e.target.value }))} placeholder={settings.smsApiKeySet ? "••••••••" : ""} />
+            </FieldWrap>
+            {form.smsProvider === "kairos" && (
+              <FieldWrap label="API secret" hint={settings.smsApiSecretSet ? "A secret is already saved. Leave blank to keep it." : "Kairos Afrika also requires a secret, alongside the key."}>
+                <Input
+                  type="password"
+                  value={form.smsApiSecret}
+                  onChange={(e) => setForm((f) => ({ ...f, smsApiSecret: e.target.value }))}
+                  placeholder={settings.smsApiSecretSet ? "••••••••" : ""}
+                />
+              </FieldWrap>
+            )}
+          </div>
         </CardBody>
       </Card>
 

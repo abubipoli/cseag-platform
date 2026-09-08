@@ -23,6 +23,7 @@ export async function GET() {
     smsProvider: settings.smsProvider,
     smsSenderId: settings.smsSenderId,
     smsApiKeySet: !!settings.smsApiKey,
+    smsApiSecretSet: !!settings.smsApiSecret,
   });
 }
 
@@ -48,6 +49,7 @@ export async function PATCH(req: NextRequest) {
   }
   if (input.smtpPass) update.smtpPass = input.smtpPass;
   if (input.smsApiKey) update.smsApiKey = input.smsApiKey;
+  if (input.smsApiSecret) update.smsApiSecret = input.smsApiSecret;
 
   await updateNotificationSettings(update);
   await recordAudit({ actorUserId: session.userId, action: "settings.notifications_updated", targetType: "app_settings" });

@@ -5,7 +5,7 @@
 // left unset there (see src/lib/settings.ts):
 //
 //   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
-//   SMS_PROVIDER=arkesel|mnotify, SMS_API_KEY, SMS_SENDER_ID
+//   SMS_PROVIDER=arkesel|mnotify|kairos, SMS_API_KEY, SMS_API_SECRET (kairos only), SMS_SENDER_ID
 //
 // Until those are set, both channels fall back to logging to the server
 // console so the whole application (including the acknowledgment flow) is
@@ -21,10 +21,11 @@ import { consoleEmailProvider, consoleSmsProvider } from "./providers/console";
 import { createSmtpEmailProvider } from "./providers/smtp";
 import { createArkeselSmsProvider } from "./providers/arkesel";
 import { createMnotifySmsProvider } from "./providers/mnotify";
+import { createKairosSmsProvider } from "./providers/kairos";
 import type { EmailProvider, SmsProvider } from "./types";
 import { renderTemplate, type TemplateKey } from "./templates";
 
-function resolveEmailProvider(settings: NotificationSettings): EmailProvider {
+export function resolveEmailProvider(settings: NotificationSettings): EmailProvider {
   if (settings.smtpHost) {
     return createSmtpEmailProvider({
       host: settings.smtpHost,
@@ -37,12 +38,18 @@ function resolveEmailProvider(settings: NotificationSettings): EmailProvider {
   return consoleEmailProvider;
 }
 
-function resolveSmsProvider(settings: NotificationSettings): SmsProvider {
+export function resolveSmsProvider(settings: NotificationSettings): SmsProvider {
   switch (settings.smsProvider) {
     case "arkesel":
       return createArkeselSmsProvider({ apiKey: settings.smsApiKey, senderId: settings.smsSenderId });
     case "mnotify":
       return createMnotifySmsProvider({ apiKey: settings.smsApiKey, senderId: settings.smsSenderId });
+    case "kairos":
+      return createKairosSmsProvider({
+        apiKey: settings.smsApiKey,
+        apiSecret: settings.smsApiSecret,
+        senderId: settings.smsSenderId,
+      });
     default:
       return consoleSmsProvider;
   }

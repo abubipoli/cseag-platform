@@ -16,6 +16,7 @@ export interface NotificationSettings {
   smtpFrom: string;
   smsProvider: string;
   smsApiKey: string;
+  smsApiSecret: string;
   smsSenderId: string;
 }
 
@@ -30,6 +31,7 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
     smtpFrom: row?.smtpFrom || process.env.SMTP_FROM || "",
     smsProvider: row?.smsProvider || process.env.SMS_PROVIDER || "",
     smsApiKey: row?.smsApiKey || process.env.SMS_API_KEY || "",
+    smsApiSecret: row?.smsApiSecret || process.env.SMS_API_SECRET || "",
     smsSenderId: row?.smsSenderId || process.env.SMS_SENDER_ID || "CSEAG",
   };
 }

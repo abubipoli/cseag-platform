@@ -29,6 +29,13 @@
       "when": 1788871590059,
       "tag": "0003_lyrical_madelyne_pryor",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788875076951,
+      "tag": "0004_burly_skreet",
+      "breakpoints": true
     }
   ]
 }

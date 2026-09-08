@@ -260,7 +260,7 @@ export const auditLog = pgTable("audit_log", {
 // new environment variables. Env vars remain the fallback when a field here
 // is empty (see src/lib/settings.ts).
 // ---------------------------------------------------------------------------
-export const SMS_PROVIDERS = ["", "arkesel", "mnotify"] as const;
+export const SMS_PROVIDERS = ["", "arkesel", "mnotify", "kairos"] as const;
 
 export const appSettings = pgTable("app_settings", {
   id: text("id").primaryKey(), // always "singleton"
@@ -270,6 +270,7 @@ export const appSettings = pgTable("app_settings", {
   smtpPass: text("smtp_pass"),
   smtpFrom: text("smtp_from"),
   smsProvider: text("sms_provider", { enum: SMS_PROVIDERS }),
+  smsApiSecret: text("sms_api_secret"), // Kairos Africa needs a key AND a secret
   smsApiKey: text("sms_api_key"),
   smsSenderId: text("sms_sender_id"),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
