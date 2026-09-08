@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 
-const INTERVAL_MS = 5500;
+const INTERVAL_MS = 8000;
 
 export function HeroSlideshow({ images }: { images: string[] }) {
   const [active, setActive] = useState(0);
