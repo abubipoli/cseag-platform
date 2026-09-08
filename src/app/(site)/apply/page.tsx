@@ -5,23 +5,21 @@ import { useRouter } from "next/navigation";
 import { AREAS_OF_EXPERTISE, MEMBERSHIP_CATEGORY_LABELS, TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS } from "@/lib/constants";
 import { PageHero } from "@/components/marketing/PageHero";
 import { Card, CardBody } from "@/components/ui/Card";
-import { FieldWrap, Input, Select, Textarea, Checkbox } from "@/components/ui/Field";
+import { FieldWrap, Input, Select, Checkbox } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
-import { IconCheckCircle, IconUpload, IconChevronRight } from "@/components/ui/icons";
+import { IconCheckCircle, IconChevronRight } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
-const CATEGORIES = Object.entries(MEMBERSHIP_CATEGORY_LABELS);
-const STEPS = ["Account", "Professional Background", "Bio & Documents", "Review & Submit"];
+// Corporate membership is handled separately (SRS 6.11), not via self-service application.
+const CATEGORIES = Object.entries(MEMBERSHIP_CATEGORY_LABELS).filter(([value]) => value !== "corporate");
+const STEPS = ["Account", "Professional Background", "Review & Submit"];
 
 export default function ApplyPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [expertise, setExpertise] = useState<string[]>([]);
-  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
-  const [documentName, setDocumentName] = useState<string | null>(null);
   const [isEmployed, setIsEmployed] = useState(true);
 
   const [fields, setFields] = useState({
@@ -38,8 +36,6 @@ export default function ApplyPage() {
     highestCertificate: "",
     certifications: "",
     membershipCategory: "associate",
-    bio: "",
-    statementOfInterest: "",
     codeOfConductAccepted: false,
     privacyConsentAccepted: false,
   });
@@ -70,7 +66,7 @@ export default function ApplyPage() {
       if (expertise.length === 0) e.push("Select at least one area of expertise.");
       return e;
     }
-    if (step === 3) {
+    if (step === 2) {
       const e: string[] = [];
       if (!fields.codeOfConductAccepted) e.push("You must accept the Code of Conduct.");
       if (!fields.privacyConsentAccepted) e.push("You must accept the privacy notice.");
@@ -91,22 +87,6 @@ export default function ApplyPage() {
   function goBack() {
     setErrors([]);
     setStep((s) => Math.max(s - 1, 0));
-  }
-
-  async function handleUpload(file: File) {
-    setUploading(true);
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/uploads", { method: "POST", body: form });
-    setUploading(false);
-    if (res.ok) {
-      const data = await res.json();
-      setDocumentUrl(data.url);
-      setDocumentName(file.name);
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setErrors([data.error || "Upload failed."]);
-    }
   }
 
   async function handleSubmit() {
@@ -134,9 +114,6 @@ export default function ApplyPage() {
         : [],
       areasOfExpertise: expertise,
       membershipCategory: fields.membershipCategory,
-      bio: fields.bio || undefined,
-      statementOfInterest: fields.statementOfInterest || undefined,
-      supportingDocumentUrl: documentUrl || undefined,
       codeOfConductAccepted: fields.codeOfConductAccepted,
       privacyConsentAccepted: fields.privacyConsentAccepted,
     };
@@ -338,32 +315,6 @@ export default function ApplyPage() {
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
-                <FieldWrap label="Short professional bio">
-                  <Textarea rows={3} value={fields.bio} onChange={(e) => set("bio", e.target.value)} />
-                </FieldWrap>
-                <FieldWrap label="Statement of interest" hint="Why do you want to join CSEAG?">
-                  <Textarea rows={3} value={fields.statementOfInterest} onChange={(e) => set("statementOfInterest", e.target.value)} />
-                </FieldWrap>
-                <FieldWrap label="Supporting document" hint="CV or certification proof, optional. PDF, Word, or image, max 8MB.">
-                  <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-slate-300 px-4 py-6 text-center hover:border-accent-400">
-                    <IconUpload className="h-6 w-6 text-slate-400" />
-                    <span className="text-sm text-slate-600">
-                      {uploading ? "Uploading..." : documentName ? documentName : "Click to choose a file"}
-                    </span>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-                    />
-                  </label>
-                  {documentUrl && <p className="mt-1 text-xs font-medium text-accent-700">Uploaded successfully.</p>}
-                </FieldWrap>
-              </div>
-            )}
-
-            {step === 3 && (
               <div className="space-y-5">
                 <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
                   <p className="font-semibold text-navy-900">{fields.fullName || "—"}</p>
