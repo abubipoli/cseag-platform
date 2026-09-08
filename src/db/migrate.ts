@@ -1,14 +1,21 @@
-// Run pending SQL migrations against the local SQLite database.
+// Run pending SQL migrations against the Postgres database.
 // Usage: npx tsx src/db/migrate.ts
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import path from "node:path";
 
-const DB_PATH = process.env.SQLITE_PATH || path.join(process.cwd(), "data", "cseag.db");
-const sqlite = new Database(DB_PATH);
-const db = drizzle(sqlite);
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set. Add it to .env.local (see .env.example).");
+}
 
-migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
-console.log("Migrations applied to", DB_PATH);
-sqlite.close();
+const client = postgres(process.env.DATABASE_URL, { max: 1 });
+const db = drizzle(client);
+
+async function main() {
+  await migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+  console.log("Migrations applied.");
+  await client.end();
+}
+
+main();

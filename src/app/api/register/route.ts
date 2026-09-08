@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
   const input = parsed.data;
+  if (input.website) {
+    // Honeypot tripped — pretend success without creating anything.
+    return NextResponse.json({ ok: true }, { status: 201 });
+  }
 
   const existing = await db.query.users.findFirst({ where: eq(users.email, input.email) });
   if (existing) {
@@ -67,6 +71,7 @@ export async function POST(req: NextRequest) {
     id: randomUUID(),
     userId,
     statementOfInterest: input.statementOfInterest,
+    supportingDocumentUrl: input.supportingDocumentUrl,
     codeOfConductAccepted: input.codeOfConductAccepted,
     privacyConsentAccepted: input.privacyConsentAccepted,
     status: "pending",

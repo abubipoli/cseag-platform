@@ -1,151 +1,129 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatCard } from "@/components/ui/StatCard";
+import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ButtonLink } from "@/components/ui/Button";
+import {
+  IconUsers,
+  IconUserCheck,
+  IconClipboard,
+  IconXCircle,
+  IconMail,
+  IconMessageSquare,
+  IconHistory,
+} from "@/components/ui/icons";
 
-interface AppRow {
-  applicationId: string;
-  status: string;
-  submittedAt: string;
-  reviewerNotes: string | null;
-  statementOfInterest: string | null;
-  userId: string;
-  email: string;
-  fullName: string;
-  phone: string;
-  membershipCategory: string;
-  areasOfExpertise: string;
-  yearsOfExperience: number | null;
+interface Stats {
+  totalMembers: number;
+  activeMembers: number;
+  pendingApplications: number;
+  approvedThisMonth: number;
+  rejectedApplications: number;
+  newsletterSubscribers: number;
+  openServiceRequests: number;
+  recentActivity: { id: string; action: string; actorName: string | null; createdAt: string; targetType: string | null }[];
 }
 
-export default function AdminPage() {
-  const [rows, setRows] = useState<AppRow[] | null>(null);
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function load() {
-    const res = await fetch("/api/admin/applications");
-    if (res.status === 403) {
-      setError("You don't have permission to view this page.");
-      return;
-    }
-    const data = await res.json();
-    setRows(data.applications);
-  }
+export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    // Fetching on mount and updating state once the response arrives is the
-    // standard "synchronize with an external system" use of an effect; the
-    // setState calls happen after the awaited fetch, not synchronously.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    fetch("/api/admin/stats")
+      .then((r) => r.json())
+      .then(setStats);
   }, []);
 
-  async function decide(id: string, decision: "approved" | "rejected" | "more_info_requested") {
-    setBusyId(id);
-    await fetch(`/api/admin/applications/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ decision, notes: notes[id] || "" }),
-    });
-    setBusyId(null);
-    load();
-  }
-
-  if (error) return <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-red-600">{error}</div>;
-  if (!rows) return <div className="mx-auto max-w-5xl px-4 py-10 text-sm text-slate-500">Loading...</div>;
-
-  const pending = rows.filter((r) => r.status === "pending" || r.status === "more_info_requested");
-  const decided = rows.filter((r) => r.status === "approved" || r.status === "rejected");
-
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-bold text-[var(--color-navy)]">Membership Review Queue</h1>
-      <p className="mt-1 text-sm text-slate-600">{pending.length} application(s) awaiting a decision.</p>
+    <div className="space-y-6">
+      <PageHeader title="Dashboard" description="An overview of CSEAG membership activity." />
 
-      <div className="mt-6 space-y-4">
-        {pending.map((r) => (
-          <div key={r.applicationId} className="rounded-md border border-slate-200 bg-white p-5">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold text-[var(--color-navy)]">{r.fullName}</p>
-                <p className="text-sm text-slate-500">
-                  {r.email} · {r.phone}
-                </p>
-              </div>
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
-                {r.status === "pending" ? "Pending review" : "More info requested"}
-              </span>
-            </div>
-
-            <dl className="mt-3 grid grid-cols-2 gap-2 text-sm text-slate-600 sm:grid-cols-4">
-              <div>
-                <dt className="text-xs text-slate-400">Category</dt>
-                <dd>{r.membershipCategory}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-slate-400">Experience</dt>
-                <dd>{r.yearsOfExperience ?? "—"} yrs</dd>
-              </div>
-              <div className="col-span-2">
-                <dt className="text-xs text-slate-400">Expertise</dt>
-                <dd>{JSON.parse(r.areasOfExpertise || "[]").join(", ")}</dd>
-              </div>
-            </dl>
-
-            {r.statementOfInterest && (
-              <p className="mt-3 text-sm italic text-slate-600">&ldquo;{r.statementOfInterest}&rdquo;</p>
-            )}
-
-            <textarea
-              placeholder="Optional note to the applicant..."
-              value={notes[r.applicationId] || ""}
-              onChange={(e) => setNotes((n) => ({ ...n, [r.applicationId]: e.target.value }))}
-              rows={2}
-              className="mt-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                disabled={busyId === r.applicationId}
-                onClick={() => decide(r.applicationId, "approved")}
-                className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                Approve
-              </button>
-              <button
-                disabled={busyId === r.applicationId}
-                onClick={() => decide(r.applicationId, "more_info_requested")}
-                className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-60"
-              >
-                Request more info
-              </button>
-              <button
-                disabled={busyId === r.applicationId}
-                onClick={() => decide(r.applicationId, "rejected")}
-                className="rounded-md border border-red-300 px-4 py-1.5 text-sm font-semibold text-red-700 disabled:opacity-60"
-              >
-                Reject
-              </button>
-            </div>
+      {!stats ? (
+        <p className="text-sm text-slate-400">Loading…</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard tone="navy" icon={<IconUsers className="h-5 w-5" />} label="Total Members" value={stats.totalMembers} />
+            <StatCard tone="accent" icon={<IconUserCheck className="h-5 w-5" />} label="Active Members" value={stats.activeMembers} />
+            <StatCard tone="amber" icon={<IconClipboard className="h-5 w-5" />} label="Pending Applications" value={stats.pendingApplications} hint="Awaiting a decision" />
+            <StatCard tone="sky" icon={<IconUserCheck className="h-5 w-5" />} label="Approved This Month" value={stats.approvedThisMonth} />
+            <StatCard tone="red" icon={<IconXCircle className="h-5 w-5" />} label="Rejected Applications" value={stats.rejectedApplications} />
+            <StatCard tone="amber" icon={<IconMessageSquare className="h-5 w-5" />} label="Open Service Requests" value={stats.openServiceRequests} hint="Awaiting expert follow-up" />
+            <StatCard tone="navy" icon={<IconMail className="h-5 w-5" />} label="Newsletter Subscribers" value={stats.newsletterSubscribers} />
           </div>
-        ))}
-        {pending.length === 0 && <p className="text-sm text-slate-500">No applications waiting for review.</p>}
-      </div>
 
-      {decided.length > 0 && (
-        <div className="mt-10">
-          <h2 className="font-semibold text-[var(--color-navy)]">Recent decisions</h2>
-          <div className="mt-3 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
-            {decided.map((r) => (
-              <div key={r.applicationId} className="flex items-center justify-between px-4 py-2 text-sm">
-                <span>{r.fullName}</span>
-                <span className={r.status === "approved" ? "text-emerald-700" : "text-red-700"}>{r.status}</span>
-              </div>
-            ))}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader className="flex items-center justify-between">
+                <p className="font-semibold text-navy-900">Recent activity</p>
+                <Link href="/admin/audit-log" className="text-xs font-medium text-accent-700 hover:text-accent-800">
+                  View audit log
+                </Link>
+              </CardHeader>
+              <CardBody>
+                {stats.recentActivity.length === 0 ? (
+                  <EmptyState icon={<IconHistory className="h-5 w-5" />} title="No activity yet" />
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {stats.recentActivity.map((a) => (
+                      <li key={a.id} className="flex items-center justify-between py-3 text-sm">
+                        <div>
+                          <span className="font-medium text-navy-900">{a.actorName || "System"}</span>{" "}
+                          <span className="text-slate-500">{formatAction(a.action)}</span>
+                        </div>
+                        <span className="shrink-0 text-xs text-slate-400">{timeAgo(a.createdAt)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <p className="font-semibold text-navy-900">Quick actions</p>
+              </CardHeader>
+              <CardBody className="flex flex-col gap-2.5">
+                <ButtonLink href="/admin/applications" variant="outline" className="justify-start">
+                  Review applications
+                </ButtonLink>
+                <ButtonLink href="/admin/service-requests" variant="outline" className="justify-start">
+                  Review service requests
+                </ButtonLink>
+                <ButtonLink href="/admin/members" variant="outline" className="justify-start">
+                  Manage members
+                </ButtonLink>
+                <ButtonLink href="/admin/content" variant="outline" className="justify-start">
+                  Publish content
+                </ButtonLink>
+                <ButtonLink href="/admin/communications" variant="outline" className="justify-start">
+                  Send a message
+                </ButtonLink>
+                <ButtonLink href="/admin/reports" variant="outline" className="justify-start">
+                  Export reports
+                </ButtonLink>
+              </CardBody>
+            </Card>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
+}
+
+function formatAction(action: string) {
+  return action.replace(/\./g, " ").replace(/_/g, " ");
+}
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }

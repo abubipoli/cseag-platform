@@ -8,7 +8,17 @@ export type TemplateKey =
   | "application_received"
   | "application_approved"
   | "application_rejected"
-  | "application_more_info";
+  | "application_more_info"
+  | "password_reset"
+  | "password_reset_by_admin"
+  | "contact_form_relay"
+  | "service_request_received_admin"
+  | "service_request_assigned_expert"
+  | "service_request_chat_link_requester"
+  | "service_request_new_message"
+  | "newsletter_confirmation"
+  | "event_rsvp_confirmation"
+  | "custom";
 
 interface Rendered {
   emailSubject: string;
@@ -56,6 +66,90 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
           data.request || ""
         }</p><p>Please log in to your dashboard to respond.</p><p>— CSEAG</p>`,
         sms: `CSEAG: Hi ${name}, we need more info to review your application. Please check your email and log in to respond.`,
+      };
+
+    case "password_reset":
+      return {
+        emailSubject: "Reset your CSEAG password",
+        emailText: `Hi ${name},\n\nWe received a request to reset your CSEAG account password. This link expires in 1 hour:\n\n${data.resetUrl}\n\nIf you didn't request this, you can safely ignore this email.\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>We received a request to reset your CSEAG account password. This link expires in 1 hour:</p><p><a href="${data.resetUrl}">${data.resetUrl}</a></p><p>If you didn't request this, you can safely ignore this email.</p><p>— CSEAG</p>`,
+        sms: `CSEAG: A password reset was requested for your account. Check your email for the reset link (expires in 1 hour). Ignore if this wasn't you.`,
+      };
+
+    case "password_reset_by_admin":
+      return {
+        emailSubject: "Your CSEAG account password has been reset",
+        emailText: `Hi ${name},\n\nA CSEAG administrator has reset your account password. Your temporary password is:\n\n${data.tempPassword}\n\nPlease log in and change it as soon as possible.\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>A CSEAG administrator has reset your account password. Your temporary password is:</p><p><strong>${data.tempPassword}</strong></p><p>Please log in and change it as soon as possible.</p><p>— CSEAG</p>`,
+        sms: `CSEAG: Your account password was reset by an administrator. Temporary password: ${data.tempPassword}. Please log in and change it.`,
+      };
+
+    case "contact_form_relay":
+      return {
+        emailSubject: `New contact form message: ${data.subject}`,
+        emailText: `From: ${data.fromName} <${data.fromEmail}>\n\n${data.message}`,
+        emailHtml: `<p><strong>From:</strong> ${data.fromName} &lt;${data.fromEmail}&gt;</p><p>${data.message}</p>`,
+        sms: `CSEAG website: new message from ${data.fromName} — check your inbox.`,
+      };
+
+    case "service_request_received_admin":
+      return {
+        emailSubject: `New service request for ${data.expertName}`,
+        emailText: `A new service request came in via the public Expert Directory.\n\nRequested expert: ${data.expertName}\nFrom: ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})\n\nMessage:\n"${data.message}"\n\nReview and action it from /admin/service-requests.`,
+        emailHtml: `<p>A new service request came in via the public Expert Directory.</p><p><strong>Requested expert:</strong> ${data.expertName}<br/><strong>From:</strong> ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})</p><p><strong>Message:</strong><br/>"${data.message}"</p><p>Review and action it from <code>/admin/service-requests</code>.</p>`,
+        sms: `CSEAG: New service request for ${data.expertName} from ${data.fromName}. Check /admin/service-requests.`,
+      };
+
+    case "service_request_assigned_expert":
+      return {
+        emailSubject: `You've been assigned a service request via CSEAG`,
+        emailText: `Hi ${name},\n\nAn admin has assigned you a service request from the CSEAG Expert Directory.\n\nFrom: ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})\n\nWhat they need:\n"${data.message}"\n\nLog in to your dashboard's "My Requests" tab to message them directly:\n${data.dashboardUrl}\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>An admin has assigned you a service request from the CSEAG Expert Directory.</p><p><strong>From:</strong> ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})</p><p><strong>What they need:</strong><br/>"${data.message}"</p><p>Log in to your dashboard's "My Requests" tab to message them directly: <a href="${data.dashboardUrl}">${data.dashboardUrl}</a></p><p>— CSEAG</p>`,
+        sms: `CSEAG: You've been assigned a service request from ${data.fromName}. Log in to your dashboard's My Requests tab to respond.`,
+      };
+
+    case "service_request_chat_link_requester":
+      return {
+        emailSubject: `${data.expertName} has been assigned to your CSEAG request`,
+        emailText: `Hi ${name},\n\n${data.expertName} has been assigned to your request and can now message you directly.\n\nOpen your conversation here (no login needed):\n${data.chatUrl}\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>${data.expertName} has been assigned to your request and can now message you directly.</p><p>Open your conversation here (no login needed): <a href="${data.chatUrl}">${data.chatUrl}</a></p><p>— CSEAG</p>`,
+        sms: `CSEAG: ${data.expertName} has been assigned to your request. Chat here: ${data.chatUrl}`,
+      };
+
+    case "service_request_new_message":
+      return {
+        emailSubject: `New message from ${data.fromName}`,
+        emailText: `Hi ${name},\n\n${data.fromName} sent you a new message:\n\n"${data.message}"\n\nReply here:\n${data.chatUrl}\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>${data.fromName} sent you a new message:</p><p>"${data.message}"</p><p><a href="${data.chatUrl}">Reply here</a></p><p>— CSEAG</p>`,
+        sms: `CSEAG: New message from ${data.fromName}. Check your email to reply.`,
+      };
+
+    case "newsletter_confirmation":
+      return {
+        emailSubject: "You're subscribed to CSEAG updates",
+        emailText: `Hi there,\n\nThanks for subscribing to CSEAG news and updates. We'll keep you posted on training, events, and association news.\n\n— CSEAG`,
+        emailHtml: `<p>Hi there,</p><p>Thanks for subscribing to CSEAG news and updates. We'll keep you posted on training, events, and association news.</p><p>— CSEAG</p>`,
+        sms: `CSEAG: You're subscribed to our updates. Thanks for joining!`,
+      };
+
+    case "event_rsvp_confirmation":
+      return {
+        emailSubject: `You're registered: ${data.eventTitle}`,
+        emailText: `Hi ${name},\n\nYou're confirmed for "${data.eventTitle}"${data.eventDate ? ` on ${data.eventDate}` : ""}${
+          data.eventLocation ? ` at ${data.eventLocation}` : ""
+        }.\n\nSee you there!\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>You're confirmed for <strong>${data.eventTitle}</strong>${data.eventDate ? ` on ${data.eventDate}` : ""}${
+          data.eventLocation ? ` at ${data.eventLocation}` : ""
+        }.</p><p>See you there!</p><p>— CSEAG</p>`,
+        sms: `CSEAG: You're registered for "${data.eventTitle}". See you there!`,
+      };
+
+    case "custom":
+      return {
+        emailSubject: data.subject || "A message from CSEAG",
+        emailText: data.message || "",
+        emailHtml: `<p>${(data.message || "").replace(/\n/g, "<br/>")}</p>`,
+        sms: (data.message || "").slice(0, 300),
       };
   }
 }

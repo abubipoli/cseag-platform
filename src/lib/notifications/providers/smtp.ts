@@ -30,6 +30,7 @@ export function createSmtpEmailProvider(): EmailProvider {
         const info = await transporter.sendMail({
           from: process.env.SMTP_FROM || process.env.SMTP_USER,
           to: message.to,
+          replyTo: message.replyTo,
           subject: message.subject,
           html: message.html,
           text: message.text,

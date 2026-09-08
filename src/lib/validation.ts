@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MEMBERSHIP_CATEGORIES } from "@/db/schema";
+import { MEMBERSHIP_CATEGORIES, ROLES, CONTENT_TYPES, CONTENT_STATUSES, SERVICE_REQUEST_STATUSES } from "@/db/schema";
 
 export const registrationSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -18,8 +18,11 @@ export const registrationSchema = z.object({
   membershipCategory: z.enum(MEMBERSHIP_CATEGORIES),
   bio: z.string().max(3000).optional(),
   statementOfInterest: z.string().max(2000).optional(),
+  supportingDocumentUrl: z.string().optional(),
   codeOfConductAccepted: z.literal(true, { message: "You must accept the Code of Conduct" }),
   privacyConsentAccepted: z.literal(true, { message: "You must accept the privacy notice" }),
+  // Honeypot — see contactFormSchema for rationale.
+  website: z.string().max(0).optional(),
 });
 export type RegistrationInput = z.infer<typeof registrationSchema>;
 
@@ -52,4 +55,86 @@ export const profileUpdateSchema = z.object({
   certificationsIsPublic: z.boolean().optional(),
   photoIsPublic: z.boolean().optional(),
   allowPublicContact: z.boolean().optional(),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(10),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+export const contactFormSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  subject: z.string().min(2).max(200),
+  message: z.string().min(5).max(4000),
+  // Honeypot: real visitors never fill this hidden field. Basic bot
+  // resistance without needing a third-party CAPTCHA key (SRS 6.2 / 9).
+  website: z.string().max(0).optional(),
+});
+
+export const serviceRequestSchema = z.object({
+  requesterName: z.string().min(2),
+  requesterEmail: z.string().email(),
+  requesterPhone: z.string().optional(),
+  message: z.string().min(5, "Tell us a little about what you need").max(4000),
+  website: z.string().max(0).optional(),
+});
+
+export const serviceRequestUpdateSchema = z.object({
+  status: z.enum(SERVICE_REQUEST_STATUSES).optional(),
+  adminNotes: z.string().max(4000).optional(),
+  // Assigns (or reassigns) the ticket to this expert and notifies them by
+  // email + SMS, along with emailing the requester their chat link.
+  assignExpertUserId: z.string().optional(),
+});
+
+export const serviceRequestMessageSchema = z.object({
+  message: z.string().min(1, "Write a message").max(4000),
+});
+
+export const newsletterSchema = z.object({
+  email: z.string().email(),
+});
+
+export const rsvpSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  website: z.string().max(0).optional(),
+});
+
+export const adminMemberUpdateSchema = z.object({
+  role: z.enum(ROLES).optional(),
+  isActive: z.boolean().optional(),
+  membershipCategory: z.enum(MEMBERSHIP_CATEGORIES).optional(),
+  resetPassword: z.boolean().optional(),
+});
+
+export const contentItemSchema = z.object({
+  type: z.enum(CONTENT_TYPES),
+  slug: z
+    .string()
+    .min(2)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens only"),
+  title: z.string().min(2).max(200),
+  summary: z.string().max(500).optional(),
+  body: z.string().min(1),
+  imageUrl: z.string().optional(),
+  fileUrl: z.string().optional(),
+  status: z.enum(CONTENT_STATUSES),
+  eventDate: z.string().optional(),
+  eventLocation: z.string().optional(),
+  isMemberOnly: z.boolean().optional(),
+});
+
+export const broadcastSchema = z.object({
+  audience: z.enum(["all_members", "applicants", "reviewers_admins", "custom"]),
+  customUserIds: z.array(z.string()).optional(),
+  channel: z.enum(["email", "sms", "both"]),
+  subject: z.string().min(1).max(200),
+  message: z.string().min(1).max(4000),
 });

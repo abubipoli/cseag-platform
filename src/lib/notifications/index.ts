@@ -45,6 +45,7 @@ interface NotifyArgs {
   templateKey: TemplateKey;
   email?: string;
   phone?: string;
+  replyTo?: string;
   data: Record<string, string>;
 }
 
@@ -53,7 +54,7 @@ interface NotifyArgs {
  * provided) using a named template, and logs the attempt to the
  * notifications table (SRS Section 6.10 — centralized notification log).
  */
-export async function notify({ userId, templateKey, email, phone, data }: NotifyArgs) {
+export async function notify({ userId, templateKey, email, phone, replyTo, data }: NotifyArgs) {
   const rendered = renderTemplate(templateKey, data);
   const results: { channel: "email" | "sms"; ok: boolean }[] = [];
 
@@ -63,6 +64,7 @@ export async function notify({ userId, templateKey, email, phone, data }: Notify
       subject: rendered.emailSubject,
       html: rendered.emailHtml,
       text: rendered.emailText,
+      replyTo,
     });
     await db.insert(notifications).values({
       id: randomUUID(),
@@ -72,6 +74,7 @@ export async function notify({ userId, templateKey, email, phone, data }: Notify
       recipient: email,
       status: result.ok ? "sent" : "failed",
       errorMessage: result.error,
+      payload: JSON.stringify({ data, replyTo }),
     });
     results.push({ channel: "email", ok: result.ok });
   }
@@ -86,6 +89,7 @@ export async function notify({ userId, templateKey, email, phone, data }: Notify
       recipient: phone,
       status: result.ok ? "sent" : "failed",
       errorMessage: result.error,
+      payload: JSON.stringify({ data }),
     });
     results.push({ channel: "sms", ok: result.ok });
   }

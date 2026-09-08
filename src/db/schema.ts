@@ -1,13 +1,10 @@
 // Drizzle ORM schema for the CSEAG Website & Member Management System.
 // Mirrors the data model in Section 8 of the System Requirements Specification.
 //
-// This schema targets SQLite for local development (see src/db/client.ts).
-// The column types used here (text, integer) are intentionally kept
-// Postgres-compatible so migrating the datasource later is a config change,
-// not a schema rewrite.
+// Targets Postgres (see src/db/client.ts) — required for Vercel's serverless
+// runtime, which has no persistent local filesystem for SQLite.
 
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
+import { pgTable, text, integer, boolean } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
 // Roles (Section 4 of the SRS)
@@ -40,17 +37,19 @@ export type MembershipCategory = (typeof MEMBERSHIP_CATEGORIES)[number];
 // ---------------------------------------------------------------------------
 // Users: authentication + role. One row per login-capable account.
 // ---------------------------------------------------------------------------
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ROLES }).notNull().default("applicant"),
-  mfaEnabled: integer("mfa_enabled", { mode: "boolean" }).notNull().default(false),
+  mfaEnabled: boolean("mfa_enabled").notNull().default(false),
   mfaSecret: text("mfa_secret"),
-  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
   lastLoginAt: text("last_login_at"),
-  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
-  updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
+  passwordResetTokenHash: text("password_reset_token_hash"),
+  passwordResetExpiresAt: text("password_reset_expires_at"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // ---------------------------------------------------------------------------
@@ -58,7 +57,7 @@ export const users = sqliteTable("users", {
 // be shown publicly, plus a matching *_visibility flag for each sensitive
 // or optional field (Section 6.6 — public profile visibility controls).
 // ---------------------------------------------------------------------------
-export const memberProfiles = sqliteTable("member_profiles", {
+export const memberProfiles = pgTable("member_profiles", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().unique(),
 
@@ -84,38 +83,38 @@ export const memberProfiles = sqliteTable("member_profiles", {
   // Sensitive fields (DOB, national ID, physical address) intentionally have
   // no visibility flag — they are never eligible for public display at all,
   // per Section 6.6 of the SRS.
-  bioIsPublic: integer("bio_is_public", { mode: "boolean" }).notNull().default(false),
-  yearsOfExperienceIsPublic: integer("years_experience_is_public", { mode: "boolean" }).notNull().default(false),
-  areasOfExpertiseIsPublic: integer("areas_of_expertise_is_public", { mode: "boolean" }).notNull().default(false),
-  employerRoleIsPublic: integer("employer_role_is_public", { mode: "boolean" }).notNull().default(false),
-  certificationsIsPublic: integer("certifications_is_public", { mode: "boolean" }).notNull().default(false),
-  photoIsPublic: integer("photo_is_public", { mode: "boolean" }).notNull().default(false),
-  allowPublicContact: integer("allow_public_contact", { mode: "boolean" }).notNull().default(false),
+  bioIsPublic: boolean("bio_is_public").notNull().default(false),
+  yearsOfExperienceIsPublic: boolean("years_experience_is_public").notNull().default(false),
+  areasOfExpertiseIsPublic: boolean("areas_of_expertise_is_public").notNull().default(false),
+  employerRoleIsPublic: boolean("employer_role_is_public").notNull().default(false),
+  certificationsIsPublic: boolean("certifications_is_public").notNull().default(false),
+  photoIsPublic: boolean("photo_is_public").notNull().default(false),
+  allowPublicContact: boolean("allow_public_contact").notNull().default(false),
 
   // A member only appears in the directory at all once they are approved
   // AND have confirmed their visibility choices at least once.
-  isListedInDirectory: integer("is_listed_in_directory", { mode: "boolean" }).notNull().default(false),
+  isListedInDirectory: boolean("is_listed_in_directory").notNull().default(false),
 
-  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
-  updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // ---------------------------------------------------------------------------
 // Applications: the record of a membership application moving through the
 // tiered review workflow (Section 6.4).
 // ---------------------------------------------------------------------------
-export const applications = sqliteTable("applications", {
+export const applications = pgTable("applications", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
   status: text("status", { enum: APPLICATION_STATUSES }).notNull().default("pending"),
   statementOfInterest: text("statement_of_interest"),
   supportingDocumentUrl: text("supporting_document_url"),
-  codeOfConductAccepted: integer("code_of_conduct_accepted", { mode: "boolean" }).notNull().default(false),
-  privacyConsentAccepted: integer("privacy_consent_accepted", { mode: "boolean" }).notNull().default(false),
+  codeOfConductAccepted: boolean("code_of_conduct_accepted").notNull().default(false),
+  privacyConsentAccepted: boolean("privacy_consent_accepted").notNull().default(false),
   reviewerId: text("reviewer_id"),
   reviewerNotes: text("reviewer_notes"),
   decisionAt: text("decision_at"),
-  submittedAt: text("submitted_at").notNull().default(sql`(current_timestamp)`),
+  submittedAt: text("submitted_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // ---------------------------------------------------------------------------
@@ -124,7 +123,7 @@ export const applications = sqliteTable("applications", {
 export const NOTIFICATION_CHANNELS = ["email", "sms"] as const;
 export const NOTIFICATION_STATUSES = ["sent", "failed", "queued"] as const;
 
-export const notifications = sqliteTable("notifications", {
+export const notifications = pgTable("notifications", {
   id: text("id").primaryKey(),
   userId: text("user_id"),
   channel: text("channel", { enum: NOTIFICATION_CHANNELS }).notNull(),
@@ -132,7 +131,8 @@ export const notifications = sqliteTable("notifications", {
   recipient: text("recipient").notNull(),
   status: text("status", { enum: NOTIFICATION_STATUSES }).notNull().default("queued"),
   errorMessage: text("error_message"),
-  sentAt: text("sent_at").notNull().default(sql`(current_timestamp)`),
+  payload: text("payload"), // JSON-encoded template data, so a failed send can be retried later
+  sentAt: text("sent_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // ---------------------------------------------------------------------------
@@ -141,29 +141,109 @@ export const notifications = sqliteTable("notifications", {
 export const CONTENT_TYPES = ["news", "event", "resource", "page"] as const;
 export const CONTENT_STATUSES = ["draft", "published"] as const;
 
-export const contentItems = sqliteTable("content_items", {
+export const contentItems = pgTable("content_items", {
   id: text("id").primaryKey(),
   type: text("type", { enum: CONTENT_TYPES }).notNull(),
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
+  summary: text("summary"),
   body: text("body").notNull(),
+  imageUrl: text("image_url"),
+  fileUrl: text("file_url"), // downloadable attachment, used by type = "resource"
   authorId: text("author_id"),
   status: text("status", { enum: CONTENT_STATUSES }).notNull().default("draft"),
   eventDate: text("event_date"), // only used when type = "event"
+  eventLocation: text("event_location"),
+  isMemberOnly: boolean("is_member_only").notNull().default(false),
   publishedAt: text("published_at"),
-  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
-  updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+// ---------------------------------------------------------------------------
+// Event RSVPs (Section 6.9 — sign-up/RSVP capture for training/events).
+// ---------------------------------------------------------------------------
+export const eventRsvps = pgTable("event_rsvps", {
+  id: text("id").primaryKey(),
+  contentItemId: text("content_item_id").notNull(),
+  userId: text("user_id"),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+// ---------------------------------------------------------------------------
+// Newsletter subscribers (Section 6.10 — "Stay Updated" signup).
+// ---------------------------------------------------------------------------
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  subscribedAt: text("subscribed_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+// ---------------------------------------------------------------------------
+// Service requests (Section 6.8 — "contact this expert"). CSEAG's real
+// process: a visitor's request is never emailed straight to the expert
+// (whose contact details are internal-only); it lands in an admin inbox
+// first, and an admin reaches out to the expert to action it. This also
+// means a request can be raised for any listed expert regardless of
+// whether their own email/phone is on file yet.
+// ---------------------------------------------------------------------------
+export const SERVICE_REQUEST_STATUSES = ["new", "contacted", "in_progress", "resolved", "declined"] as const;
+export type ServiceRequestStatus = (typeof SERVICE_REQUEST_STATUSES)[number];
+
+export const serviceRequests = pgTable("service_requests", {
+  id: text("id").primaryKey(),
+  // The expert the visitor originally asked for — immutable, kept for
+  // context even after reassignment.
+  expertUserId: text("expert_user_id").notNull(),
+  // The expert actually working the ticket. Starts null; an admin assigns
+  // it (defaulting to expertUserId) and can reassign it to someone else if
+  // the original expert is unavailable.
+  assignedExpertUserId: text("assigned_expert_user_id"),
+  assignedAt: text("assigned_at"),
+  // Random token mailed to the requester (who has no account) so they can
+  // open the shared chat thread without logging in.
+  accessToken: text("access_token").unique(),
+  requesterName: text("requester_name").notNull(),
+  requesterEmail: text("requester_email").notNull(),
+  requesterPhone: text("requester_phone"),
+  message: text("message").notNull(),
+  status: text("status", { enum: SERVICE_REQUEST_STATUSES }).notNull().default("new"),
+  adminNotes: text("admin_notes"),
+  handledBy: text("handled_by"),
+  expertNotifiedAt: text("expert_notified_at"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+// ---------------------------------------------------------------------------
+// Service request messages — the monitored chat thread between the assigned
+// expert and the requester once a ticket is assigned. Admins can always read
+// the full thread for quality oversight.
+// ---------------------------------------------------------------------------
+export const MESSAGE_SENDER_ROLES = ["expert", "requester", "admin"] as const;
+export type MessageSenderRole = (typeof MESSAGE_SENDER_ROLES)[number];
+
+export const serviceRequestMessages = pgTable("service_request_messages", {
+  id: text("id").primaryKey(),
+  serviceRequestId: text("service_request_id").notNull(),
+  senderRole: text("sender_role", { enum: MESSAGE_SENDER_ROLES }).notNull(),
+  senderName: text("sender_name").notNull(),
+  message: text("message").notNull(),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // ---------------------------------------------------------------------------
 // Audit log: every admin action (Section 6.7 / 7.1 security requirement).
 // ---------------------------------------------------------------------------
-export const auditLog = sqliteTable("audit_log", {
+export const auditLog = pgTable("audit_log", {
   id: text("id").primaryKey(),
   actorUserId: text("actor_user_id"),
   action: text("action").notNull(),
   targetType: text("target_type"),
   targetId: text("target_id"),
   details: text("details"), // JSON-encoded string
-  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });

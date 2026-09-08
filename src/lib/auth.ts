@@ -6,6 +6,7 @@
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { randomBytes, createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import type { Role } from "@/db/schema";
 
@@ -84,4 +85,24 @@ const ROLE_RANK: Record<Role, number> = {
 
 export function roleAtLeast(role: Role, minimum: Role): boolean {
   return ROLE_RANK[role] >= ROLE_RANK[minimum];
+}
+
+// --- Password reset (SRS 6.5 — "forgot password self-service reset") ------
+// We never store the raw token: only a SHA-256 hash of it, so a database
+// leak alone can't be used to reset an account. The raw token only ever
+// exists in the email link and briefly in memory here.
+
+export function generatePasswordResetToken(): { token: string; tokenHash: string; expiresAt: string } {
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+  return { token, tokenHash, expiresAt };
+}
+
+export function hashResetToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export function generateTemporaryPassword(): string {
+  return randomBytes(9).toString("base64url");
 }

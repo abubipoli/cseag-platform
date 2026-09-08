@@ -1,17 +1,143 @@
 @import "tailwindcss";
 
+@theme {
+  /* Bright, editorial palette — white/paper surfaces throughout, with the
+     deep navy scale kept as a deliberate dark accent (footer, admin
+     sidebar, decorative gradient chips, the home hero) rather than the
+     dominant surface. CSEAG's own teal/emerald mark remains the single
+     disciplined accent color, used sparingly, never as a full-surface fill —
+     the one thing carried over unchanged from the "midnight vault" /
+     "control room" reference systems (Slash and Twingate on
+     styles.refero.design) this design's typography and shapes are modeled
+     on: serif display headlines, pill controls, hairline borders. */
+  --color-navy-950: #05060a; /* deep accent — footer, hero wash, overlays */
+  --color-navy-900: #0a0c12; /* structural dark chrome: admin sidebar */
+  --color-navy-800: #10131c; /* decorative gradient chip stop */
+  --color-navy-700: #171b28; /* decorative gradient chip stop */
+  --color-navy-600: #202638; /* decorative gradient chip stop */
+  --color-navy-500: #2c3450; /* lightest navy, sparing use */
+
+  --color-paper: #ffffff; /* primary content surface */
+  --color-paper-alt: #f6f7f9; /* page canvas / alternate section wash */
+
+  --color-accent-50: #ecfdf6;
+  --color-accent-100: #d1fae3;
+  --color-accent-200: #a7f3cd;
+  --color-accent-300: #6ee7ae;
+  --color-accent-400: #34d488;
+  --color-accent-500: #14b871;
+  --color-accent-600: #0f6e5b;
+  --color-accent-700: #0c5a49;
+
+  --color-sky-400: #38bdf8;
+  --color-sky-500: #0ea5e9;
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Editorial display serif for the public site's headlines — see Slash on
+     styles.refero.design. Playfair Display is the documented open fallback
+     for the licensed Ivy Presto cut used there. */
+  --font-serif: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  /* Light-weight geometric display for the admin control room — see
+     Twingate on styles.refero.design. Manrope is the open equivalent of
+     their licensed TT Hoves Light. */
+  --font-display: var(--font-manrope), Inter, system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 2px rgba(10, 12, 18, 0.04), 0 12px 32px -12px rgba(10, 12, 18, 0.12);
+  --shadow-card: 0 1px 2px rgba(10, 12, 18, 0.05), 0 1px 1px rgba(10, 12, 18, 0.04);
+}
+
 :root {
-  --color-navy: #1b2a4a;
-  --color-accent: #0f6e5b;
+  color-scheme: light;
+  /* Legacy variable names kept so any not-yet-migrated inline styles still work. */
+  --color-navy: var(--color-navy-950);
+  --color-accent: var(--color-accent-500);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: var(--font-sans);
+}
+
+.font-serif-display {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.font-display-light {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+/* Subtle circuit/grid texture used behind hero sections. */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(10, 12, 18, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 12, 18, 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(10, 12, 18, 0.1) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* Dark-surface variant, for the few deliberate dark sections (footer, admin
+   sidebar, the home hero wash). */
+.bg-grid-dark {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+@keyframes signal-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(20, 184, 113, 0.5);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 4px rgba(20, 184, 113, 0);
+  }
+}
+
+/* A live-status dot, used for "New" tickets/applications waiting on
+   someone — the "status LED" motif from the control-room reference. */
+.signal-dot {
+  animation: signal-pulse 2s ease-in-out infinite;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(10, 12, 18, 0.15);
+  border-radius: 999px;
+}
+
+::selection {
+  background: var(--color-accent-200);
+  color: var(--color-navy-900);
 }

@@ -11,6 +11,7 @@ export interface EmailMessage {
   subject: string;
   html: string;
   text: string;
+  replyTo?: string;
 }
 
 export interface SmsMessage {

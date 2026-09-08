@@ -41,3 +41,43 @@ export const MEMBERSHIP_CATEGORY_LABELS: Record<string, string> = {
   full_professional: "Full / Professional",
   corporate: "Corporate",
 };
+
+export const ROLE_LABELS: Record<string, string> = {
+  applicant: "Applicant",
+  member: "Member",
+  reviewer: "Reviewer",
+  admin: "Administrator",
+  super_admin: "Super Admin",
+};
+
+export const APPLICATION_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending review",
+  more_info_requested: "More info requested",
+  approved: "Approved",
+  rejected: "Not approved",
+};
+
+export const CONTENT_TYPE_LABELS: Record<string, string> = {
+  news: "News",
+  event: "Event",
+  resource: "Resource",
+  page: "Page",
+};
+
+// Single source of truth for contact details (SRS Section 6.1 / 12 —
+// resolving the discrepancy between the two legacy properties).
+export const SITE_CONFIG = {
+  name: "CSEAG",
+  fullName: "Cyber Security Experts Association of Ghana",
+  tagline: "A united front of cybersecurity professionals, securing Ghana's digital future.",
+  email: "info@cyberexpertgh.org",
+  phone: "+233 24 384 1842",
+  phoneHref: "+233243841842",
+  address: "Block 205, 21 Jordan Street, Madina Estates, Accra, Ghana",
+  domain: "cyberexpertgh.org",
+  socials: {
+    twitter: "https://twitter.com/cyberexpertgh",
+    linkedin: "https://linkedin.com/company/cyberexpertgh",
+    facebook: "https://facebook.com/cyberexpertgh",
+  },
+} as const;

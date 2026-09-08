@@ -1,22 +1,43 @@
 import type { Metadata } from "next";
+import { Inter, Playfair_Display, Manrope } from "next/font/google";
 import "./globals.css";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "CSEAG — Cyber Security Experts Association of Ghana",
+  title: {
+    default: "CSEAG — Cyber Security Experts Association of Ghana",
+    template: "%s · CSEAG",
+  },
   description:
-    "The Cyber Security Experts Association of Ghana (CSEAG) — membership, expert directory, and resources.",
+    "The Cyber Security Experts Association of Ghana (CSEAG) — membership, expert directory, training, and resources for a safer digital Ghana.",
+  icons: {
+    icon: "/brand/cseag-logo.png",
+    shortcut: "/brand/cseag-logo.png",
+    apple: "/brand/cseag-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-      </body>
+    <html lang="en" className={`h-full antialiased ${inter.variable} ${playfairDisplay.variable} ${manrope.variable}`}>
+      <body className="flex min-h-full flex-col bg-white text-slate-700">{children}</body>
     </html>
   );
 }

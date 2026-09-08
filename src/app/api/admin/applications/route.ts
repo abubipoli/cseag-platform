@@ -20,6 +20,7 @@ export async function GET() {
       submittedAt: applications.submittedAt,
       reviewerNotes: applications.reviewerNotes,
       statementOfInterest: applications.statementOfInterest,
+      supportingDocumentUrl: applications.supportingDocumentUrl,
       userId: users.id,
       email: users.email,
       fullName: memberProfiles.fullName,
