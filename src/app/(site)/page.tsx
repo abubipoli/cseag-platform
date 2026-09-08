@@ -6,6 +6,7 @@ import {
   IconUsers,
   IconGraduationCap,
   IconTarget,
+  IconFileText,
 } from "@/components/ui/icons";
 import { getBaseUrl } from "@/lib/base-url";
 import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
@@ -27,6 +28,7 @@ interface NewsItem {
   slug: string;
   title: string;
   summary: string | null;
+  imageUrl: string | null;
   publishedAt: string | null;
   createdAt: string;
 }
@@ -133,13 +135,23 @@ export default async function HomePage() {
                 <Link
                   key={item.id}
                   href={`/news/${item.slug}`}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg"
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg"
                 >
-                  <p className="text-xs text-slate-400">
-                    {new Date(item.publishedAt || item.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                  </p>
-                  <p className="mt-2 font-semibold text-navy-900">{item.title}</p>
-                  {item.summary && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{item.summary}</p>}
+                  {item.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- static content photo from local uploads/content dir
+                    <img src={item.imageUrl} alt="" className="h-40 w-full object-cover" />
+                  ) : (
+                    <div className="flex h-40 w-full items-center justify-center bg-slate-50">
+                      <IconFileText className="h-8 w-8 text-slate-300" />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    <p className="text-xs text-slate-400">
+                      {new Date(item.publishedAt || item.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                    <p className="mt-2 font-semibold text-navy-900">{item.title}</p>
+                    {item.summary && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{item.summary}</p>}
+                  </div>
                 </Link>
               ))}
             </div>
