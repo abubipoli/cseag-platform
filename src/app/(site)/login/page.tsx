@@ -81,8 +81,11 @@ export default function LoginPage() {
 
           {mfaToken ? (
             <form onSubmit={handleMfaSubmit} className="space-y-4">
-              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-700">
-                <IconShieldCheck className="h-5 w-5" />
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-700">
+                  <IconShieldCheck className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent-600">MFA</span>
               </div>
               <FieldWrap label="Authentication code" required hint="From your authenticator app, or a backup code.">
                 <Input
