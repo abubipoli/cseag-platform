@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardBody } from "@/components/ui/Card";
-import { FieldWrap, Input } from "@/components/ui/Field";
+import { FieldWrap, Input, PasswordInput } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { BrandMark } from "@/components/BrandMark";
 import { IconShieldCheck } from "@/components/ui/icons";
@@ -121,7 +121,7 @@ export default function LoginPage() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input name="password" type="password" required />
+                <PasswordInput name="password" required />
               </div>
               <Button type="submit" disabled={submitting} className="w-full">
                 {submitting ? "Logging in..." : "Log in"}

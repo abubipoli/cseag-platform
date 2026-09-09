@@ -13,7 +13,7 @@ import {
 } from "@/lib/constants";
 import { PageHero } from "@/components/marketing/PageHero";
 import { Card, CardBody } from "@/components/ui/Card";
-import { FieldWrap, Input, Select, Checkbox } from "@/components/ui/Field";
+import { FieldWrap, Input, PasswordInput, Select, Checkbox } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { IconCheckCircle, IconChevronRight } from "@/components/ui/icons";
 import { PasswordRequirements, isStrongPassword } from "@/components/ui/PasswordRequirements";
@@ -234,7 +234,7 @@ export default function ApplyPage() {
                   </FieldWrap>
                 </div>
                 <FieldWrap label="Create a password" required>
-                  <Input type="password" value={fields.password} onChange={(e) => set("password", e.target.value)} required minLength={10} />
+                  <PasswordInput value={fields.password} onChange={(e) => set("password", e.target.value)} required minLength={10} />
                   <PasswordRequirements password={fields.password} />
                 </FieldWrap>
                 <div className="grid gap-4 sm:grid-cols-2">

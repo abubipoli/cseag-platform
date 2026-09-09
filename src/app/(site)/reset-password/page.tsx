@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardBody } from "@/components/ui/Card";
-import { FieldWrap, Input } from "@/components/ui/Field";
+import { FieldWrap, PasswordInput } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { IconLock, IconCheckCircle } from "@/components/ui/icons";
 import { PasswordRequirements, isStrongPassword } from "@/components/ui/PasswordRequirements";
@@ -63,7 +63,7 @@ function ResetPasswordForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
               <FieldWrap label="New password" required>
-                <Input name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={10} />
+                <PasswordInput name="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={10} />
                 <PasswordRequirements password={password} />
               </FieldWrap>
               <Button type="submit" disabled={submitting} className="w-full">
