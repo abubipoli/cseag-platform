@@ -62,6 +62,8 @@ function DashboardPageInner() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Record<string, string | boolean>>({});
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/me")
@@ -81,6 +83,7 @@ function DashboardPageInner() {
             currentRole: d.profile.currentRole || "",
             yearsOfExperience: d.profile.yearsOfExperience?.toString() || "",
             bio: d.profile.bio || "",
+            photoUrl: d.profile.photoUrl || "",
             bioIsPublic: d.profile.bioIsPublic,
             yearsOfExperienceIsPublic: d.profile.yearsOfExperienceIsPublic,
             areasOfExpertiseIsPublic: d.profile.areasOfExpertiseIsPublic,
@@ -123,7 +126,46 @@ function DashboardPageInner() {
       body: JSON.stringify(payload),
     });
     setSaving(false);
-    if (res.ok) setSaved(true);
+    if (res.ok) {
+      setSaved(true);
+      // Reflect the save immediately (header avatar, category badge, etc.)
+      // without needing a full reload.
+      setData((prev) =>
+        prev?.profile
+          ? {
+              ...prev,
+              profile: {
+                ...prev.profile,
+                fullName: form.fullName as string,
+                phone: form.phone as string,
+                employer: form.employer as string,
+                currentRole: form.currentRole as string,
+                bio: form.bio as string,
+                photoUrl: (form.photoUrl as string) || null,
+              },
+            }
+          : prev
+      );
+    }
+  }
+
+  async function handlePhotoSelected(file: File) {
+    setPhotoError(null);
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Please choose an image file.");
+      return;
+    }
+    setUploadingPhoto(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/uploads", { method: "POST", body: fd });
+    setUploadingPhoto(false);
+    if (!res.ok) {
+      setPhotoError("Couldn't upload that photo. Please try again.");
+      return;
+    }
+    const uploadData = await res.json();
+    setForm((f) => ({ ...f, photoUrl: uploadData.url }));
   }
 
   return (
@@ -210,6 +252,40 @@ function DashboardPageInner() {
                 <p className="font-semibold text-navy-900">Edit my information</p>
               </CardHeader>
               <CardBody className="space-y-4">
+                <div className="flex flex-col items-center gap-3 border-b border-slate-100 pb-5 sm:flex-row">
+                  <Avatar name={(form.fullName as string) || profile.fullName} photoUrl={(form.photoUrl as string) || null} size="xl" />
+                  <div>
+                    <div className="flex flex-wrap gap-2">
+                      <label className="cursor-pointer">
+                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-accent-500 hover:text-accent-700">
+                          {uploadingPhoto ? "Uploading..." : "Upload photo"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingPhoto}
+                          onChange={(e) => e.target.files?.[0] && handlePhotoSelected(e.target.files[0])}
+                        />
+                      </label>
+                      <label className="cursor-pointer">
+                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-accent-500 hover:text-accent-700">
+                          {uploadingPhoto ? "Uploading..." : "Take photo"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="user"
+                          className="hidden"
+                          disabled={uploadingPhoto}
+                          onChange={(e) => e.target.files?.[0] && handlePhotoSelected(e.target.files[0])}
+                        />
+                      </label>
+                    </div>
+                    <p className="mt-1.5 text-xs text-slate-400">JPG, PNG, or WebP. Saved when you click Save Changes below.</p>
+                    {photoError && <p className="mt-1.5 text-xs text-red-600">{photoError}</p>}
+                  </div>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FieldWrap label="Full name">
                     <Input value={form.fullName as string} onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))} />
