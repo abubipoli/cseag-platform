@@ -16,6 +16,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { FieldWrap, Input, Select, Checkbox } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { IconCheckCircle, IconChevronRight } from "@/components/ui/icons";
+import { PasswordRequirements, isStrongPassword } from "@/components/ui/PasswordRequirements";
 import { cn } from "@/lib/cn";
 
 // Corporate membership is handled separately (SRS 6.11), not via self-service application.
@@ -64,7 +65,7 @@ export default function ApplyPage() {
       if (!fields.title) e.push("Select a title.");
       if (fields.fullName.trim().length < 2) e.push("Enter your full name.");
       if (!/^\S+@\S+\.\S+$/.test(fields.email)) e.push("Enter a valid email address.");
-      if (fields.password.length < 8) e.push("Password must be at least 8 characters.");
+      if (!isStrongPassword(fields.password)) e.push("Choose a password that meets all the requirements below.");
       if (fields.phone.trim().length < 9) e.push("Enter a valid mobile number.");
       if (!fields.ageGroup) e.push("Select an age group.");
       if (!fields.region) e.push("Select a region.");
@@ -232,8 +233,9 @@ export default function ApplyPage() {
                     <Input value={fields.phone} onChange={(e) => set("phone", e.target.value)} required />
                   </FieldWrap>
                 </div>
-                <FieldWrap label="Create a password" required hint="At least 8 characters.">
-                  <Input type="password" value={fields.password} onChange={(e) => set("password", e.target.value)} required minLength={8} />
+                <FieldWrap label="Create a password" required>
+                  <Input type="password" value={fields.password} onChange={(e) => set("password", e.target.value)} required minLength={10} />
+                  <PasswordRequirements password={fields.password} />
                 </FieldWrap>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FieldWrap label="Age group" required>

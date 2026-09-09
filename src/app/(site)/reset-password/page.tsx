@@ -7,24 +7,29 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { FieldWrap, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { IconLock, IconCheckCircle } from "@/components/ui/icons";
+import { PasswordRequirements, isStrongPassword } from "@/components/ui/PasswordRequirements";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token") || "";
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!isStrongPassword(password)) {
+      setError("Choose a password that meets all the requirements below.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
-    const form = new FormData(e.currentTarget);
     const res = await fetch("/api/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password: form.get("password") }),
+      body: JSON.stringify({ token, password }),
     });
     setSubmitting(false);
     if (res.ok) {
@@ -57,8 +62,9 @@ function ResetPasswordForm() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-              <FieldWrap label="New password" required hint="At least 8 characters.">
-                <Input name="password" type="password" required minLength={8} />
+              <FieldWrap label="New password" required>
+                <Input name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={10} />
+                <PasswordRequirements password={password} />
               </FieldWrap>
               <Button type="submit" disabled={submitting} className="w-full">
                 {submitting ? "Saving..." : "Reset password"}

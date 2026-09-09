@@ -9,11 +9,25 @@ import {
 } from "@/db/schema";
 import { TITLE_OPTIONS, AGE_GROUPS, GHANA_REGIONS, CSA_ACCREDITATION_TIERS } from "@/lib/constants";
 
+// Strong-password policy (SRS 7.1 — account security). Applied everywhere a
+// user sets their own password: registration and self-service reset. See
+// src/components/ui/PasswordRequirements.tsx for the matching client-side
+// checklist, and generateTemporaryPassword() in src/lib/auth.ts for
+// admin-issued temporary passwords, which are generated to satisfy this
+// same policy.
+export const strongPasswordSchema = z
+  .string()
+  .min(10, "Use at least 10 characters")
+  .regex(/[a-z]/, "Include at least one lowercase letter")
+  .regex(/[A-Z]/, "Include at least one uppercase letter")
+  .regex(/[0-9]/, "Include at least one number")
+  .regex(/[^A-Za-z0-9]/, "Include at least one symbol (e.g. ! @ # $ %)");
+
 export const registrationSchema = z.object({
   title: z.enum(TITLE_OPTIONS, { message: "Select a title" }),
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: strongPasswordSchema,
   phone: z
     .string()
     .min(9, "Enter a valid phone number")
@@ -81,7 +95,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(10),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: strongPasswordSchema,
 });
 
 export const contactFormSchema = z.object({

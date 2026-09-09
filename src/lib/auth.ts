@@ -103,6 +103,29 @@ export function hashResetToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+// Generates a temporary password that already satisfies the strong-password
+// policy (src/lib/validation.ts#strongPasswordSchema) — the recipient is
+// always told to change it, but there's no reason to hand out a weak one in
+// the meantime. Excludes visually-confusable characters (0/O, 1/l/I).
 export function generateTemporaryPassword(): string {
-  return randomBytes(9).toString("base64url");
+  const LOWER = "abcdefghjkmnpqrstuvwxyz";
+  const UPPER = "ABCDEFGHJKMNPQRSTUVWXYZ";
+  const DIGITS = "23456789";
+  const SYMBOLS = "!@#$%^&*-_+=";
+  const ALL = LOWER + UPPER + DIGITS + SYMBOLS;
+  const LENGTH = 12;
+
+  function randomChar(pool: string): string {
+    return pool[randomBytes(1)[0] % pool.length];
+  }
+
+  const chars = [randomChar(LOWER), randomChar(UPPER), randomChar(DIGITS), randomChar(SYMBOLS)];
+  while (chars.length < LENGTH) chars.push(randomChar(ALL));
+
+  // Fisher-Yates shuffle so the guaranteed classes aren't always up front.
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomBytes(1)[0] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
 }
