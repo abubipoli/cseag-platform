@@ -99,10 +99,10 @@ body {
    feel behind secondary-page hero sections. */
 .bg-grid-animate {
   background-image:
-    linear-gradient(rgba(10, 12, 18, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(10, 12, 18, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(10, 12, 18, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 12, 18, 0.09) 1px, transparent 1px);
   background-size: 34px 34px;
-  animation: grid-drift 14s linear infinite;
+  animation: grid-drift 8s linear infinite;
 }
 
 @keyframes grid-drift {
@@ -113,8 +113,8 @@ body {
   }
   to {
     background-position:
-      34px 34px,
-      34px 34px;
+      68px 68px,
+      68px 68px;
   }
 }
 
@@ -124,17 +124,32 @@ body {
     transform: translate(0, 0) scale(1);
   }
   50% {
-    transform: translate(-14px, 16px) scale(1.12);
+    transform: translate(-30px, 26px) scale(1.25);
   }
 }
 
 .animate-float-slow {
-  animation: float-slow 11s ease-in-out infinite;
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+@keyframes ken-burns {
+  0%,
+  100% {
+    transform: scale(1.1) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.22) translate(-2%, -1.5%);
+  }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 16s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .bg-grid-animate,
-  .animate-float-slow {
+  .animate-float-slow,
+  .animate-ken-burns {
     animation: none;
   }
 }

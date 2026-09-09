@@ -25,9 +25,9 @@ export function PageHero({
             src={image}
             alt=""
             aria-hidden
-            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-md"
+            className="animate-ken-burns absolute inset-0 h-full w-full object-cover opacity-80 blur-xs"
           />
-          <div className="absolute inset-0 bg-white/78" aria-hidden />
+          <div className="absolute inset-0 bg-white/60" aria-hidden />
         </>
       )}
       <div className="bg-grid-animate absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
