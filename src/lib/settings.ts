@@ -46,3 +46,30 @@ export async function updateNotificationSettings(input: Partial<NotificationSett
     await db.insert(appSettings).values({ id: SETTINGS_ID, ...update });
   }
 }
+
+export interface PaymentSettings {
+  duesAmountGhs: number;
+  paystackPublicKey: string;
+  paystackSecretKey: string;
+}
+
+export async function getPaymentSettings(): Promise<PaymentSettings> {
+  const row = await db.query.appSettings.findFirst({ where: eq(appSettings.id, SETTINGS_ID) });
+
+  return {
+    duesAmountGhs: row?.duesAmountGhs ?? 0,
+    paystackPublicKey: row?.paystackPublicKey || "",
+    paystackSecretKey: row?.paystackSecretKey || "",
+  };
+}
+
+export async function updatePaymentSettings(input: Partial<PaymentSettings>) {
+  const existing = await db.query.appSettings.findFirst({ where: eq(appSettings.id, SETTINGS_ID) });
+  const update = { ...input, updatedAt: new Date().toISOString() } as Partial<typeof appSettings.$inferInsert>;
+
+  if (existing) {
+    await db.update(appSettings).set(update).where(eq(appSettings.id, SETTINGS_ID));
+  } else {
+    await db.insert(appSettings).values({ id: SETTINGS_ID, ...update });
+  }
+}

@@ -171,6 +171,24 @@ export const notificationSettingsSchema = z.object({
   smsSenderId: z.string().optional(),
 });
 
+export const notificationTemplateUpdateSchema = z.object({
+  emailSubject: z.string().max(200).optional(),
+  emailBody: z.string().max(5000).optional(),
+  smsBody: z.string().max(500).optional(),
+});
+
+export const paymentSettingsSchema = z.object({
+  duesAmountGhs: z.coerce.number().int().min(0).optional(),
+  paystackPublicKey: z.string().optional(),
+  paystackSecretKey: z.string().optional(),
+});
+
+export const manualDuesPaymentSchema = z.object({
+  userId: z.string().min(1),
+  amountGhs: z.coerce.number().int().min(1),
+  note: z.string().max(500).optional(),
+});
+
 export const adminCreateUserSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Enter a valid email address"),

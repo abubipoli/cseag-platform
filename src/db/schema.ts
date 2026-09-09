@@ -273,5 +273,48 @@ export const appSettings = pgTable("app_settings", {
   smsApiSecret: text("sms_api_secret"), // Kairos Africa needs a key AND a secret
   smsApiKey: text("sms_api_key"),
   smsSenderId: text("sms_sender_id"),
+  // Membership dues (a single fixed annual amount for now) + Paystack keys,
+  // so online payment can be turned on from the UI without a redeploy.
+  duesAmountGhs: integer("dues_amount_ghs"),
+  paystackPublicKey: text("paystack_public_key"),
+  paystackSecretKey: text("paystack_secret_key"),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+// ---------------------------------------------------------------------------
+// Notification templates: admin-editable overrides for the wording in
+// src/lib/notifications/templates.ts. A missing row (or a blank field within
+// one) falls back to that file's hardcoded default — see
+// src/lib/notifications/store.ts.
+// ---------------------------------------------------------------------------
+export const notificationTemplates = pgTable("notification_templates", {
+  templateKey: text("template_key").primaryKey(),
+  emailSubject: text("email_subject"),
+  emailBody: text("email_body"), // plain text with {{placeholders}}; blank lines become paragraph breaks
+  smsBody: text("sms_body"), // kept deliberately separate from the email body — SMS should stay short
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+// ---------------------------------------------------------------------------
+// Dues payments: one row per payment (a member can pay in instalments, so a
+// year's dues may be covered by more than one row). Not enforced anywhere
+// yet — members can see their status and optionally pay.
+// ---------------------------------------------------------------------------
+export const DUES_PAYMENT_METHODS = ["paystack", "manual"] as const;
+export type DuesPaymentMethod = (typeof DUES_PAYMENT_METHODS)[number];
+
+export const DUES_PAYMENT_STATUSES = ["pending", "success", "failed"] as const;
+export type DuesPaymentStatus = (typeof DUES_PAYMENT_STATUSES)[number];
+
+export const duesPayments = pgTable("dues_payments", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  year: text("year").notNull(), // dues period this payment counts toward, e.g. "2026"
+  amountGhs: integer("amount_ghs").notNull(),
+  method: text("method", { enum: DUES_PAYMENT_METHODS }).notNull().default("paystack"),
+  status: text("status", { enum: DUES_PAYMENT_STATUSES }).notNull().default("pending"),
+  paystackReference: text("paystack_reference").unique(),
+  recordedBy: text("recorded_by"), // admin userId, set only for method = "manual"
+  note: text("note"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });

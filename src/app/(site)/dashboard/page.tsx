@@ -12,6 +12,7 @@ import { FieldWrap, Input, Textarea, Checkbox, Switch } from "@/components/ui/Fi
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ServiceRequestChat } from "@/components/ServiceRequestChat";
+import { MiniCalendar } from "@/components/ui/MiniCalendar";
 import {
   IconBriefcase,
   IconCalendar,
@@ -49,7 +50,7 @@ interface MeResponse {
   application: { status: string; reviewerNotes?: string } | null;
 }
 
-type TabKey = "overview" | "profile" | "public" | "requests" | "events" | "resources";
+type TabKey = "overview" | "profile" | "public" | "requests" | "events" | "dues" | "resources";
 
 function DashboardPageInner() {
   const searchParams = useSearchParams();
@@ -178,6 +179,7 @@ function DashboardPageInner() {
               { value: "public", label: "Public Visibility" },
               { value: "requests", label: "My Requests" },
               { value: "events", label: "Events" },
+              ...(isApplicantOnly ? [] : [{ value: "dues" as const, label: "Dues" }]),
               { value: "resources", label: "Resources" },
             ]}
           />
@@ -337,6 +339,8 @@ function DashboardPageInner() {
 
           {tab === "events" && <UpcomingEvents />}
 
+          {tab === "dues" && !isApplicantOnly && <MembershipDues />}
+
           {tab === "resources" && <MemberResources />}
         </div>
       </div>
@@ -493,7 +497,10 @@ function UpcomingEvents() {
       <CardHeader>
         <p className="font-semibold text-navy-900">Upcoming CSEAG events</p>
       </CardHeader>
-      <CardBody>
+      <CardBody className="space-y-5">
+        {items && upcoming.length > 0 && (
+          <MiniCalendar eventDates={upcoming.filter((e) => e.eventDate).map((e) => e.eventDate as string)} />
+        )}
         {!items ? (
           <p className="text-sm text-slate-400">Loading…</p>
         ) : upcoming.length === 0 ? (
@@ -533,6 +540,127 @@ function UpcomingEvents() {
                 </div>
               </a>
             ))}
+          </div>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
+interface DuesPaymentItem {
+  id: string;
+  amountGhs: number;
+  method: "paystack" | "manual";
+  status: "pending" | "success" | "failed";
+  createdAt: string;
+}
+
+interface DuesStatus {
+  year: string;
+  duesAmountGhs: number;
+  totalPaidGhs: number;
+  balanceGhs: number;
+  status: "paid" | "partial" | "unpaid";
+  payments: DuesPaymentItem[];
+  paystackReady: boolean;
+}
+
+const DUES_STATUS_LABELS: Record<DuesStatus["status"], string> = { paid: "Paid up", partial: "Partially paid", unpaid: "Not paid" };
+
+function MembershipDues() {
+  const searchParams = useSearchParams();
+  const [dues, setDues] = useState<DuesStatus | null>(null);
+  const [paying, setPaying] = useState(false);
+  const paymentResult = searchParams.get("payment");
+
+  useEffect(() => {
+    fetch("/api/member/dues/status")
+      .then((r) => r.json())
+      .then(setDues);
+  }, []);
+
+  async function handlePay() {
+    setPaying(true);
+    const res = await fetch("/api/member/dues/pay", { method: "POST" });
+    const data = await res.json();
+    setPaying(false);
+    if (res.ok && data.authorizationUrl) {
+      window.location.href = data.authorizationUrl;
+    }
+  }
+
+  if (!dues) {
+    return (
+      <Card>
+        <CardBody>
+          <p className="text-sm text-slate-400">Loading…</p>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <p className="font-semibold text-navy-900">Membership dues — {dues.year}</p>
+      </CardHeader>
+      <CardBody className="space-y-5">
+        {paymentResult === "success" && (
+          <p className="rounded-lg bg-accent-50 px-4 py-2.5 text-sm text-accent-800">Payment received — thank you!</p>
+        )}
+        {paymentResult === "failed" && (
+          <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">
+            That payment didn&rsquo;t go through. You can try again below.
+          </p>
+        )}
+
+        <div className="grid grid-cols-3 gap-3 text-center sm:text-left">
+          <div>
+            <p className="text-xs text-slate-400">Amount due</p>
+            <p className="mt-0.5 font-semibold text-navy-900">GHS {dues.duesAmountGhs.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">Paid</p>
+            <p className="mt-0.5 font-semibold text-navy-900">GHS {dues.totalPaidGhs.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400">Balance</p>
+            <p className="mt-0.5 font-semibold text-navy-900">GHS {dues.balanceGhs.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <Badge tone={dues.status === "paid" ? "accent" : dues.status === "partial" ? "amber" : "red"}>
+          {DUES_STATUS_LABELS[dues.status]}
+        </Badge>
+
+        {dues.status !== "paid" &&
+          (dues.paystackReady ? (
+            <Button onClick={handlePay} disabled={paying}>
+              {paying ? "Redirecting..." : `Pay GHS ${dues.balanceGhs.toLocaleString()} with Paystack`}
+            </Button>
+          ) : (
+            <p className="text-xs text-slate-400">Online payment isn&rsquo;t set up yet — contact CSEAG to pay another way.</p>
+          ))}
+
+        {dues.payments.length > 0 && (
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-xs font-semibold uppercase text-slate-400">Payment history</p>
+            <div className="mt-2 space-y-2">
+              {dues.payments.map((p) => (
+                <div key={p.id} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">
+                    {new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} ·{" "}
+                    {p.method === "paystack" ? "Paystack" : "Manual"}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium text-navy-900">GHS {p.amountGhs.toLocaleString()}</span>
+                    <Badge tone={statusTone(p.status === "success" ? "active" : p.status === "failed" ? "inactive" : "pending")}>
+                      {p.status}
+                    </Badge>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardBody>

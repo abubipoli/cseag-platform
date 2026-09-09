@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardBody } from "@/components/ui/Card";
 import { FieldWrap, Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { IconArrowRight } from "@/components/ui/icons";
 
 interface Settings {
   smtpHost: string;
@@ -112,6 +114,13 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Settings" description="Configure the email and SMS providers CSEAG uses to send notifications." />
+
+      <Link
+        href="/admin/settings/templates"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-accent-600 hover:text-accent-700"
+      >
+        Customize application & other notification wording <IconArrowRight className="h-4 w-4" />
+      </Link>
 
       {message && <p className="rounded-lg bg-slate-50 px-4 py-2.5 text-sm text-slate-600">{message}</p>}
 

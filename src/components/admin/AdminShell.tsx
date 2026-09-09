@@ -21,6 +21,7 @@ import {
   IconMenu,
   IconX,
   IconExternalLink,
+  IconCheckCircle,
 } from "@/components/ui/icons";
 
 interface NavItem {
@@ -43,7 +44,10 @@ const NAV: NavItem[] = [
 
 // Live email/SMS credentials — restricted to super admins, same as granting
 // admin access itself.
-const SUPER_ADMIN_NAV: NavItem[] = [{ href: "/admin/settings", label: "Settings", icon: IconSettings }];
+const SUPER_ADMIN_NAV: NavItem[] = [
+  { href: "/admin/dues", label: "Dues", icon: IconCheckCircle },
+  { href: "/admin/settings", label: "Settings", icon: IconSettings },
+];
 
 // The admin back office ("member management platform") pairs a dark
 // instrument-panel sidebar — in the spirit of Twingate's own product design

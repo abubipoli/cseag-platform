@@ -23,7 +23,8 @@ import { createArkeselSmsProvider } from "./providers/arkesel";
 import { createMnotifySmsProvider } from "./providers/mnotify";
 import { createKairosSmsProvider } from "./providers/kairos";
 import type { EmailProvider, SmsProvider } from "./types";
-import { renderTemplate, type TemplateKey } from "./templates";
+import type { TemplateKey } from "./templates";
+import { resolveTemplate } from "./store";
 
 export function resolveEmailProvider(settings: NotificationSettings): EmailProvider {
   if (settings.smtpHost) {
@@ -73,7 +74,7 @@ export async function notify({ userId, templateKey, email, phone, replyTo, data 
   const settings = await getNotificationSettings();
   const emailProvider = resolveEmailProvider(settings);
   const smsProvider = resolveSmsProvider(settings);
-  const rendered = renderTemplate(templateKey, data);
+  const rendered = await resolveTemplate(templateKey, data);
   const results: { channel: "email" | "sms"; ok: boolean }[] = [];
 
   if (email) {

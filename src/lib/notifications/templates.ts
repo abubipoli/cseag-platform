@@ -21,12 +21,48 @@ export type TemplateKey =
   | "event_rsvp_confirmation"
   | "custom";
 
-interface Rendered {
+export interface Rendered {
   emailSubject: string;
   emailHtml: string;
   emailText: string;
   sms: string;
 }
+
+// Human-readable labels + the {{placeholder}} variables available to an
+// admin customizing this template's wording in Settings (src/app/admin/settings/templates).
+export const TEMPLATE_LABELS: Record<Exclude<TemplateKey, "custom">, string> = {
+  application_received: "Application submitted (to applicant)",
+  application_approved: "Application approved",
+  application_rejected: "Application rejected",
+  application_more_info: "More information requested",
+  password_reset: "Password reset (self-service)",
+  password_reset_by_admin: "Password reset (by admin)",
+  account_created_by_admin: "Account created by admin",
+  contact_form_relay: "Contact form message (to admin)",
+  service_request_received_admin: "New service request (to admin)",
+  service_request_assigned_expert: "Service request assigned (to expert)",
+  service_request_chat_link_requester: "Expert assigned (to requester)",
+  service_request_new_message: "New chat message",
+  newsletter_confirmation: "Newsletter subscription confirmation",
+  event_rsvp_confirmation: "Event RSVP confirmation",
+};
+
+export const TEMPLATE_VARIABLES: Record<Exclude<TemplateKey, "custom">, string[]> = {
+  application_received: ["name"],
+  application_approved: ["name"],
+  application_rejected: ["name", "reason"],
+  application_more_info: ["name", "request"],
+  password_reset: ["name", "resetUrl"],
+  password_reset_by_admin: ["name", "tempPassword"],
+  account_created_by_admin: ["name", "role", "email", "tempPassword"],
+  contact_form_relay: ["fromName", "fromEmail", "subject", "message"],
+  service_request_received_admin: ["expertName", "fromName", "fromEmail", "fromPhone", "message"],
+  service_request_assigned_expert: ["name", "fromName", "fromEmail", "fromPhone", "message", "dashboardUrl"],
+  service_request_chat_link_requester: ["name", "expertName", "chatUrl"],
+  service_request_new_message: ["name", "fromName", "message", "chatUrl"],
+  newsletter_confirmation: [],
+  event_rsvp_confirmation: ["name", "eventTitle", "eventDate", "eventLocation"],
+};
 
 export function renderTemplate(key: TemplateKey, data: Record<string, string>): Rendered {
   const name = data.name || "there";
