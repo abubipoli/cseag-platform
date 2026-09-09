@@ -20,6 +20,7 @@ export default function AboutPage() {
         kicker="About CSEAG"
         title="A professional home for Ghana's cybersecurity community"
         description="The Cyber Security Experts Association of Ghana unites practitioners, researchers, and organizations working to make Ghana's digital environment safer."
+        image="/hero/summit-7.jpg"
       />
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
