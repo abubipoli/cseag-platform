@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { Reveal } from "@/components/ui/Reveal";
 
 export function PageHero({
   kicker,
@@ -37,16 +38,26 @@ export function PageHero({
         aria-hidden
       />
       <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-        {kicker && <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-600">{kicker}</p>}
-        <h1
-          className={cn(
-            "font-serif-display mt-4 text-navy-900",
-            compact ? "text-3xl sm:text-4xl" : "text-4xl sm:text-6xl"
-          )}
-        >
-          {title}
-        </h1>
-        {description && <p className="mx-auto mt-5 max-w-2xl text-base text-slate-500 sm:text-lg">{description}</p>}
+        {kicker && (
+          <Reveal>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-600">{kicker}</p>
+          </Reveal>
+        )}
+        <Reveal delay={100}>
+          <h1
+            className={cn(
+              "font-serif-display mt-4 text-navy-900",
+              compact ? "text-3xl sm:text-4xl" : "text-4xl sm:text-6xl"
+            )}
+          >
+            {title}
+          </h1>
+        </Reveal>
+        {description && (
+          <Reveal delay={200}>
+            <p className="mx-auto mt-5 max-w-2xl text-base text-slate-500 sm:text-lg">{description}</p>
+          </Reveal>
+        )}
         {children}
       </div>
     </section>
