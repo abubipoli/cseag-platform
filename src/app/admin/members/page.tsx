@@ -162,7 +162,7 @@ export default function AdminMembersPage() {
         )}
       </Card>
 
-      <MemberDetailDrawer memberId={activeId} onClose={() => setActiveId(null)} onChanged={load} />
+      <MemberDetailDrawer memberId={activeId} currentRole={currentRole} onClose={() => setActiveId(null)} onChanged={load} />
       <AddUserDrawer open={addOpen} currentRole={currentRole} onClose={() => setAddOpen(false)} onCreated={load} />
     </div>
   );

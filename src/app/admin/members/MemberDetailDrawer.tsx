@@ -8,6 +8,26 @@ import { Button } from "@/components/ui/Button";
 import { Select, Input } from "@/components/ui/Field";
 import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
 
+interface DuesPaymentItem {
+  id: string;
+  amountGhs: number;
+  method: "paystack" | "manual";
+  status: "pending" | "success" | "failed";
+  note: string | null;
+  createdAt: string;
+}
+
+interface DuesSummary {
+  year: string;
+  duesAmountGhs: number;
+  totalPaidGhs: number;
+  balanceGhs: number;
+  status: "paid" | "partial" | "unpaid";
+  payments: DuesPaymentItem[];
+}
+
+const DUES_STATUS_LABELS: Record<DuesSummary["status"], string> = { paid: "Paid up", partial: "Partially paid", unpaid: "Not paid" };
+
 interface Detail {
   user: { id: string; email: string; role: string; isActive: boolean; lastLoginAt: string | null };
   profile: {
@@ -32,10 +52,12 @@ interface Detail {
 
 export default function MemberDetailDrawer({
   memberId,
+  currentRole,
   onClose,
   onChanged,
 }: {
   memberId: string | null;
+  currentRole?: string;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -43,6 +65,7 @@ export default function MemberDetailDrawer({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
+  const [dues, setDues] = useState<DuesSummary | null>(null);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- resetting local view
@@ -50,6 +73,7 @@ export default function MemberDetailDrawer({
        external system. */
     if (!memberId) {
       setDetail(null);
+      setDues(null);
       return;
     }
     setMessage(null);
@@ -60,7 +84,13 @@ export default function MemberDetailDrawer({
         setDetail(d);
         setEmailDraft(d?.user?.email || "");
       });
-  }, [memberId]);
+
+    if (currentRole === "super_admin") {
+      fetch(`/api/admin/members/${memberId}/dues`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then(setDues);
+    }
+  }, [memberId, currentRole]);
 
   async function patch(body: Record<string, unknown>, successMessage: string) {
     if (!memberId) return;
@@ -207,6 +237,57 @@ export default function MemberDetailDrawer({
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {currentRole === "super_admin" && dues && (
+            <div className="rounded-xl border border-slate-200 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase text-slate-400">Membership dues — {dues.year}</p>
+                <Badge tone={dues.status === "paid" ? "accent" : dues.status === "partial" ? "amber" : "red"}>
+                  {DUES_STATUS_LABELS[dues.status]}
+                </Badge>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-slate-400">Due</p>
+                  <p className="font-medium text-navy-900">GHS {dues.duesAmountGhs.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Paid</p>
+                  <p className="font-medium text-navy-900">GHS {dues.totalPaidGhs.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Balance</p>
+                  <p className="font-medium text-navy-900">GHS {dues.balanceGhs.toLocaleString()}</p>
+                </div>
+              </div>
+
+              {dues.payments.length > 0 ? (
+                <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm">
+                  {dues.payments.map((p) => (
+                    <li key={p.id} className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500">
+                        {new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} ·{" "}
+                        {p.method === "paystack" ? "Paystack" : "Manual"}
+                        {p.note ? ` — ${p.note}` : ""}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <span className="font-medium text-navy-900">GHS {p.amountGhs.toLocaleString()}</span>
+                        <Badge tone={statusTone(p.status === "success" ? "active" : p.status === "failed" ? "inactive" : "pending")}>
+                          {p.status}
+                        </Badge>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-400">No payments recorded yet.</p>
+              )}
+
+              <a href="/admin/dues" className="mt-3 inline-block text-xs font-semibold text-accent-600 hover:text-accent-700">
+                Record a payment / view full report →
+              </a>
             </div>
           )}
         </div>
