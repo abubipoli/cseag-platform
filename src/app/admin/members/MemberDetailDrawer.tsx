@@ -29,7 +29,7 @@ interface DuesSummary {
 const DUES_STATUS_LABELS: Record<DuesSummary["status"], string> = { paid: "Paid up", partial: "Partially paid", unpaid: "Not paid" };
 
 interface Detail {
-  user: { id: string; email: string; role: string; isActive: boolean; lastLoginAt: string | null };
+  user: { id: string; email: string; role: string; isActive: boolean; lastLoginAt: string | null; mfaEnabled: boolean };
   profile: {
     title: string | null;
     fullName: string;
@@ -113,6 +113,22 @@ export default function MemberDetailDrawer({
     } else {
       const data = await res.json().catch(() => ({}));
       setMessage(typeof data.error === "string" ? data.error : "That action isn't permitted.");
+    }
+  }
+
+  async function handleResetMfa() {
+    if (!memberId) return;
+    if (!confirm("Turn off 2FA for this member? Only do this if they've lost their device and their backup codes.")) return;
+    setBusy(true);
+    const res = await fetch(`/api/admin/members/${memberId}/reset-mfa`, { method: "POST" });
+    setBusy(false);
+    if (res.ok) {
+      setMessage("2FA has been turned off for this member.");
+      fetch(`/api/admin/members/${memberId}`)
+        .then((r) => r.json())
+        .then(setDetail);
+    } else {
+      setMessage("Couldn't reset 2FA.");
     }
   }
 
@@ -311,6 +327,11 @@ export default function MemberDetailDrawer({
           >
             Reset password
           </Button>
+          {detail.user.mfaEnabled && (
+            <Button variant="outline" disabled={busy} onClick={handleResetMfa}>
+              Reset 2FA
+            </Button>
+          )}
         </div>
       )}
     </Drawer>

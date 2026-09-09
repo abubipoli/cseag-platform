@@ -66,6 +66,35 @@ export async function clearSessionCookie() {
   store.delete(SESSION_COOKIE);
 }
 
+// --- MFA login challenge --------------------------------------------------
+// A short-lived, purpose-scoped token issued after a correct password when
+// the account has MFA enabled — bridges the password step and the code step
+// without ever setting the real session cookie until the code is verified.
+// Deliberately a separate signing purpose from SessionPayload so this token
+// can never be mistaken for (or reused as) a full session.
+
+const MFA_CHALLENGE_TTL_SECONDS = 5 * 60;
+
+interface MfaChallengePayload {
+  userId: string;
+  purpose: "mfa_challenge";
+}
+
+export function signMfaChallenge(userId: string): string {
+  const payload: MfaChallengePayload = { userId, purpose: "mfa_challenge" };
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: MFA_CHALLENGE_TTL_SECONDS });
+}
+
+export function verifyMfaChallenge(token: string): { userId: string } | null {
+  try {
+    const payload = jwt.verify(token, getJwtSecret()) as Partial<MfaChallengePayload>;
+    if (payload.purpose !== "mfa_challenge" || !payload.userId) return null;
+    return { userId: payload.userId };
+  } catch {
+    return null;
+  }
+}
+
 export async function getSession(): Promise<SessionPayload | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;

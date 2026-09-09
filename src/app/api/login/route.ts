@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { loginSchema } from "@/lib/validation";
-import { verifyPassword, setSessionCookie } from "@/lib/auth";
+import { verifyPassword, setSessionCookie, signMfaChallenge } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
   if (!valid) {
     await recordAudit({ actorUserId: user.id, action: "login.failed" });
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+  }
+
+  if (user.mfaEnabled) {
+    await recordAudit({ actorUserId: user.id, action: "login.password_ok_mfa_pending" });
+    return NextResponse.json({ mfaRequired: true, mfaToken: signMfaChallenge(user.id) });
   }
 
   await db

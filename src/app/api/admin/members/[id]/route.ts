@@ -25,7 +25,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!user || !profile) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json({
-    user: { id: user.id, email: user.email, role: user.role, isActive: user.isActive, lastLoginAt: user.lastLoginAt },
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      lastLoginAt: user.lastLoginAt,
+      mfaEnabled: user.mfaEnabled,
+    },
     profile,
     applications: applicationHistory,
   });

@@ -44,7 +44,8 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ROLES }).notNull().default("applicant"),
   mfaEnabled: boolean("mfa_enabled").notNull().default(false),
-  mfaSecret: text("mfa_secret"),
+  mfaSecret: text("mfa_secret"), // base32 TOTP secret; set on setup, kept even if mfaEnabled is still false until confirmed
+  mfaBackupCodes: text("mfa_backup_codes"), // JSON-encoded [{ hash, usedAt }] — one-time recovery codes, hashed like passwordResetTokenHash
   isActive: boolean("is_active").notNull().default(true),
   lastLoginAt: text("last_login_at"),
   passwordResetTokenHash: text("password_reset_token_hash"),

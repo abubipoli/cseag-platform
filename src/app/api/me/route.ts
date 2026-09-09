@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { memberProfiles, applications } from "@/db/schema";
+import { memberProfiles, applications, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { profileUpdateSchema } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
@@ -18,8 +18,9 @@ export async function GET() {
 
   const profile = await db.query.memberProfiles.findFirst({ where: eq(memberProfiles.userId, session.userId) });
   const application = await db.query.applications.findFirst({ where: eq(applications.userId, session.userId) });
+  const user = await db.query.users.findFirst({ where: eq(users.id, session.userId) });
 
-  return NextResponse.json({ session, profile, application });
+  return NextResponse.json({ session, profile, application, mfaEnabled: user?.mfaEnabled ?? false });
 }
 
 export async function PATCH(req: NextRequest) {

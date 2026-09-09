@@ -58,6 +58,15 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const mfaCodeSchema = z.object({
+  code: z.string().min(6, "Enter your 6-digit code or a backup code").max(20),
+});
+
+export const mfaLoginVerifySchema = z.object({
+  mfaToken: z.string().min(10),
+  code: z.string().min(6).max(20),
+});
+
 export const decisionSchema = z.object({
   decision: z.enum(["approved", "rejected", "more_info_requested"]),
   notes: z.string().max(2000).optional(),

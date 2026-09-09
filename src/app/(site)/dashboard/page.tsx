@@ -20,6 +20,7 @@ import {
   IconClock,
   IconEye,
   IconFileText,
+  IconLock,
   IconMapPin,
   IconMessageSquare,
   IconShieldCheck,
@@ -48,9 +49,10 @@ interface MeResponse {
   session: { userId: string; role: string; email: string };
   profile: Profile | null;
   application: { status: string; reviewerNotes?: string } | null;
+  mfaEnabled: boolean;
 }
 
-type TabKey = "overview" | "profile" | "public" | "requests" | "events" | "dues" | "resources";
+type TabKey = "overview" | "profile" | "public" | "requests" | "events" | "dues" | "security" | "resources";
 
 function DashboardPageInner() {
   const searchParams = useSearchParams();
@@ -180,6 +182,7 @@ function DashboardPageInner() {
               { value: "requests", label: "My Requests" },
               { value: "events", label: "Events" },
               ...(isApplicantOnly ? [] : [{ value: "dues" as const, label: "Dues" }]),
+              { value: "security", label: "Security" },
               { value: "resources", label: "Resources" },
             ]}
           />
@@ -340,6 +343,8 @@ function DashboardPageInner() {
           {tab === "events" && <UpcomingEvents />}
 
           {tab === "dues" && !isApplicantOnly && <MembershipDues />}
+
+          {tab === "security" && <SecuritySettings initialEnabled={data.mfaEnabled} />}
 
           {tab === "resources" && <MemberResources />}
         </div>
@@ -661,6 +666,190 @@ function MembershipDues() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
+type MfaStep = "idle" | "enrolling" | "backup_codes" | "disabling";
+
+function SecuritySettings({ initialEnabled }: { initialEnabled: boolean }) {
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [step, setStep] = useState<MfaStep>("idle");
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function startEnrollment() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/me/mfa/setup", { method: "POST" });
+    setBusy(false);
+    if (!res.ok) {
+      setError("Couldn't start setup. Try again.");
+      return;
+    }
+    const data = await res.json();
+    setQrCodeDataUrl(data.qrCodeDataUrl);
+    setSecret(data.secret);
+    setStep("enrolling");
+  }
+
+  async function confirmEnrollment() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/me/mfa/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    setBusy(false);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || "That code isn't valid.");
+      return;
+    }
+    setBackupCodes(data.backupCodes);
+    setEnabled(true);
+    setStep("backup_codes");
+    setCode("");
+  }
+
+  async function confirmDisable() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/me/mfa/disable", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    setBusy(false);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || "That code isn't valid.");
+      return;
+    }
+    setEnabled(false);
+    setStep("idle");
+    setCode("");
+  }
+
+  function finishBackupCodes() {
+    setStep("idle");
+    setQrCodeDataUrl(null);
+    setSecret(null);
+    setBackupCodes(null);
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <p className="font-semibold text-navy-900">Two-factor authentication</p>
+      </CardHeader>
+      <CardBody className="space-y-4">
+        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+        {step === "idle" && (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">
+                  Add a second step to your login using an authenticator app (Google Authenticator, Authy, Microsoft
+                  Authenticator, etc.).
+                </p>
+              </div>
+              <Badge tone={enabled ? "accent" : "neutral"}>{enabled ? "Enabled" : "Off"}</Badge>
+            </div>
+            {enabled ? (
+              <Button variant="outline" onClick={() => setStep("disabling")}>
+                Disable 2FA
+              </Button>
+            ) : (
+              <Button onClick={startEnrollment} disabled={busy}>
+                {busy ? "Starting..." : "Enable 2FA"}
+              </Button>
+            )}
+          </>
+        )}
+
+        {step === "disabling" && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600">Enter your current code (or a backup code) to confirm turning 2FA off.</p>
+            <Input value={code} onChange={(e) => setCode(e.target.value)} autoFocus inputMode="numeric" className="sm:w-48" />
+            <div className="flex gap-2">
+              <Button variant="danger" onClick={confirmDisable} disabled={busy || !code}>
+                {busy ? "Disabling..." : "Confirm disable"}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setStep("idle");
+                  setCode("");
+                  setError(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === "enrolling" && qrCodeDataUrl && (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              Scan this QR code with your authenticator app, or enter the key manually, then enter the 6-digit code it
+              shows you.
+            </p>
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-start">
+              {/* eslint-disable-next-line @next/next/no-img-element -- locally-generated data: URI QR code */}
+              <img src={qrCodeDataUrl} alt="2FA enrollment QR code" className="h-40 w-40" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase text-slate-400">Manual entry key</p>
+                <p className="mt-1 break-all rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700">{secret}</p>
+              </div>
+            </div>
+            <FieldWrap label="6-digit code">
+              <Input value={code} onChange={(e) => setCode(e.target.value)} autoFocus inputMode="numeric" className="sm:w-48" />
+            </FieldWrap>
+            <div className="flex gap-2">
+              <Button onClick={confirmEnrollment} disabled={busy || !code}>
+                {busy ? "Verifying..." : "Verify & turn on"}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setStep("idle");
+                  setCode("");
+                  setError(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === "backup_codes" && backupCodes && (
+          <div className="space-y-4">
+            <p className="rounded-lg bg-accent-50 px-3 py-2 text-sm text-accent-800">2FA is now on.</p>
+            <div>
+              <p className="text-sm font-medium text-navy-900">Save these backup codes somewhere safe</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Each one can be used once to log in if you lose access to your authenticator app. They&rsquo;re only shown
+                now.
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-1.5 rounded-lg bg-slate-50 p-3 font-mono text-sm text-slate-700 sm:grid-cols-4">
+                {backupCodes.map((c) => (
+                  <span key={c}>{c}</span>
+                ))}
+              </div>
+            </div>
+            <Button onClick={finishBackupCodes}>I&rsquo;ve saved these — Done</Button>
           </div>
         )}
       </CardBody>

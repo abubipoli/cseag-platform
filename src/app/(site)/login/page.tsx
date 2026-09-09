@@ -7,13 +7,21 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { FieldWrap, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { BrandMark } from "@/components/BrandMark";
+import { IconShieldCheck } from "@/components/ui/icons";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function goToDestination(role: string) {
+    router.push(role === "admin" || role === "super_admin" || role === "reviewer" ? "/admin" : "/dashboard");
+    router.refresh();
+  }
+
+  async function handlePasswordSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
@@ -25,44 +33,101 @@ export default function LoginPage() {
       body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
     });
     setSubmitting(false);
+    const data = await res.json().catch(() => ({}));
 
-    if (res.ok) {
-      const data = await res.json();
-      router.push(data.role === "admin" || data.role === "super_admin" || data.role === "reviewer" ? "/admin" : "/dashboard");
-      router.refresh();
+    if (res.ok && data.mfaRequired) {
+      setMfaToken(data.mfaToken);
       return;
     }
-    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      goToDestination(data.role);
+      return;
+    }
     setError(data.error || "Login failed. Please check your credentials.");
+  }
+
+  async function handleMfaSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!mfaToken) return;
+    setError(null);
+    setSubmitting(true);
+
+    const res = await fetch("/api/login/verify-mfa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mfaToken, code: mfaCode }),
+    });
+    setSubmitting(false);
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      goToDestination(data.role);
+      return;
+    }
+    setError(data.error || "That code isn't valid.");
   }
 
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center px-4 py-16 sm:px-6">
       <BrandMark className="mx-auto h-14 w-14" />
       <h1 className="mt-4 text-center text-2xl font-bold text-navy-900">Member Login</h1>
-      <p className="mt-1 text-center text-sm text-slate-600">Log in to manage your CSEAG profile.</p>
+      <p className="mt-1 text-center text-sm text-slate-600">
+        {mfaToken ? "Enter your two-factor authentication code." : "Log in to manage your CSEAG profile."}
+      </p>
 
       <Card className="mt-6">
         <CardBody>
           {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <FieldWrap label="Email" required>
-              <Input name="email" type="email" required autoFocus />
-            </FieldWrap>
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">Password</label>
-                <Link href="/forgot-password" className="text-xs font-medium text-accent-700 hover:text-accent-800">
-                  Forgot password?
-                </Link>
+          {mfaToken ? (
+            <form onSubmit={handleMfaSubmit} className="space-y-4">
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-700">
+                <IconShieldCheck className="h-5 w-5" />
               </div>
-              <Input name="password" type="password" required />
-            </div>
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? "Logging in..." : "Log in"}
-            </Button>
-          </form>
+              <FieldWrap label="Authentication code" required hint="From your authenticator app, or a backup code.">
+                <Input
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  autoFocus
+                  required
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                />
+              </FieldWrap>
+              <Button type="submit" disabled={submitting} className="w-full">
+                {submitting ? "Verifying..." : "Verify & log in"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMfaToken(null);
+                  setMfaCode("");
+                  setError(null);
+                }}
+                className="w-full text-center text-xs font-medium text-slate-500 hover:text-slate-700"
+              >
+                ← Back to login
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <FieldWrap label="Email" required>
+                <Input name="email" type="email" required autoFocus />
+              </FieldWrap>
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700">Password</label>
+                  <Link href="/forgot-password" className="text-xs font-medium text-accent-700 hover:text-accent-800">
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input name="password" type="password" required />
+              </div>
+              <Button type="submit" disabled={submitting} className="w-full">
+                {submitting ? "Logging in..." : "Log in"}
+              </Button>
+            </form>
+          )}
         </CardBody>
       </Card>
 
