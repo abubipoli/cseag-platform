@@ -3,30 +3,15 @@ import Link from "next/link";
 import { PageHero } from "@/components/marketing/PageHero";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconCalendar, IconMapPin, IconArrowRight } from "@/components/ui/icons";
-import { getBaseUrl } from "@/lib/base-url";
+import { listPublishedContent } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Events" };
 export const dynamic = "force-dynamic";
 
-interface EventItem {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string | null;
-  eventDate: string | null;
-  eventLocation: string | null;
-  imageUrl: string | null;
-}
-
-async function getEvents(): Promise<EventItem[]> {
-  const res = await fetch(`${await getBaseUrl()}/api/content?type=event`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.items || [];
-}
+type EventItem = Awaited<ReturnType<typeof listPublishedContent>>[number];
 
 export default async function EventsPage() {
-  const items = await getEvents();
+  const items = await listPublishedContent("event", false);
   // This page is force-dynamic (rendered fresh per request), so reading the
   // current time here is the intended behavior, not an accidental impurity.
   // eslint-disable-next-line react-hooks/purity

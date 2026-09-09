@@ -3,30 +3,13 @@ import Link from "next/link";
 import { PageHero } from "@/components/marketing/PageHero";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconFileText, IconArrowRight } from "@/components/ui/icons";
-import { getBaseUrl } from "@/lib/base-url";
+import { listPublishedContent } from "@/lib/content";
 
 export const metadata: Metadata = { title: "News" };
 export const dynamic = "force-dynamic";
 
-interface NewsItem {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string | null;
-  imageUrl: string | null;
-  publishedAt: string | null;
-  createdAt: string;
-}
-
-async function getNews(): Promise<NewsItem[]> {
-  const res = await fetch(`${await getBaseUrl()}/api/content?type=news`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.items || [];
-}
-
 export default async function NewsPage() {
-  const items = await getNews();
+  const items = await listPublishedContent("news", false);
 
   return (
     <div>

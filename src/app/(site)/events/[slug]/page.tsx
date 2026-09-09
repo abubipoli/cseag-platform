@@ -1,22 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getBaseUrl } from "@/lib/base-url";
+import { getSession } from "@/lib/auth";
+import { getPublishedContentBySlug } from "@/lib/content";
 import { IconCalendar, IconMapPin } from "@/components/ui/icons";
 import { SidebarAd } from "@/components/marketing/SidebarAd";
 import RsvpForm from "./RsvpForm";
 
 export const dynamic = "force-dynamic";
 
-async function getItem(slug: string) {
-  const res = await fetch(`${await getBaseUrl()}/api/content/${slug}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.item;
-}
-
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const item = await getItem(slug);
+  const session = await getSession();
+  const isMember = !!session && session.role !== "applicant";
+  const item = await getPublishedContentBySlug(slug, isMember);
   if (!item || item.type !== "event") notFound();
 
   return (

@@ -4,30 +4,16 @@ import { PageHero } from "@/components/marketing/PageHero";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { IconFileText, IconDownload, IconLock } from "@/components/ui/icons";
-import { getBaseUrl } from "@/lib/base-url";
 import { getSession } from "@/lib/auth";
+import { listPublishedContent } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Resources" };
 export const dynamic = "force-dynamic";
 
-interface ResourceItem {
-  id: string;
-  title: string;
-  summary: string | null;
-  fileUrl: string | null;
-  isMemberOnly: boolean;
-}
-
-async function getResources(): Promise<ResourceItem[]> {
-  const res = await fetch(`${await getBaseUrl()}/api/content?type=resource`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.items || [];
-}
-
 export default async function ResourcesPage() {
-  const [items, session] = await Promise.all([getResources(), getSession()]);
+  const session = await getSession();
   const isMember = !!session && session.role !== "applicant";
+  const items = await listPublishedContent("resource", isMember);
 
   return (
     <div>

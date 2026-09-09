@@ -3,10 +3,9 @@
 // is expected to gate access; download links for gated items should not be
 // rendered to non-members by the page itself.
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { contentItems, CONTENT_TYPES } from "@/db/schema";
+import { CONTENT_TYPES } from "@/db/schema";
 import { getSession } from "@/lib/auth";
+import { listPublishedContent } from "@/lib/content";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -14,21 +13,8 @@ export async function GET(req: NextRequest) {
   const session = await getSession();
   const isMember = !!session && session.role !== "applicant";
 
-  const conditions = [eq(contentItems.status, "published")];
-  if (type && (CONTENT_TYPES as readonly string[]).includes(type)) {
-    conditions.push(eq(contentItems.type, type as (typeof CONTENT_TYPES)[number]));
-  }
+  const validType = type && (CONTENT_TYPES as readonly string[]).includes(type) ? (type as (typeof CONTENT_TYPES)[number]) : undefined;
+  const items = await listPublishedContent(validType, isMember);
 
-  const rows = await db
-    .select()
-    .from(contentItems)
-    .where(and(...conditions))
-    .orderBy(desc(contentItems.publishedAt), desc(contentItems.createdAt));
-
-  const shaped = rows.map((r) => ({
-    ...r,
-    fileUrl: r.isMemberOnly && !isMember ? null : r.fileUrl,
-  }));
-
-  return NextResponse.json({ items: shaped });
+  return NextResponse.json({ items });
 }

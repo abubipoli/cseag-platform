@@ -8,9 +8,9 @@ import {
   IconTarget,
   IconFileText,
 } from "@/components/ui/icons";
-import { getBaseUrl } from "@/lib/base-url";
 import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 import { Reveal } from "@/components/ui/Reveal";
+import { listPublishedContent } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
 
@@ -45,14 +45,8 @@ interface NewsItem {
 }
 
 async function getLatestNews(): Promise<NewsItem[]> {
-  try {
-    const res = await fetch(`${await getBaseUrl()}/api/content?type=news`, { cache: "no-store" });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.items || []).slice(0, 3);
-  } catch {
-    return [];
-  }
+  const items = await listPublishedContent("news", false);
+  return items.slice(0, 3);
 }
 
 export default async function HomePage() {
