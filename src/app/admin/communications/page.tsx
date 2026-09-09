@@ -6,8 +6,17 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FieldWrap, Input, Textarea, Select } from "@/components/ui/Field";
+import { FieldWrap, Input, Textarea, Select, Checkbox } from "@/components/ui/Field";
 import { IconMail, IconSend } from "@/components/ui/icons";
+import { GHANA_REGIONS, MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
+
+interface MemberLite {
+  id: string;
+  fullName: string;
+  email: string;
+  membershipCategory: string | null;
+  region: string | null;
+}
 
 interface NotificationRow {
   id: string;
@@ -32,6 +41,40 @@ export default function CommunicationsPage() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pickerCategory, setPickerCategory] = useState("");
+  const [pickerRegion, setPickerRegion] = useState("");
+  const [pickerResults, setPickerResults] = useState<MemberLite[] | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (broadcast.audience !== "custom") return;
+    const params = new URLSearchParams();
+    if (pickerQuery) params.set("q", pickerQuery);
+    if (pickerCategory) params.set("category", pickerCategory);
+    if (pickerRegion) params.set("region", pickerRegion);
+    fetch(`/api/admin/members?${params.toString()}`)
+      .then((r) => r.json())
+      .then((d) => setPickerResults(d.members || []));
+  }, [broadcast.audience, pickerQuery, pickerCategory, pickerRegion]);
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAllShown() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      (pickerResults || []).forEach((m) => next.add(m.id));
+      return next;
+    });
+  }
+
   async function load() {
     const res = await fetch("/api/admin/notifications");
     const data = await res.json();
@@ -52,18 +95,26 @@ export default function CommunicationsPage() {
 
   async function handleBroadcast(e: React.FormEvent) {
     e.preventDefault();
+    if (broadcast.audience === "custom" && selectedIds.size === 0) {
+      setResult("Select at least one recipient first.");
+      return;
+    }
     setSending(true);
     setResult(null);
     const res = await fetch("/api/admin/notifications/broadcast", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(broadcast),
+      body: JSON.stringify({
+        ...broadcast,
+        ...(broadcast.audience === "custom" ? { customUserIds: [...selectedIds] } : {}),
+      }),
     });
     setSending(false);
     if (res.ok) {
       const data = await res.json();
       setResult(`Sent to ${data.sent} recipient(s).`);
       setBroadcast((b) => ({ ...b, subject: "", message: "" }));
+      setSelectedIds(new Set());
       load();
     } else {
       setResult("Something went wrong sending that broadcast.");
@@ -90,6 +141,7 @@ export default function CommunicationsPage() {
                     <option value="all_members">All members</option>
                     <option value="applicants">Applicants</option>
                     <option value="reviewers_admins">Reviewers &amp; admins</option>
+                    <option value="custom">Specific people…</option>
                   </Select>
                 </FieldWrap>
                 <FieldWrap label="Channel" required>
@@ -100,6 +152,58 @@ export default function CommunicationsPage() {
                   </Select>
                 </FieldWrap>
               </div>
+
+              {broadcast.audience === "custom" && (
+                <div className="rounded-xl border border-slate-200 p-3">
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <Input placeholder="Search name, email, phone" value={pickerQuery} onChange={(e) => setPickerQuery(e.target.value)} />
+                    <Select value={pickerCategory} onChange={(e) => setPickerCategory(e.target.value)}>
+                      <option value="">Any category</option>
+                      {Object.entries(MEMBERSHIP_CATEGORY_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select value={pickerRegion} onChange={(e) => setPickerRegion(e.target.value)}>
+                      <option value="">Any region</option>
+                      {GHANA_REGIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="text-xs text-slate-500">{selectedIds.size} selected</p>
+                    {pickerResults && pickerResults.length > 0 && (
+                      <button type="button" onClick={selectAllShown} className="text-xs font-semibold text-accent-700 hover:text-accent-800">
+                        Select all {pickerResults.length} shown
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto rounded-lg border border-slate-100 p-2 scrollbar-thin">
+                    {!pickerResults ? (
+                      <p className="p-2 text-sm text-slate-400">Loading…</p>
+                    ) : pickerResults.length === 0 ? (
+                      <p className="p-2 text-sm text-slate-400">No members match those filters.</p>
+                    ) : (
+                      pickerResults.map((m) => (
+                        <Checkbox
+                          key={m.id}
+                          className="rounded-lg px-2 py-1.5 hover:bg-slate-50"
+                          label={`${m.fullName} — ${m.email}`}
+                          checked={selectedIds.has(m.id)}
+                          onChange={() => toggleSelected(m.id)}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
               <FieldWrap label="Subject" required hint="Used as the email subject line.">
                 <Input value={broadcast.subject} onChange={(e) => setBroadcast((b) => ({ ...b, subject: e.target.value }))} required />
               </FieldWrap>

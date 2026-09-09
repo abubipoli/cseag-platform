@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
   const role = searchParams.get("role");
   const status = searchParams.get("status"); // active | inactive
   const category = searchParams.get("category");
+  const region = searchParams.get("region");
 
   const rows = await db
     .select({
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
   if (status === "active") shaped = shaped.filter((r) => r.isActive);
   if (status === "inactive") shaped = shaped.filter((r) => !r.isActive);
   if (category) shaped = shaped.filter((r) => r.membershipCategory === category);
+  if (region) shaped = shaped.filter((r) => r.region === region);
 
   return NextResponse.json({ members: shaped });
 }
