@@ -2,12 +2,12 @@
 // (super_admin only), plus an aggregate summary for reporting.
 
 import { NextResponse } from "next/server";
-import { ne, eq } from "drizzle-orm";
+import { ne } from "drizzle-orm";
 import { db } from "@/db/client";
-import { users, memberProfiles } from "@/db/schema";
+import { users } from "@/db/schema";
 import { getSession, roleAtLeast } from "@/lib/auth";
 import { getPaymentSettings } from "@/lib/settings";
-import { getMemberDuesSummary, currentDuesYear } from "@/lib/dues";
+import { getAllMemberDuesSummaries, currentDuesYear } from "@/lib/dues";
 
 export async function GET() {
   const session = await getSession();
@@ -19,22 +19,28 @@ export async function GET() {
   const year = currentDuesYear();
 
   const members = await db.query.users.findMany({ where: ne(users.role, "applicant") });
-  const rows = await Promise.all(
-    members.map(async (user) => {
-      const profile = await db.query.memberProfiles.findFirst({ where: eq(memberProfiles.userId, user.id) });
-      const summary = await getMemberDuesSummary(user.id, settings.duesAmountGhs, year);
-      return {
-        userId: user.id,
-        name: profile?.fullName || user.email,
-        email: user.email,
-        membershipCategory: profile?.membershipCategory || null,
-        duesAmountGhs: summary.duesAmountGhs,
-        totalPaidGhs: summary.totalPaidGhs,
-        balanceGhs: summary.balanceGhs,
-        status: summary.status,
-      };
-    })
+  const profiles = await db.query.memberProfiles.findMany();
+  const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
+  const summaries = await getAllMemberDuesSummaries(
+    members.map((m) => m.id),
+    settings.duesAmountGhs,
+    year
   );
+
+  const rows = members.map((user) => {
+    const profile = profileByUserId.get(user.id);
+    const summary = summaries.get(user.id)!;
+    return {
+      userId: user.id,
+      name: profile?.fullName || user.email,
+      email: user.email,
+      membershipCategory: profile?.membershipCategory || null,
+      duesAmountGhs: summary.duesAmountGhs,
+      totalPaidGhs: summary.totalPaidGhs,
+      balanceGhs: summary.balanceGhs,
+      status: summary.status,
+    };
+  });
 
   const summary = {
     year,

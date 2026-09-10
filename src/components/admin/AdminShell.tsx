@@ -125,7 +125,7 @@ export function AdminShell({
   return (
     <div className="flex min-h-screen bg-paper-alt">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col bg-navy-900 lg:flex">{sidebarContent}</aside>
+      <aside className="hidden w-64 shrink-0 flex-col bg-navy-900 lg:flex print:hidden">{sidebarContent}</aside>
 
       {/* Mobile sidebar */}
       {mobileOpen && (
@@ -144,7 +144,7 @@ export function AdminShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md sm:px-6">
+        <header className="flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md print:hidden sm:px-6">
           <button onClick={() => setMobileOpen(true)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 lg:hidden">
             <IconMenu className="h-5 w-5" />
           </button>
@@ -160,7 +160,7 @@ export function AdminShell({
             <LogoutButton className="ml-1" />
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 print:p-0">{children}</main>
       </div>
     </div>
   );

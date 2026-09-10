@@ -326,3 +326,19 @@ export const IconAlertTriangle = (p: IconProps) => (
     <path d="M12 9v4M12 17h.01" />
   </Icon>
 );
+
+export const IconPrinter = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 9V2h12v7" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <path d="M6 14h12v8H6z" />
+  </Icon>
+);
+
+export const IconFileSpreadsheet = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+    <path d="M14 2v6h6" />
+    <path d="M8 13h8M8 17h8M8 13v4M12 13v4M16 13v4" />
+  </Icon>
+);

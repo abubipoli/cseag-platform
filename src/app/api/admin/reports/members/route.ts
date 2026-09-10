@@ -1,12 +1,38 @@
-// GET /api/admin/reports/members — CSV export (SRS 6.7 "basic reporting/export").
-import { NextResponse } from "next/server";
+// GET /api/admin/reports/members?format=csv|xlsx|json — member list export (SRS 6.7).
+import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, memberProfiles } from "@/db/schema";
 import { getSession, roleAtLeast } from "@/lib/auth";
-import { toCsv } from "@/lib/csv";
+import { reportResponse, parseReportFormat, type ReportColumn } from "@/lib/reportResponse";
 
-export async function GET() {
+interface MemberRow {
+  fullName: string;
+  email: string;
+  phone: string;
+  role: string;
+  status: string;
+  membershipCategory: string | null;
+  region: string | null;
+  employer: string | null;
+  yearsOfExperience: number | null;
+  createdAt: string;
+}
+
+const COLUMNS: ReportColumn<MemberRow>[] = [
+  { key: "fullName", header: "Full name" },
+  { key: "email", header: "Email" },
+  { key: "phone", header: "Phone" },
+  { key: "role", header: "Role" },
+  { key: "status", header: "Status" },
+  { key: "membershipCategory", header: "Membership category" },
+  { key: "region", header: "Region" },
+  { key: "employer", header: "Employer" },
+  { key: "yearsOfExperience", header: "Years of experience" },
+  { key: "createdAt", header: "Joined" },
+];
+
+export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session || !roleAtLeast(session.role, "admin")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -28,15 +54,8 @@ export async function GET() {
     .from(users)
     .innerJoin(memberProfiles, eq(memberProfiles.userId, users.id));
 
-  const csv = toCsv(
-    rows.map((r) => ({ ...r, status: r.status ? "active" : "inactive" })),
-    ["fullName", "email", "phone", "role", "status", "membershipCategory", "region", "employer", "yearsOfExperience", "createdAt"]
-  );
+  const shaped: MemberRow[] = rows.map((r) => ({ ...r, status: r.status ? "active" : "inactive" }));
 
-  return new NextResponse(csv, {
-    headers: {
-      "Content-Type": "text/csv",
-      "Content-Disposition": `attachment; filename="cseag-members-${new Date().toISOString().slice(0, 10)}.csv"`,
-    },
-  });
+  const format = parseReportFormat(req.nextUrl.searchParams.get("format"));
+  return reportResponse(format, shaped, COLUMNS, "cseag-members");
 }
