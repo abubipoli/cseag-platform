@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardBody } from "@/components/ui/Card";
 import { FieldWrap, Input, PasswordInput } from "@/components/ui/Field";
@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/Button";
 import { BrandMark } from "@/components/BrandMark";
 import { IconShieldCheck } from "@/components/ui/icons";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [idleNotice] = useState(searchParams.get("reason") === "idle");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -77,6 +79,11 @@ export default function LoginPage() {
 
       <Card className="mt-6">
         <CardBody>
+          {idleNotice && !error && (
+            <div className="mb-4 rounded-lg bg-accent-50 px-3 py-2 text-sm text-accent-800">
+              You were logged out after a period of inactivity. Please log in again.
+            </div>
+          )}
           {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
           {mfaToken ? (
@@ -141,5 +148,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

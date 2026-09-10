@@ -13,6 +13,13 @@ import type { Role } from "@/db/schema";
 const SESSION_COOKIE = "cseag_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12; // 12 hours
 
+// Idle-timeout tracking (separate from the session JWT's absolute 12h cap).
+// Read/refreshed by middleware.ts on every authenticated request; if too much
+// time passes with no request at all, the session is force-logged-out even
+// though the JWT itself hasn't expired yet.
+export const LAST_SEEN_COOKIE = "cseag_last_seen";
+export const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+
 function getJwtSecret(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 32) {
@@ -59,11 +66,21 @@ export async function setSessionCookie(payload: SessionPayload) {
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
   });
+  // Baseline the idle clock at login; middleware.ts refreshes it on every
+  // subsequent authenticated request.
+  store.set(LAST_SEEN_COOKIE, String(Date.now()), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_TTL_SECONDS,
+  });
 }
 
 export async function clearSessionCookie() {
   const store = await cookies();
   store.delete(SESSION_COOKIE);
+  store.delete(LAST_SEEN_COOKIE);
 }
 
 // --- MFA login challenge --------------------------------------------------

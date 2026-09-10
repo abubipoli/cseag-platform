@@ -62,11 +62,15 @@ export async function PATCH(req: NextRequest) {
   if (input.areasOfExpertise) update.areasOfExpertise = JSON.stringify(input.areasOfExpertise);
   if (input.certifications) update.certifications = JSON.stringify(input.certifications);
 
-  // Only an approved member (not a tier-1 applicant) becomes eligible for
-  // the public directory, and only once they've saved visibility choices at
-  // least once (Section 6.4 / 6.6).
-  if (session.role !== "applicant") {
-    update.isListedInDirectory = true;
+  // Directory listing is opt-in: a member only appears once they flip this
+  // on themselves from "Public Visibility" (Section 6.6) — it must never be
+  // turned on as a side effect of saving unrelated profile fields. A tier-1
+  // applicant can never be listed regardless of what's sent, since they
+  // aren't an approved member yet (Section 6.4).
+  if (session.role === "applicant") {
+    update.isListedInDirectory = false;
+  } else if (input.isListedInDirectory !== undefined) {
+    update.isListedInDirectory = input.isListedInDirectory;
   }
 
   await db.update(memberProfiles).set(update).where(eq(memberProfiles.userId, session.userId));

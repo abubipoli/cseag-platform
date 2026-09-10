@@ -89,6 +89,7 @@ function DashboardPageInner() {
             areasOfExpertiseIsPublic: d.profile.areasOfExpertiseIsPublic,
             employerRoleIsPublic: d.profile.employerRoleIsPublic,
             allowPublicContact: d.profile.allowPublicContact,
+            isListedInDirectory: d.profile.isListedInDirectory,
           });
         }
       });
@@ -111,6 +112,9 @@ function DashboardPageInner() {
 
   const { session, profile, application } = data;
   const isApplicantOnly = session.role === "applicant";
+  // Applicants get status + account security only — everything else is a
+  // member benefit that unlocks on approval (see the banner below).
+  const effectiveTab: TabKey = isApplicantOnly && tab !== "overview" && tab !== "security" ? "overview" : tab;
 
   async function handleSave() {
     setSaving(true);
@@ -142,6 +146,7 @@ function DashboardPageInner() {
                 currentRole: form.currentRole as string,
                 bio: form.bio as string,
                 photoUrl: (form.photoUrl as string) || null,
+                isListedInDirectory: (form.isListedInDirectory as boolean) || false,
               },
             }
           : prev
@@ -215,23 +220,30 @@ function DashboardPageInner() {
 
         <div className="mt-6">
           <Tabs<TabKey>
-            active={tab}
+            active={effectiveTab}
             onChange={setTab}
-            tabs={[
-              { value: "overview", label: "Overview" },
-              { value: "profile", label: "My Profile" },
-              { value: "public", label: "Public Visibility" },
-              { value: "requests", label: "My Requests" },
-              { value: "events", label: "Events" },
-              ...(isApplicantOnly ? [] : [{ value: "dues" as const, label: "Dues" }]),
-              { value: "security", label: "Security" },
-              { value: "resources", label: "Resources" },
-            ]}
+            tabs={
+              isApplicantOnly
+                ? [
+                    { value: "overview", label: "Overview" },
+                    { value: "security", label: "Security" },
+                  ]
+                : [
+                    { value: "overview", label: "Overview" },
+                    { value: "profile", label: "My Profile" },
+                    { value: "public", label: "Public Visibility" },
+                    { value: "requests", label: "My Requests" },
+                    { value: "events", label: "Events" },
+                    { value: "dues", label: "Dues" },
+                    { value: "security", label: "Security" },
+                    { value: "resources", label: "Resources" },
+                  ]
+            }
           />
         </div>
 
         <div className="mt-5">
-          {tab === "overview" && (
+          {effectiveTab === "overview" && (
             <Card>
               <CardHeader>
                 <p className="font-semibold text-navy-900">Membership overview</p>
@@ -246,7 +258,7 @@ function DashboardPageInner() {
             </Card>
           )}
 
-          {tab === "profile" && (
+          {effectiveTab === "profile" && (
             <Card>
               <CardHeader>
                 <p className="font-semibold text-navy-900">Edit my information</p>
@@ -330,7 +342,7 @@ function DashboardPageInner() {
             </Card>
           )}
 
-          {tab === "public" && (
+          {effectiveTab === "public" && (
             <div className="grid gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -343,6 +355,12 @@ function DashboardPageInner() {
                     {isApplicantOnly && " These choices take effect once your membership is approved."}
                   </p>
                   <div className="mt-3 divide-y divide-slate-100">
+                    <Switch
+                      label="List me in the public Experts directory"
+                      description="Off by default. Turn this on when you're ready to appear in the directory — nothing is shown publicly until you do."
+                      checked={form.isListedInDirectory as boolean}
+                      onChange={(e) => setForm((f) => ({ ...f, isListedInDirectory: e.target.checked }))}
+                    />
                     <Switch
                       label="Show my bio publicly"
                       checked={form.bioIsPublic as boolean}
@@ -414,15 +432,15 @@ function DashboardPageInner() {
             </div>
           )}
 
-          {tab === "requests" && <MyServiceRequests />}
+          {effectiveTab === "requests" && <MyServiceRequests />}
 
-          {tab === "events" && <UpcomingEvents />}
+          {effectiveTab === "events" && <UpcomingEvents />}
 
-          {tab === "dues" && !isApplicantOnly && <MembershipDues />}
+          {effectiveTab === "dues" && !isApplicantOnly && <MembershipDues />}
 
-          {tab === "security" && <SecuritySettings initialEnabled={data.mfaEnabled} />}
+          {effectiveTab === "security" && <SecuritySettings initialEnabled={data.mfaEnabled} />}
 
-          {tab === "resources" && <MemberResources />}
+          {effectiveTab === "resources" && <MemberResources />}
         </div>
       </div>
     </div>

@@ -96,6 +96,7 @@ export const profileUpdateSchema = z.object({
   certificationsIsPublic: z.boolean().optional(),
   photoIsPublic: z.boolean().optional(),
   allowPublicContact: z.boolean().optional(),
+  isListedInDirectory: z.boolean().optional(),
 });
 
 export const forgotPasswordSchema = z.object({
