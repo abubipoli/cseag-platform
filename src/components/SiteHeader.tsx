@@ -10,7 +10,7 @@ import { BrandMark } from "./BrandMark";
 const NAV_LINKS = [
   { href: "/about", label: "About" },
   { href: "/what-we-do", label: "What We Do" },
-  { href: "/experts", label: "Experts" },
+  { href: "/experts", label: "Expert Directory" },
   { href: "/news", label: "News" },
   { href: "/events", label: "Events" },
   { href: "/resources", label: "Resources" },
@@ -32,7 +32,7 @@ export default async function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
+        <nav className="hidden items-center gap-5 text-sm font-medium text-slate-600 xl:flex">
           {NAV_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="transition-colors hover:text-accent-700">
               {link.label}
@@ -40,7 +40,7 @@ export default async function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-3 xl:flex">
           {session ? (
             <>
               <ButtonLink href={isStaff ? "/admin" : "/dashboard"} variant="outline" size="sm">

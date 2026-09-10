@@ -8,7 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Select } from "@/components/ui/Field";
-import { IconSearch, IconUsers, IconBriefcase } from "@/components/ui/icons";
+import { IconSearch, IconUsers, IconBriefcase, IconEye } from "@/components/ui/icons";
 
 interface Expert {
   id: string;
@@ -76,26 +76,30 @@ export default function ExpertsPage() {
                 <Link
                   key={expert.id}
                   href={`/experts/${expert.id}`}
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                  className="group flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-lg"
                 >
-                  <div className="flex items-center gap-3">
-                    <Avatar name={expert.name} photoUrl={expert.photoUrl} size="lg" />
-                    <div>
-                      <p className="font-semibold text-navy-900 group-hover:text-accent-700">{expert.name}</p>
-                      {expert.yearsOfExperience !== null && (
-                        <p className="text-xs text-slate-500">{expert.yearsOfExperience} years of experience</p>
-                      )}
+                  <div className="relative">
+                    <Avatar name={expert.name} photoUrl={expert.photoUrl} size="xl" />
+                    {/* "click to view more" affordance: a soft overlay that only
+                        appears on hover, so the grid stays clean at rest but
+                        clearly invites a click once you're looking at a card. */}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-navy-900/0 opacity-0 transition-all duration-200 group-hover:bg-navy-900/50 group-hover:opacity-100">
+                      <IconEye className="h-6 w-6 text-white" />
                     </div>
                   </div>
+                  <p className="mt-3 font-semibold text-navy-900 group-hover:text-accent-700">{expert.name}</p>
+                  {expert.yearsOfExperience !== null && (
+                    <p className="text-xs text-slate-500">{expert.yearsOfExperience} years of experience</p>
+                  )}
                   {(expert.currentRole || expert.employer) && (
-                    <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
-                      <IconBriefcase className="h-3.5 w-3.5" />
-                      {[expert.currentRole, expert.employer].filter(Boolean).join(" at ")}
+                    <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+                      <IconBriefcase className="h-3.5 w-3.5 shrink-0" />
+                      <span>{[expert.currentRole, expert.employer].filter(Boolean).join(" at ")}</span>
                     </p>
                   )}
                   {expert.bio && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{expert.bio}</p>}
                   {expert.areasOfExpertise.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
+                    <div className="mt-3 flex flex-wrap justify-center gap-1.5">
                       {expert.areasOfExpertise.slice(0, 2).map((a) => (
                         <Badge key={a} tone="accent">
                           {a}
@@ -106,6 +110,12 @@ export default function ExpertsPage() {
                       )}
                     </div>
                   )}
+                  <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-accent-700 opacity-0 transition-opacity group-hover:opacity-100">
+                    View profile
+                    <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 8h8M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
                 </Link>
               ))}
             </div>

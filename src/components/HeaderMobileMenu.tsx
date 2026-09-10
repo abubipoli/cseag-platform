@@ -26,7 +26,7 @@ export default function HeaderMobileMenu({
   }, []);
 
   return (
-    <div className="lg:hidden">
+    <div className="xl:hidden">
       <button
         onClick={() => setOpen(true)}
         aria-label="Open menu"
