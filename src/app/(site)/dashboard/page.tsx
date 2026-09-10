@@ -670,21 +670,33 @@ function MembershipDues() {
   const searchParams = useSearchParams();
   const [dues, setDues] = useState<DuesStatus | null>(null);
   const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [payAmount, setPayAmount] = useState("");
   const paymentResult = searchParams.get("payment");
 
   useEffect(() => {
     fetch("/api/member/dues/status")
       .then((r) => r.json())
-      .then(setDues);
+      .then((d: DuesStatus) => {
+        setDues(d);
+        setPayAmount(d.balanceGhs ? String(d.balanceGhs) : "");
+      });
   }, []);
 
   async function handlePay() {
     setPaying(true);
-    const res = await fetch("/api/member/dues/pay", { method: "POST" });
+    setPayError(null);
+    const res = await fetch("/api/member/dues/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amountGhs: payAmount ? Number(payAmount) : undefined }),
+    });
     const data = await res.json();
     setPaying(false);
     if (res.ok && data.authorizationUrl) {
       window.location.href = data.authorizationUrl;
+    } else {
+      setPayError(data.error || "Couldn't start payment. Please try again.");
     }
   }
 
@@ -734,9 +746,32 @@ function MembershipDues() {
 
         {dues.status !== "paid" &&
           (dues.paystackReady ? (
-            <Button onClick={handlePay} disabled={paying}>
-              {paying ? "Redirecting..." : `Pay GHS ${dues.balanceGhs.toLocaleString()} with Paystack`}
-            </Button>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Amount to pay now</label>
+              <p className="mb-2 text-xs text-slate-500">
+                Pay in full or in installments — enter any amount up to your GHS {dues.balanceGhs.toLocaleString()} balance.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative w-40">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-slate-400">GHS</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={dues.balanceGhs}
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    className="pl-11"
+                  />
+                </div>
+                <Button
+                  onClick={handlePay}
+                  disabled={paying || !payAmount || Number(payAmount) <= 0 || Number(payAmount) > dues.balanceGhs}
+                >
+                  {paying ? "Redirecting..." : "Pay with Paystack"}
+                </Button>
+              </div>
+              {payError && <p className="mt-2 text-xs text-red-600">{payError}</p>}
+            </div>
           ) : (
             <p className="text-xs text-slate-400">Online payment isn&rsquo;t set up yet — contact CSEAG to pay another way.</p>
           ))}

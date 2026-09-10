@@ -2,7 +2,7 @@
 // logged-in member's outstanding dues balance and returns the checkout URL
 // to redirect the browser to.
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
@@ -12,10 +12,17 @@ import { getPaymentSettings } from "@/lib/settings";
 import { getMemberDuesSummary, currentDuesYear } from "@/lib/dues";
 import { initializePaystackTransaction } from "@/lib/paystack";
 import { getBaseUrl } from "@/lib/base-url";
+import { memberDuesPaySchema } from "@/lib/validation";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const parsed = memberDuesPaySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Enter a valid amount." }, { status: 422 });
+  }
 
   const settings = await getPaymentSettings();
   if (!settings.paystackPublicKey || !settings.paystackSecretKey) {
@@ -23,7 +30,10 @@ export async function POST() {
   }
 
   const summary = await getMemberDuesSummary(session.userId, settings.duesAmountGhs);
-  const amountGhs = summary.balanceGhs > 0 ? summary.balanceGhs : settings.duesAmountGhs;
+  const requested = parsed.data.amountGhs;
+  // Pay any part of the balance at a time (installments) — but never more
+  // than what's actually outstanding.
+  const amountGhs = requested ? Math.min(requested, summary.balanceGhs) : summary.balanceGhs || settings.duesAmountGhs;
   if (amountGhs <= 0) {
     return NextResponse.json({ error: "There's nothing due right now." }, { status: 400 });
   }

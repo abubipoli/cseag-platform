@@ -218,6 +218,12 @@ export const manualDuesPaymentSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
+// A member paying their own dues can pay any part of their balance at a
+// time (installments) rather than only the full amount at once.
+export const memberDuesPaySchema = z.object({
+  amountGhs: z.coerce.number().int().min(1).optional(),
+});
+
 export const adminCreateUserSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Enter a valid email address"),
