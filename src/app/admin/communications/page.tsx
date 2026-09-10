@@ -31,6 +31,7 @@ interface NotificationRow {
 
 export default function CommunicationsPage() {
   const [log, setLog] = useState<NotificationRow[] | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "sent" | "failed" | "queued">("all");
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [broadcast, setBroadcast] = useState({
     audience: "all_members",
@@ -122,6 +123,9 @@ export default function CommunicationsPage() {
   }
 
   const failedCount = log?.filter((n) => n.status === "failed").length ?? 0;
+  const sentCount = log?.filter((n) => n.status === "sent").length ?? 0;
+  const queuedCount = log?.filter((n) => n.status === "queued").length ?? 0;
+  const visibleLog = statusFilter === "all" ? log : (log ?? []).filter((n) => n.status === statusFilter);
 
   return (
     <div className="space-y-6">
@@ -222,14 +226,40 @@ export default function CommunicationsPage() {
             <p className="font-semibold text-navy-900">Notification log</p>
             {failedCount > 0 && <Badge tone="red">{failedCount} failed</Badge>}
           </CardHeader>
+          <div className="flex flex-wrap gap-1.5 border-b border-slate-100 px-5 py-3">
+            {(
+              [
+                ["all", "All", log?.length ?? 0],
+                ["sent", "Sent", sentCount],
+                ["failed", "Failed", failedCount],
+                ["queued", "Queued", queuedCount],
+              ] as const
+            ).map(([value, label, count]) => (
+              <button
+                key={value}
+                onClick={() => setStatusFilter(value)}
+                className={
+                  "rounded-full px-3 py-1 text-xs font-semibold transition-colors " +
+                  (statusFilter === value
+                    ? "bg-navy-900 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200")
+                }
+              >
+                {label} {log && `(${count})`}
+              </button>
+            ))}
+          </div>
           <CardBody className="max-h-[560px] overflow-y-auto scrollbar-thin">
             {!log ? (
               <p className="text-sm text-slate-400">Loading…</p>
-            ) : log.length === 0 ? (
-              <EmptyState icon={<IconMail className="h-5 w-5" />} title="No notifications sent yet" />
+            ) : visibleLog!.length === 0 ? (
+              <EmptyState
+                icon={<IconMail className="h-5 w-5" />}
+                title={statusFilter === "all" ? "No notifications sent yet" : `No ${statusFilter} notifications`}
+              />
             ) : (
               <ul className="divide-y divide-slate-100">
-                {log.map((n) => (
+                {visibleLog!.map((n) => (
                   <li key={n.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium text-navy-900">
