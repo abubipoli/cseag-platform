@@ -6,10 +6,10 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
-import { FieldWrap, Input, Textarea } from "@/components/ui/Field";
+import { FieldWrap, Input, Textarea, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
-import { IconBarChart } from "@/components/ui/icons";
+import { IconBarChart, IconSearch } from "@/components/ui/icons";
 
 interface Row {
   userId: string;
@@ -45,6 +45,9 @@ export default function DuesReport() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | Row["status"]>("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   function load() {
     fetch("/api/admin/dues")
@@ -75,6 +78,22 @@ export default function DuesReport() {
     }
   }
 
+  const categories = Array.from(new Set((rows || []).map((r) => r.membershipCategory).filter((c): c is string => !!c)));
+
+  const filteredRows = (rows || []).filter((r) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (categoryFilter && r.membershipCategory !== categoryFilter) return false;
+    if (query && !`${r.name} ${r.email}`.toLowerCase().includes(query.toLowerCase())) return false;
+    return true;
+  });
+
+  const statusCounts = {
+    all: rows?.length ?? 0,
+    paid: rows?.filter((r) => r.status === "paid").length ?? 0,
+    partial: rows?.filter((r) => r.status === "partial").length ?? 0,
+    unpaid: rows?.filter((r) => r.status === "unpaid").length ?? 0,
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="Membership dues" description="Who's paid, who's partial, and who's still outstanding — not enforced, just tracked." />
@@ -98,20 +117,71 @@ export default function DuesReport() {
             <EmptyState icon={<IconBarChart className="h-5 w-5" />} title="No members yet" />
           </CardBody>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
-                  <th className="px-5 py-3 sm:px-6">Member</th>
-                  <th className="px-5 py-3 sm:px-6">Category</th>
-                  <th className="px-5 py-3 sm:px-6">Paid</th>
-                  <th className="px-5 py-3 sm:px-6">Balance</th>
-                  <th className="px-5 py-3 sm:px-6">Status</th>
-                  <th className="px-5 py-3 sm:px-6" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((r) => (
+          <>
+            <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    ["all", "All"],
+                    ["paid", "Paid"],
+                    ["partial", "Partial"],
+                    ["unpaid", "Unpaid"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setStatusFilter(value)}
+                    className={
+                      "rounded-full px-3 py-1 text-xs font-semibold transition-colors " +
+                      (statusFilter === value ? "bg-navy-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")
+                    }
+                  >
+                    {label} ({statusCounts[value]})
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative">
+                  <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    placeholder="Search by name or email"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="w-full pl-9 sm:w-56"
+                  />
+                </div>
+                {categories.length > 0 && (
+                  <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="sm:w-48">
+                    <option value="">All categories</option>
+                    {categories.map((c) => (
+                      <option key={c} value={c}>
+                        {MEMBERSHIP_CATEGORY_LABELS[c] || c}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </div>
+            </div>
+
+            {filteredRows.length === 0 ? (
+              <CardBody>
+                <EmptyState icon={<IconBarChart className="h-5 w-5" />} title="No members match those filters" />
+              </CardBody>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
+                      <th className="px-5 py-3 sm:px-6">Member</th>
+                      <th className="px-5 py-3 sm:px-6">Category</th>
+                      <th className="px-5 py-3 sm:px-6">Paid</th>
+                      <th className="px-5 py-3 sm:px-6">Balance</th>
+                      <th className="px-5 py-3 sm:px-6">Status</th>
+                      <th className="px-5 py-3 sm:px-6" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredRows.map((r) => (
                   <tr key={r.userId}>
                     <td className="px-5 py-3 sm:px-6">
                       <p className="font-medium text-navy-900">{r.name}</p>
@@ -133,10 +203,12 @@ export default function DuesReport() {
                       </Button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </Card>
 
