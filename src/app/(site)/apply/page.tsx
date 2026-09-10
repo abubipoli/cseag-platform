@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { IconCheckCircle, IconChevronRight } from "@/components/ui/icons";
 import { PasswordRequirements, isStrongPassword } from "@/components/ui/PasswordRequirements";
 import { cn } from "@/lib/cn";
+import CodeOfConductModal from "./CodeOfConductModal";
 
 // Corporate membership is handled separately (SRS 6.11), not via self-service application.
 const CATEGORIES = Object.entries(MEMBERSHIP_CATEGORY_LABELS).filter(([value]) => value !== "corporate");
@@ -31,6 +32,7 @@ export default function ApplyPage() {
   const [expertise, setExpertise] = useState<string[]>([]);
   const [isEmployed, setIsEmployed] = useState(true);
   const [csaAccredited, setCsaAccredited] = useState(false);
+  const [showCodeOfConduct, setShowCodeOfConduct] = useState(false);
 
   const [fields, setFields] = useState({
     title: "",
@@ -370,7 +372,19 @@ export default function ApplyPage() {
                   <p className="mt-1">{expertise.length} area(s) of expertise selected</p>
                 </div>
                 <Checkbox
-                  label="I accept the CSEAG Code of Conduct."
+                  label={
+                    <>
+                      I accept the CSEAG{" "}
+                      <button
+                        type="button"
+                        onClick={() => setShowCodeOfConduct(true)}
+                        className="font-medium text-accent-700 underline underline-offset-2 hover:text-accent-800"
+                      >
+                        Code of Conduct
+                      </button>
+                      .
+                    </>
+                  }
                   checked={fields.codeOfConductAccepted}
                   onChange={(e) => set("codeOfConductAccepted", e.target.checked)}
                 />
@@ -399,6 +413,8 @@ export default function ApplyPage() {
           )}
         </div>
       </div>
+
+      {showCodeOfConduct && <CodeOfConductModal onClose={() => setShowCodeOfConduct(false)} />}
     </div>
   );
 }
