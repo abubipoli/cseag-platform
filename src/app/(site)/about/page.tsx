@@ -43,7 +43,7 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4 self-start">
-            <StatTile icon={<IconUsers className="h-5 w-5" />} label="Member community" value="20+ experts" />
+            <StatTile icon={<IconUsers className="h-5 w-5" />} label="Member community" value="200+ experts" />
             <StatTile icon={<IconGlobe className="h-5 w-5" />} label="Coverage" value="Nationwide" />
             <StatTile icon={<IconShieldCheck className="h-5 w-5" />} label="Focus" value="32 specialty areas" />
             <StatTile icon={<IconTarget className="h-5 w-5" />} label="Mission" value="Public digital safety" />
