@@ -22,7 +22,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   });
   if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
+  // RSVP is a member-only benefit (surfaced from the member dashboard, not
+  // the public event page) — enforced here too, not just by hiding the form.
   const session = await getSession();
+  if (!session || session.role === "applicant") {
+    return NextResponse.json({ error: "Log in as a member to RSVP for this event." }, { status: 403 });
+  }
 
   await db.insert(eventRsvps).values({
     id: randomUUID(),

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getPublishedContentBySlug } from "@/lib/content";
-import { IconCalendar, IconMapPin } from "@/components/ui/icons";
+import { IconCalendar, IconMapPin, IconLock } from "@/components/ui/icons";
 import { SidebarAd } from "@/components/marketing/SidebarAd";
 import RsvpForm from "./RsvpForm";
 
@@ -45,7 +45,28 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         <div className="prose prose-slate mt-6 max-w-none whitespace-pre-line text-slate-700">{item.body}</div>
 
         <div className="mt-10">
-          <RsvpForm eventId={item.id} eventTitle={item.title} />
+          {isMember ? (
+            <RsvpForm eventId={item.id} eventTitle={item.title} />
+          ) : (
+            <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <IconLock className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
+              <div>
+                <p className="text-sm font-semibold text-navy-900">RSVP is for CSEAG members</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {session ? (
+                    "Your account needs to be an approved member to RSVP."
+                  ) : (
+                    <>
+                      <Link href="/login" className="font-medium text-accent-700 hover:text-accent-800">
+                        Log in
+                      </Link>{" "}
+                      as a member to RSVP for this event.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </article>
 
