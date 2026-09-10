@@ -14,26 +14,35 @@ import { getBaseUrl } from "@/lib/base-url";
 
 export async function GET(req: NextRequest) {
   const baseUrl = await getBaseUrl();
-  const session = await getSession();
-  if (!session) return NextResponse.redirect(`${baseUrl}/login`);
+  const dashboardUrl = (result: "success" | "failed") => `${baseUrl}/dashboard?tab=dues&payment=${result}`;
 
   const reference = req.nextUrl.searchParams.get("reference");
-  const dashboardUrl = (result: "success" | "failed") => `${baseUrl}/dashboard?tab=dues&payment=${result}`;
   if (!reference) return NextResponse.redirect(dashboardUrl("failed"));
 
   const payment = await db.query.duesPayments.findFirst({ where: eq(duesPayments.paystackReference, reference) });
-  if (!payment || payment.userId !== session.userId) return NextResponse.redirect(dashboardUrl("failed"));
+  if (!payment) return NextResponse.redirect(dashboardUrl("failed"));
 
+  // Verify and record the payment regardless of whether the member's
+  // session is still alive — a Paystack checkout (card/mobile-money entry,
+  // an OTP wait) can easily outlast an idle timeout or a slow browser
+  // redirect back, and Paystack has already moved real money by this point.
+  // The `payment` row itself is how this is tied to the right member, not
+  // the current session.
   const settings = await getPaymentSettings();
   if (!settings.paystackSecretKey) return NextResponse.redirect(dashboardUrl("failed"));
 
-  const result = await verifyPaystackTransaction({ secretKey: settings.paystackSecretKey, reference });
-  const succeeded = result.ok && result.success;
+  if (payment.status === "pending") {
+    const result = await verifyPaystackTransaction({ secretKey: settings.paystackSecretKey, reference });
+    const succeeded = result.ok && result.success;
+    await db
+      .update(duesPayments)
+      .set({ status: succeeded ? "success" : "failed" })
+      .where(eq(duesPayments.id, payment.id));
+  }
 
-  await db
-    .update(duesPayments)
-    .set({ status: succeeded ? "success" : "failed" })
-    .where(eq(duesPayments.id, payment.id));
+  const session = await getSession();
+  if (!session || session.userId !== payment.userId) return NextResponse.redirect(`${baseUrl}/login`);
 
-  return NextResponse.redirect(dashboardUrl(succeeded ? "success" : "failed"));
+  const fresh = await db.query.duesPayments.findFirst({ where: eq(duesPayments.id, payment.id) });
+  return NextResponse.redirect(dashboardUrl(fresh?.status === "success" ? "success" : "failed"));
 }

@@ -13,9 +13,18 @@ const LAST_SEEN_COOKIE = "cseag_last_seen";
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const COOKIE_MAX_AGE = 60 * 60 * 12; // matches the session JWT's own ceiling
 
+// Paystack redirects the browser here after checkout, which can easily
+// take longer than the idle window (entering card/mobile-money details,
+// waiting on an OTP). The payment must still be verified and recorded even
+// if the member's session has gone idle in the meantime — see the route
+// itself for the matching fix (it doesn't hard-require a live session
+// either, as defense in depth).
+const IDLE_EXEMPT_PATHS = ["/api/member/dues/verify"];
+
 export function middleware(req: NextRequest) {
   const sessionToken = req.cookies.get(SESSION_COOKIE)?.value;
   if (!sessionToken) return NextResponse.next();
+  if (IDLE_EXEMPT_PATHS.some((p) => req.nextUrl.pathname.startsWith(p))) return NextResponse.next();
 
   const lastSeenRaw = req.cookies.get(LAST_SEEN_COOKIE)?.value;
   const lastSeen = lastSeenRaw ? Number(lastSeenRaw) : null;
