@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import HeaderMobileMenu from "./HeaderMobileMenu";
 import LogoutButton from "./LogoutButton";
 import { BrandMark } from "./BrandMark";
+import { IconLayoutDashboard } from "@/components/ui/icons";
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
@@ -43,6 +44,16 @@ export default async function SiteHeader() {
         <div className="hidden items-center gap-3 xl:flex">
           {session ? (
             <>
+              {isStaff && (
+                <Link
+                  href="/dashboard"
+                  title="My member dashboard"
+                  aria-label="My member dashboard"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-accent-700"
+                >
+                  <IconLayoutDashboard className="h-4.5 w-4.5" />
+                </Link>
+              )}
               <ButtonLink href={isStaff ? "/admin" : "/dashboard"} variant="outline" size="sm">
                 {isStaff ? "Admin" : "Dashboard"}
               </ButtonLink>
@@ -65,6 +76,7 @@ export default async function SiteHeader() {
           isLoggedIn={!!session}
           dashboardHref={isStaff ? "/admin" : "/dashboard"}
           dashboardLabel={isStaff ? "Admin" : "Dashboard"}
+          memberDashboardHref={isStaff ? "/dashboard" : undefined}
         />
       </div>
     </header>

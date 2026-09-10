@@ -12,11 +12,16 @@ export default function HeaderMobileMenu({
   isLoggedIn,
   dashboardHref,
   dashboardLabel,
+  memberDashboardHref,
 }: {
   navLinks: { href: string; label: string }[];
   isLoggedIn: boolean;
   dashboardHref: string;
   dashboardLabel: string;
+  // Staff (reviewer/admin/super_admin) get an "Admin" button as their main
+  // dashboard link — this gives them a second way to reach their own member
+  // dashboard too, since they otherwise have no path to it in the header.
+  memberDashboardHref?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -65,6 +70,16 @@ export default function HeaderMobileMenu({
                   <ButtonLink href={dashboardHref} onClick={() => setOpen(false)}>
                     {dashboardLabel}
                   </ButtonLink>
+                  {memberDashboardHref && (
+                    <ButtonLink
+                      href={memberDashboardHref}
+                      variant="outline"
+                      onClick={() => setOpen(false)}
+                      className="w-full justify-center"
+                    >
+                      My Member Dashboard
+                    </ButtonLink>
+                  )}
                   <LogoutButton className="w-full justify-center rounded-full border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-accent-500 hover:text-accent-700" />
                 </>
               ) : (

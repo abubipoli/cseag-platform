@@ -22,6 +22,7 @@ import {
   IconX,
   IconExternalLink,
   IconCheckCircle,
+  IconUserCheck,
 } from "@/components/ui/icons";
 
 interface NavItem {
@@ -103,6 +104,13 @@ export function AdminShell({
       </nav>
 
       <div className="border-t border-white/8 px-3 py-4">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
+        >
+          <IconUserCheck className="h-4.5 w-4.5" />
+          My member dashboard
+        </Link>
         <Link
           href="/"
           className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
