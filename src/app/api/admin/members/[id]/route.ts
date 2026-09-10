@@ -76,8 +76,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (Object.keys(updates).length > 0) {
     await db.update(users).set(updates).where(eq(users.id, id));
   }
-  if (input.membershipCategory) {
-    await db.update(memberProfiles).set({ membershipCategory: input.membershipCategory }).where(eq(memberProfiles.userId, id));
+  const profileUpdates: Record<string, unknown> = {};
+  if (input.membershipCategory) profileUpdates.membershipCategory = input.membershipCategory;
+  if (input.phone) profileUpdates.phone = input.phone;
+  if (Object.keys(profileUpdates).length > 0) {
+    await db.update(memberProfiles).set(profileUpdates).where(eq(memberProfiles.userId, id));
   }
 
   if (input.resetPassword) {

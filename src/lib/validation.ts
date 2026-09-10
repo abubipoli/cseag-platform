@@ -155,6 +155,11 @@ export const adminMemberUpdateSchema = z.object({
   membershipCategory: z.enum(MEMBERSHIP_CATEGORIES).optional(),
   resetPassword: z.boolean().optional(),
   email: z.string().email("Enter a valid email address").optional(),
+  phone: z
+    .string()
+    .min(9)
+    .regex(/^\+?[0-9\s-]{9,15}$/, "Enter a valid phone number, e.g. +233241234567")
+    .optional(),
 });
 
 export const contentItemSchema = z.object({

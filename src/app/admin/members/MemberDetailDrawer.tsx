@@ -65,6 +65,7 @@ export default function MemberDetailDrawer({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
+  const [phoneDraft, setPhoneDraft] = useState("");
   const [dues, setDues] = useState<DuesSummary | null>(null);
 
   useEffect(() => {
@@ -83,6 +84,7 @@ export default function MemberDetailDrawer({
       .then((d) => {
         setDetail(d);
         setEmailDraft(d?.user?.email || "");
+        setPhoneDraft(d?.profile?.phone || "");
       });
 
     if (currentRole === "super_admin") {
@@ -109,6 +111,7 @@ export default function MemberDetailDrawer({
         .then((d) => {
           setDetail(d);
           setEmailDraft(d?.user?.email || "");
+          setPhoneDraft(d?.profile?.phone || "");
         });
     } else {
       const data = await res.json().catch(() => ({}));
@@ -205,6 +208,26 @@ export default function MemberDetailDrawer({
                 variant="outline"
                 disabled={busy || !emailDraft || emailDraft === detail.user.email}
                 onClick={() => patch({ email: emailDraft }, "Email address updated.")}
+              >
+                Update
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Phone number</label>
+            <div className="flex gap-2">
+              <Input
+                type="tel"
+                value={phoneDraft}
+                disabled={busy}
+                onChange={(e) => setPhoneDraft(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                disabled={busy || !phoneDraft || phoneDraft === detail.profile.phone}
+                onClick={() => patch({ phone: phoneDraft }, "Phone number updated.")}
               >
                 Update
               </Button>
