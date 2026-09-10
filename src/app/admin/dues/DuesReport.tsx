@@ -32,7 +32,21 @@ interface Summary {
   unpaidCount: number;
 }
 
+interface PaymentHistoryItem {
+  id: string;
+  amountGhs: number;
+  method: "paystack" | "manual";
+  status: "pending" | "success" | "failed";
+  note: string | null;
+  createdAt: string;
+}
+
 const STATUS_LABELS: Record<Row["status"], string> = { paid: "Paid", partial: "Partially paid", unpaid: "Not paid" };
+const PAYMENT_STATUS_LABELS: Record<PaymentHistoryItem["status"], string> = {
+  success: "Success",
+  pending: "Pending",
+  failed: "Failed",
+};
 
 function ghs(n: number) {
   return `GHS ${n.toLocaleString()}`;
@@ -48,6 +62,18 @@ export default function DuesReport() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | Row["status"]>("all");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [historyFor, setHistoryFor] = useState<Row | null>(null);
+  const [history, setHistory] = useState<PaymentHistoryItem[] | null>(null);
+
+  useEffect(() => {
+    if (!historyFor) {
+      setHistory(null);
+      return;
+    }
+    fetch(`/api/admin/members/${historyFor.userId}/dues`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { payments: PaymentHistoryItem[] } | null) => setHistory(d?.payments || []));
+  }, [historyFor]);
 
   function load() {
     fetch("/api/admin/dues")
@@ -182,7 +208,11 @@ export default function DuesReport() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredRows.map((r) => (
-                  <tr key={r.userId}>
+                  <tr
+                    key={r.userId}
+                    onClick={() => setHistoryFor(r)}
+                    className="cursor-pointer hover:bg-slate-50"
+                  >
                     <td className="px-5 py-3 sm:px-6">
                       <p className="font-medium text-navy-900">{r.name}</p>
                       <p className="text-xs text-slate-400">{r.email}</p>
@@ -198,7 +228,14 @@ export default function DuesReport() {
                       </Badge>
                     </td>
                     <td className="px-5 py-3 text-right sm:px-6">
-                      <Button variant="outline" size="sm" onClick={() => setRecordFor(r)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRecordFor(r);
+                        }}
+                      >
                         Record payment
                       </Button>
                     </td>
@@ -227,6 +264,64 @@ export default function DuesReport() {
           <Button onClick={handleRecord} disabled={saving || !amount}>
             {saving ? "Saving..." : "Record payment"}
           </Button>
+        </div>
+      </Drawer>
+
+      <Drawer open={!!historyFor} onClose={() => setHistoryFor(null)} title={`Payment history — ${historyFor?.name || ""}`}>
+        <div className="space-y-4">
+          {historyFor && (
+            <div className="grid grid-cols-3 gap-3 rounded-xl bg-slate-50 p-4 text-center text-sm">
+              <div>
+                <p className="text-xs text-slate-400">Dues</p>
+                <p className="mt-0.5 font-semibold text-navy-900">{ghs(historyFor.duesAmountGhs)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Paid</p>
+                <p className="mt-0.5 font-semibold text-navy-900">{ghs(historyFor.totalPaidGhs)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Balance</p>
+                <p className="mt-0.5 font-semibold text-navy-900">{ghs(historyFor.balanceGhs)}</p>
+              </div>
+            </div>
+          )}
+
+          {!history ? (
+            <p className="text-sm text-slate-400">Loading…</p>
+          ) : history.length === 0 ? (
+            <EmptyState icon={<IconBarChart className="h-5 w-5" />} title="No payments recorded yet" />
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {history.map((p) => (
+                <li key={p.id} className="flex items-start justify-between gap-3 py-3 text-sm">
+                  <div>
+                    <p className="font-medium text-navy-900">{ghs(p.amountGhs)}</p>
+                    <p className="text-xs text-slate-400">
+                      {new Date(p.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} ·{" "}
+                      {p.method === "paystack" ? "Paystack" : "Manual"}
+                    </p>
+                    {p.note && <p className="mt-1 text-xs text-slate-500">{p.note}</p>}
+                  </div>
+                  <Badge tone={statusTone(p.status === "success" ? "active" : p.status === "failed" ? "inactive" : "pending")}>
+                    {PAYMENT_STATUS_LABELS[p.status]}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {historyFor && (
+            <Button
+              variant="outline"
+              className="w-full justify-center"
+              onClick={() => {
+                setRecordFor(historyFor);
+                setHistoryFor(null);
+              }}
+            >
+              Record a payment
+            </Button>
+          )}
         </div>
       </Drawer>
     </div>
