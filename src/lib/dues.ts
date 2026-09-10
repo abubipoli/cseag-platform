@@ -5,6 +5,7 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db/client";
 import { duesPayments } from "@/db/schema";
+import { verifyPaystackTransaction } from "./paystack";
 
 export function currentDuesYear(): string {
   return new Date().getFullYear().toString();
@@ -42,6 +43,48 @@ export function summarizeDuesPayments(
     status,
     payments: [...payments].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   };
+}
+
+// Confirms one pending Paystack payment against Paystack directly and
+// updates its row — shared by the checkout-redirect callback, the Paystack
+// webhook, and the dues-status endpoint's own reconciliation pass below.
+// A member's browser doesn't always make it back to the redirect callback
+// (closed tab, lost connection, session gone idle mid-checkout), so nothing
+// here should assume that route is the only way a payment gets confirmed.
+//
+// Returns "pending" (leaving the row untouched) rather than "failed" when
+// Paystack's API itself couldn't be reached — a transient network hiccup on
+// our side is not evidence the payment failed, and marking it failed would
+// be a false negative on money that may have actually gone through.
+export async function reconcilePaystackPayment(
+  reference: string,
+  secretKey: string
+): Promise<"success" | "failed" | "pending" | "not_found"> {
+  const payment = await db.query.duesPayments.findFirst({ where: eq(duesPayments.paystackReference, reference) });
+  if (!payment) return "not_found";
+  if (payment.status !== "pending") return payment.status;
+
+  const result = await verifyPaystackTransaction({ secretKey, reference });
+  if (!result.ok) return "pending";
+
+  const status = result.success ? "success" : "failed";
+  await db.update(duesPayments).set({ status }).where(eq(duesPayments.id, payment.id));
+  return status;
+}
+
+// Re-checks every one of a member's still-pending Paystack payments. Called
+// whenever the member loads their dues status, so a payment that missed the
+// redirect callback self-heals the next time they look at the page — no
+// separate "did it go through?" step for them.
+export async function reconcilePendingDuesPayments(userId: string, secretKey: string): Promise<void> {
+  const pending = await db.query.duesPayments.findMany({
+    where: and(eq(duesPayments.userId, userId), eq(duesPayments.status, "pending")),
+  });
+  for (const payment of pending) {
+    if (payment.paystackReference) {
+      await reconcilePaystackPayment(payment.paystackReference, secretKey);
+    }
+  }
 }
 
 export async function getMemberDuesSummary(
