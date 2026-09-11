@@ -17,7 +17,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { put } from "@vercel/blob";
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_BYTES = 25 * 1024 * 1024; // 25MB — resource PDFs/decks routinely exceed 8MB
 const ALLOWED_EXTENSIONS = new Set([".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp"]);
 
 export async function POST(req: NextRequest) {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "File is too large (max 8MB)" }, { status: 413 });
+    return NextResponse.json({ error: "File is too large (max 25MB)" }, { status: 413 });
   }
 
   const ext = path.extname(file.name).toLowerCase();

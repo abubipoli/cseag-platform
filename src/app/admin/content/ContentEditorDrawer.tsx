@@ -91,25 +91,41 @@ export default function ContentEditorDrawer({
 
   async function handleUpload(file: File) {
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/uploads", { method: "POST", body: fd });
-    setUploading(false);
-    if (res.ok) {
-      const data = await res.json();
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/uploads", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error || "Couldn't upload that file. Try again.");
+        return;
+      }
       setForm((f) => ({ ...f, fileUrl: data.url }));
+    } catch {
+      setError("Couldn't upload that file — check your connection and try again.");
+    } finally {
+      setUploading(false);
     }
   }
 
   async function handleImageUpload(file: File) {
     setUploadingImage(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/uploads", { method: "POST", body: fd });
-    setUploadingImage(false);
-    if (res.ok) {
-      const data = await res.json();
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/uploads", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error || "Couldn't upload that picture. Try again.");
+        return;
+      }
       setForm((f) => ({ ...f, imageUrl: data.url }));
+    } catch {
+      setError("Couldn't upload that picture — check your connection and try again.");
+    } finally {
+      setUploadingImage(false);
     }
   }
 
