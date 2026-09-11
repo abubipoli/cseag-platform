@@ -40,6 +40,9 @@ yarn-error.log*
 /data/*.db
 /data/*.db-*
 
+# user-uploaded files (runtime only — see src/app/api/uploads/route.ts)
+/storage/uploads/*
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

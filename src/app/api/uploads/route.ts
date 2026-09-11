@@ -2,23 +2,28 @@
 // profile photo, content image/attachment — SRS 6.2 / 6.5 / 6.9) and
 // returns its public URL.
 //
-// Uses Vercel Blob in any environment where BLOB_READ_WRITE_TOKEN is set
-// (production, and local dev once `vercel env pull` has fetched it).
-// Falls back to writing into public/uploads on local disk otherwise, so
-// local development works without a Blob store.
+// Written to storage/uploads — a sibling of public/, not inside it. The
+// production deploy process fully replaces public/, node_modules, .next,
+// server.js, and package.json on every release, but leaves any other
+// top-level directory alone; storage/ is deliberately outside that blast
+// radius so uploaded files survive deploys. Served back same-origin via
+// /files/[filename] (see src/app/files/[filename]/route.ts) rather than a
+// third-party host, so a public download link never exposes a storage
+// provider's domain.
+//
 // Deliberately allowed without a session: the public membership application
 // (SRS 6.2) needs to attach a CV/certification before an account exists.
-// Abuse resistance instead comes from a strict extension allow-list, an 8MB
+// Abuse resistance instead comes from a strict extension allow-list, a 25MB
 // cap, and random non-guessable filenames.
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { put } from "@vercel/blob";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25MB — resource PDFs/decks routinely exceed 8MB
 const ALLOWED_EXTENSIONS = new Set([".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp"]);
+const STORAGE_DIR = path.join(process.cwd(), "storage", "uploads");
 
 export async function POST(req: NextRequest) {
   const form = await req.formData().catch(() => null);
@@ -39,16 +44,9 @@ export async function POST(req: NextRequest) {
   }
 
   const filename = `${randomUUID()}${ext}`;
-
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(`uploads/${filename}`, file, { access: "public" });
-    return NextResponse.json({ url: blob.url }, { status: 201 });
-  }
-
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadsDir, { recursive: true });
+  await mkdir(STORAGE_DIR, { recursive: true });
   const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadsDir, filename), bytes);
+  await writeFile(path.join(STORAGE_DIR, filename), bytes);
 
-  return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
+  return NextResponse.json({ url: `/files/${filename}` }, { status: 201 });
 }
