@@ -61,6 +61,8 @@ export default function WhatWeDoPage() {
         kicker="What We Do"
         title="Programs built around Ghana's real cybersecurity needs"
         description="From hands-on training to public advocacy, everything CSEAG runs is designed to raise the standard of practice — and public trust — in Ghana's digital environment."
+        image="/marketing/ai-network.jpg"
+        dark
       />
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">

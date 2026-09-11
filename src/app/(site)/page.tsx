@@ -97,6 +97,27 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Circuit video band */}
+      <section className="relative isolate overflow-hidden bg-navy-950 py-14 text-center text-white">
+        <video
+          className="absolute inset-0 h-full w-full object-cover opacity-40"
+          src="/hero/circuit-bg.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-navy-950/70 via-navy-950/50 to-navy-950/80" aria-hidden />
+        <Reveal className="relative mx-auto max-w-2xl px-4 sm:px-6">
+          <p className="font-serif-display text-xl sm:text-2xl">Real-time vigilance. Nationwide reach.</p>
+          <p className="mt-3 text-sm text-white/70">
+            CSEAG members actively monitor, respond to, and share intelligence on the threats facing Ghana&rsquo;s
+            digital infrastructure — every day, across every sector.
+          </p>
+        </Reveal>
+      </section>
+
       {/* Stats strip */}
       <section className="border-b border-slate-100 bg-white">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 px-4 py-10 sm:grid-cols-4 sm:px-6">
@@ -184,12 +205,19 @@ export default async function HomePage() {
       )}
 
       {/* CTA */}
-      <section className="relative overflow-hidden bg-slate-50">
-        <div className="bg-grid absolute inset-0 opacity-50 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
-        <div className="absolute left-1/2 top-0 h-64 w-96 -translate-x-1/2 rounded-full bg-accent-100/70 blur-[100px]" aria-hidden />
+      <section className="relative overflow-hidden bg-navy-950 text-white">
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative section backdrop photo */}
+        <img
+          src="/marketing/cyber-security.jpg"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/85 to-navy-950/70" aria-hidden />
+        <div className="absolute left-1/2 top-0 h-64 w-96 -translate-x-1/2 rounded-full bg-accent-500/20 blur-[100px]" aria-hidden />
         <Reveal className="relative mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
-          <h2 className="font-serif-display text-2xl text-navy-900 sm:text-3xl">Ready to join CSEAG?</h2>
-          <p className="mx-auto mt-3 max-w-xl text-slate-500">
+          <h2 className="font-serif-display text-2xl sm:text-3xl">Ready to join CSEAG?</h2>
+          <p className="mx-auto mt-3 max-w-xl text-white/70">
             Whether you&rsquo;re a student, a working professional, or represent an organization, there&rsquo;s a
             place for you. Apply online and hear back from our membership committee — you&rsquo;ll get an
             immediate email and SMS confirmation the moment you apply.

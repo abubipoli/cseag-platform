@@ -21,6 +21,8 @@ export default async function ResourcesPage() {
         kicker="Resource Library"
         title="Guides, templates &amp; training materials"
         description="Some resources are open to everyone; others are reserved for CSEAG members."
+        image="/marketing/ethical-hacking.jpg"
+        dark
         compact
       />
 

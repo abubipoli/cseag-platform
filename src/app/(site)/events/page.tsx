@@ -26,6 +26,7 @@ export default async function EventsPage() {
         kicker="Training &amp; Events"
         title="Upcoming Events"
         description="Awareness training, OSINT programmes, and community meetups — open to members and, where noted, the public."
+        image="/hero/summit-3.jpg"
         compact
       />
 

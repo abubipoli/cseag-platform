@@ -41,6 +41,8 @@ export default function ExpertsPage() {
         kicker="Verified Professionals"
         title="Expert Directory"
         description="Search CSEAG's community of certified cybersecurity professionals by name or specialty."
+        image="/marketing/cyber-security.jpg"
+        dark
         compact
       />
 

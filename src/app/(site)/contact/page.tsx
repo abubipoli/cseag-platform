@@ -13,6 +13,8 @@ export default function ContactPage() {
         kicker="Get in touch"
         title="Contact CSEAG"
         description="Questions about membership, training, or working with our experts? Send us a message and the right team will get back to you."
+        image="/marketing/workstation.jpg"
+        dark
         compact
       />
 
