@@ -7,6 +7,8 @@ import {
   IconGraduationCap,
   IconTarget,
   IconFileText,
+  IconBriefcase,
+  IconGlobe,
 } from "@/components/ui/icons";
 import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 import { Reveal } from "@/components/ui/Reveal";
@@ -27,12 +29,45 @@ const HERO_IMAGES = [
 ];
 
 const VALUES = [
-  ["Integrity", "Honesty, transparency, and accountability in cybersecurity practice."],
-  ["Professionalism", "Excellence, competence, and reliability."],
-  ["Collaboration", "A united front across sectors and disciplines."],
-  ["Continuous Learning", "Staying ahead of an ever-evolving threat landscape."],
-  ["Public Service", "Promoting digital safety for every Ghanaian."],
-];
+  {
+    title: "Integrity",
+    body: "Honesty, transparency, and accountability in cybersecurity practice.",
+    icon: IconShieldCheck,
+    color: "sky",
+  },
+  {
+    title: "Professionalism",
+    body: "Excellence, competence, and reliability.",
+    icon: IconBriefcase,
+    color: "indigo",
+  },
+  {
+    title: "Collaboration",
+    body: "A united front across sectors and disciplines.",
+    icon: IconUsers,
+    color: "accent",
+  },
+  {
+    title: "Continuous Learning",
+    body: "Staying ahead of an ever-evolving threat landscape.",
+    icon: IconGraduationCap,
+    color: "amber",
+  },
+  {
+    title: "Public Service",
+    body: "Promoting digital safety for every Ghanaian.",
+    icon: IconGlobe,
+    color: "rose",
+  },
+] as const;
+
+const VALUE_COLORS: Record<string, { bar: string; chip: string; icon: string }> = {
+  sky: { bar: "bg-sky-500", chip: "bg-sky-50", icon: "text-sky-600" },
+  indigo: { bar: "bg-indigo-500", chip: "bg-indigo-50", icon: "text-indigo-600" },
+  accent: { bar: "bg-accent-500", chip: "bg-accent-50", icon: "text-accent-600" },
+  amber: { bar: "bg-amber-500", chip: "bg-amber-50", icon: "text-amber-600" },
+  rose: { bar: "bg-rose-500", chip: "bg-rose-50", icon: "text-rose-600" },
+};
 
 interface NewsItem {
   id: string;
@@ -137,20 +172,34 @@ export default async function HomePage() {
       </section>
 
       {/* Core values */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-accent-600">What we stand for</p>
-          <h2 className="font-serif-display mt-2 text-2xl text-navy-900 sm:text-3xl">Our Core Values</h2>
-        </Reveal>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-          {VALUES.map(([title, body], i) => (
-            <Reveal key={title} delay={i * 80}>
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg">
-                <p className="font-semibold text-navy-900">{title}</p>
-                <p className="mt-2 text-sm text-slate-600">{body}</p>
-              </div>
-            </Reveal>
-          ))}
+      <section className="relative overflow-hidden bg-white py-16">
+        <div className="bg-dot-grid absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-accent-600">What we stand for</p>
+            <h2 className="font-serif-display mt-2 text-2xl text-navy-900 sm:text-3xl">Our Core Values</h2>
+          </Reveal>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            {VALUES.map((v, i) => {
+              const c = VALUE_COLORS[v.color];
+              return (
+                <Reveal key={v.title} delay={i * 80}>
+                  <div className="group h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[var(--shadow-card)] transition-all hover:-translate-y-1 hover:shadow-lg">
+                    <div className={`h-1 w-full ${c.bar}`} aria-hidden />
+                    <div className="p-5">
+                      <span
+                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${c.chip} ${c.icon} transition-transform group-hover:scale-110`}
+                      >
+                        <v.icon className="h-5 w-5" />
+                      </span>
+                      <p className="font-serif-display mt-4 text-lg text-navy-900">{v.title}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{v.body}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
         </div>
       </section>
 
