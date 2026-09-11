@@ -7,14 +7,15 @@ import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { serviceRequests, memberProfiles, users } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { serviceRequestUpdateSchema } from "@/lib/validation";
 import { notify } from "@/lib/notifications";
 import { recordAudit } from "@/lib/audit";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "reviewer")) {
+  if (!session || !(await hasPermission(session, "serviceRequests"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;

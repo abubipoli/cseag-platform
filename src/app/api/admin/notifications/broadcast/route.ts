@@ -4,14 +4,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { inArray, eq, ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, memberProfiles } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { broadcastSchema } from "@/lib/validation";
 import { notify } from "@/lib/notifications";
 import { recordAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "communications"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

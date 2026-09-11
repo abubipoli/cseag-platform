@@ -5,13 +5,14 @@ import { randomUUID } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { contentItems } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { contentItemSchema } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "content"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const type = new URL(req.url).searchParams.get("type");
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "content"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

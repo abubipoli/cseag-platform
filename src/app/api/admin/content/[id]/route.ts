@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { contentItems } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { contentItemSchema } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "content"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
@@ -47,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "content"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;

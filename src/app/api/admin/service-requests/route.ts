@@ -5,11 +5,12 @@ import { desc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db/client";
 import { serviceRequests, memberProfiles } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 
 export async function GET() {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "reviewer")) {
+  if (!(await hasPermission(session, "serviceRequests"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

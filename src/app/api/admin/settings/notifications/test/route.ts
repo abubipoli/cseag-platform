@@ -5,7 +5,8 @@
 // notifications.
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { getNotificationSettings } from "@/lib/settings";
 import { resolveEmailProvider, resolveSmsProvider } from "@/lib/notifications";
 
@@ -13,7 +14,7 @@ const testSchema = z.object({ phone: z.string().optional() });
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!session || !(await hasPermission(session, "settings"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

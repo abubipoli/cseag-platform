@@ -2,7 +2,8 @@
 // leaving a field blank) one notification template's override wording.
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { notificationTemplateUpdateSchema } from "@/lib/validation";
 import { setTemplateOverride } from "@/lib/notifications/store";
 import { TEMPLATE_LABELS } from "@/lib/notifications/templates";
@@ -11,7 +12,7 @@ import { recordAudit } from "@/lib/audit";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ key: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!session || !(await hasPermission(session, "settings"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

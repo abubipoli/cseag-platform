@@ -4,14 +4,15 @@
 // "leave unchanged".
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { getPaymentSettings, updatePaymentSettings } from "@/lib/settings";
 import { paymentSettingsSchema } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 
 export async function GET() {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!session || !(await hasPermission(session, "settings"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -25,7 +26,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!session || !(await hasPermission(session, "settings"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

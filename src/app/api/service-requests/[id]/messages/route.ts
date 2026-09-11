@@ -13,7 +13,8 @@ import { randomUUID } from "node:crypto";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { serviceRequests, serviceRequestMessages, memberProfiles, users } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { serviceRequestMessageSchema } from "@/lib/validation";
 import { notify } from "@/lib/notifications";
 
@@ -28,7 +29,7 @@ async function resolveViewer(
 ): Promise<Viewer | null> {
   const session = await getSession();
   if (session) {
-    if (roleAtLeast(session.role, "reviewer")) {
+    if (await hasPermission(session, "serviceRequests")) {
       const profile = await db.query.memberProfiles.findFirst({ where: eq(memberProfiles.userId, session.userId) });
       return { role: "admin", userId: session.userId, name: profile?.fullName || "CSEAG Team" };
     }

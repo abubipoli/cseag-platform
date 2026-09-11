@@ -7,7 +7,8 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, memberProfiles } from "@/db/schema";
-import { getSession, roleAtLeast, generateTemporaryPassword, hashPassword } from "@/lib/auth";
+import { getSession, generateTemporaryPassword, hashPassword } from "@/lib/auth";
+import { hasPermission, canAssignRole } from "@/lib/permissions";
 import { adminCreateUserSchema } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
@@ -15,7 +16,7 @@ import { ROLE_LABELS } from "@/lib/constants";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "reviewer")) {
+  if (!(await hasPermission(session, "membersView"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "membersManage"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
   const input = parsed.data;
 
-  if ((input.role === "admin" || input.role === "super_admin") && !roleAtLeast(session.role, "super_admin")) {
+  if (!canAssignRole(session, input.role)) {
     return NextResponse.json({ error: "Only a super admin can grant administrator access." }, { status: 403 });
   }
 

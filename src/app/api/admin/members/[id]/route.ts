@@ -6,14 +6,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, memberProfiles, applications } from "@/db/schema";
-import { getSession, roleAtLeast, generateTemporaryPassword, hashPassword } from "@/lib/auth";
+import { getSession, generateTemporaryPassword, hashPassword } from "@/lib/auth";
+import { hasPermission, canAssignRole } from "@/lib/permissions";
 import { adminMemberUpdateSchema } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "reviewer")) {
+  if (!(await hasPermission(session, "membersView"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
@@ -40,7 +41,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "reviewer")) {
+  if (!session || !(await hasPermission(session, "membersView"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await params;
@@ -55,11 +56,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const target = await db.query.users.findFirst({ where: eq(users.id, id) });
   if (!target) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (input.role && (input.role === "admin" || input.role === "super_admin") && !roleAtLeast(session.role, "super_admin")) {
+  if (input.role && !canAssignRole(session, input.role)) {
     return NextResponse.json({ error: "Only a super admin can grant administrator access." }, { status: 403 });
   }
-  if (!roleAtLeast(session.role, "admin") && (input.role || input.isActive !== undefined || input.email)) {
-    return NextResponse.json({ error: "Reviewers can view members but not change role, status, or email." }, { status: 403 });
+  if (
+    (input.role || input.isActive !== undefined || input.email) &&
+    !(await hasPermission(session, "membersManage"))
+  ) {
+    return NextResponse.json({ error: "You don't have permission to change role, status, or email." }, { status: 403 });
   }
 
   if (input.email && input.email !== target.email) {

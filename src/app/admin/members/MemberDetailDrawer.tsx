@@ -53,11 +53,15 @@ interface Detail {
 export default function MemberDetailDrawer({
   memberId,
   currentRole,
+  canManage = false,
+  canViewDues = false,
   onClose,
   onChanged,
 }: {
   memberId: string | null;
   currentRole?: string;
+  canManage?: boolean;
+  canViewDues?: boolean;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -87,12 +91,12 @@ export default function MemberDetailDrawer({
         setPhoneDraft(d?.profile?.phone || "");
       });
 
-    if (currentRole === "super_admin") {
+    if (canViewDues) {
       fetch(`/api/admin/members/${memberId}/dues`)
         .then((r) => (r.ok ? r.json() : null))
         .then(setDues);
     }
-  }, [memberId, currentRole]);
+  }, [memberId, canViewDues]);
 
   async function patch(body: Record<string, unknown>, successMessage: string) {
     if (!memberId) return;
@@ -200,17 +204,19 @@ export default function MemberDetailDrawer({
               <Input
                 type="email"
                 value={emailDraft}
-                disabled={busy}
+                disabled={busy || !canManage}
                 onChange={(e) => setEmailDraft(e.target.value)}
                 className="flex-1"
               />
-              <Button
-                variant="outline"
-                disabled={busy || !emailDraft || emailDraft === detail.user.email}
-                onClick={() => patch({ email: emailDraft }, "Email address updated.")}
-              >
-                Update
-              </Button>
+              {canManage && (
+                <Button
+                  variant="outline"
+                  disabled={busy || !emailDraft || emailDraft === detail.user.email}
+                  onClick={() => patch({ email: emailDraft }, "Email address updated.")}
+                >
+                  Update
+                </Button>
+              )}
             </div>
           </div>
 
@@ -239,7 +245,7 @@ export default function MemberDetailDrawer({
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Role</label>
               <Select
                 value={detail.user.role}
-                disabled={busy}
+                disabled={busy || !canManage}
                 onChange={(e) => patch({ role: e.target.value }, "Role updated.")}
               >
                 {Object.entries(ROLE_LABELS).map(([value, label]) => (
@@ -279,7 +285,7 @@ export default function MemberDetailDrawer({
             </div>
           )}
 
-          {currentRole === "super_admin" && dues && (
+          {canViewDues && dues && (
             <div className="rounded-xl border border-slate-200 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase text-slate-400">Membership dues — {dues.year}</p>
@@ -334,15 +340,16 @@ export default function MemberDetailDrawer({
 
       {detail && (
         <div className="flex flex-wrap gap-2">
-          {detail.user.isActive ? (
-            <Button variant="danger" disabled={busy} onClick={() => patch({ isActive: false }, "Member deactivated.")}>
-              Deactivate
-            </Button>
-          ) : (
-            <Button variant="primary" disabled={busy} onClick={() => patch({ isActive: true }, "Member reinstated.")}>
-              Reinstate
-            </Button>
-          )}
+          {canManage &&
+            (detail.user.isActive ? (
+              <Button variant="danger" disabled={busy} onClick={() => patch({ isActive: false }, "Member deactivated.")}>
+                Deactivate
+              </Button>
+            ) : (
+              <Button variant="primary" disabled={busy} onClick={() => patch({ isActive: true }, "Member reinstated.")}>
+                Reinstate
+              </Button>
+            ))}
           <Button
             variant="outline"
             disabled={busy}
@@ -350,7 +357,7 @@ export default function MemberDetailDrawer({
           >
             Reset password
           </Button>
-          {detail.user.mfaEnabled && (
+          {canManage && detail.user.mfaEnabled && (
             <Button variant="outline" disabled={busy} onClick={handleResetMfa}>
               Reset 2FA
             </Button>

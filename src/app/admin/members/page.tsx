@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { IconSearch, IconUsers, IconPlus } from "@/components/ui/icons";
 import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS } from "@/lib/constants";
+import { useAdminPermissions } from "@/lib/permissionsContext";
 import MemberDetailDrawer from "./MemberDetailDrawer";
 import AddUserDrawer from "./AddUserDrawer";
 
@@ -28,6 +29,7 @@ export interface MemberRow {
 }
 
 export default function AdminMembersPage() {
+  const permissions = useAdminPermissions();
   const [members, setMembers] = useState<MemberRow[] | null>(null);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
@@ -72,9 +74,11 @@ export default function AdminMembersPage() {
         title="Members"
         description="Search, review, and manage CSEAG member accounts."
         actions={
-          <Button onClick={() => setAddOpen(true)}>
-            <IconPlus className="h-4 w-4" /> Add user
-          </Button>
+          permissions.membersManage && (
+            <Button onClick={() => setAddOpen(true)}>
+              <IconPlus className="h-4 w-4" /> Add user
+            </Button>
+          )
         }
       />
 
@@ -162,8 +166,17 @@ export default function AdminMembersPage() {
         )}
       </Card>
 
-      <MemberDetailDrawer memberId={activeId} currentRole={currentRole} onClose={() => setActiveId(null)} onChanged={load} />
-      <AddUserDrawer open={addOpen} currentRole={currentRole} onClose={() => setAddOpen(false)} onCreated={load} />
+      <MemberDetailDrawer
+        memberId={activeId}
+        currentRole={currentRole}
+        canManage={permissions.membersManage}
+        canViewDues={permissions.dues}
+        onClose={() => setActiveId(null)}
+        onChanged={load}
+      />
+      {permissions.membersManage && (
+        <AddUserDrawer open={addOpen} currentRole={currentRole} onClose={() => setAddOpen(false)} onCreated={load} />
+      )}
     </div>
   );
 }

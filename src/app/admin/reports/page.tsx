@@ -1,15 +1,27 @@
+"use client";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { IconUsers, IconClipboard, IconCheckCircle, IconMessageSquare, IconDownload, IconFileSpreadsheet } from "@/components/ui/icons";
+import { useAdminPermissions } from "@/lib/permissionsContext";
+import type { PermissionKey } from "@/lib/permissions";
 
-const REPORTS = [
+const REPORTS: {
+  href: string;
+  api: string;
+  icon: typeof IconUsers;
+  title: string;
+  body: string;
+  requires: PermissionKey;
+}[] = [
   {
     href: "/admin/reports/members",
     api: "/api/admin/reports/members",
     icon: IconUsers,
     title: "Member list",
     body: "Full name, contact, category, region, and role for every member and applicant.",
+    requires: "reportsMembers",
   },
   {
     href: "/admin/reports/applications",
@@ -17,6 +29,7 @@ const REPORTS = [
     icon: IconClipboard,
     title: "Applications",
     body: "Every application with status, submission date, and decision date.",
+    requires: "reportsApplications",
   },
   {
     href: "/admin/reports/dues",
@@ -24,6 +37,7 @@ const REPORTS = [
     icon: IconCheckCircle,
     title: "Membership dues",
     body: "Per-member dues status for the current year, plus collected/outstanding totals.",
+    requires: "dues",
   },
   {
     href: "/admin/reports/service-requests",
@@ -31,10 +45,14 @@ const REPORTS = [
     icon: IconMessageSquare,
     title: "Service requests",
     body: "Every request for expert help, who it's assigned to, and status breakdown.",
+    requires: "reportsServiceRequests",
   },
 ];
 
 export default function ReportsPage() {
+  const permissions = useAdminPermissions();
+  const reports = REPORTS.filter((r) => permissions[r.requires]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -43,7 +61,7 @@ export default function ReportsPage() {
       />
 
       <div className="grid gap-5 sm:grid-cols-2">
-        {REPORTS.map((r) => (
+        {reports.map((r) => (
           <Card key={r.href}>
             <CardBody className="flex flex-col items-start gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-navy-900">

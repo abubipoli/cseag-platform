@@ -279,6 +279,11 @@ export const appSettings = pgTable("app_settings", {
   duesAmountGhs: integer("dues_amount_ghs"),
   paystackPublicKey: text("paystack_public_key"),
   paystackSecretKey: text("paystack_secret_key"),
+  // JSON-encoded RolePermissions (see src/lib/permissions.ts) — what the
+  // "reviewer" and "admin" roles are each allowed to do in the admin back
+  // office. super_admin is always fully permitted and never stored here, so
+  // whoever configures this can never lock themselves out.
+  rolePermissions: text("role_permissions"),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

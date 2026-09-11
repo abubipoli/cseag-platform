@@ -4,7 +4,8 @@
 // Settings > Notification templates editor.
 
 import { NextResponse } from "next/server";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { getTemplateOverride } from "@/lib/notifications/store";
 import { renderTemplate, TEMPLATE_LABELS, TEMPLATE_VARIABLES, type TemplateKey } from "@/lib/notifications/templates";
 
@@ -31,7 +32,7 @@ const SAMPLE_DATA: Record<string, string> = {
 
 export async function GET() {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!session || !(await hasPermission(session, "settings"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

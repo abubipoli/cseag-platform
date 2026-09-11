@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import DuesReport from "./DuesReport";
 
 export default async function DuesPage() {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!(await hasPermission(session, "dues"))) {
     redirect("/admin");
   }
 

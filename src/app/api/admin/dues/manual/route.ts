@@ -6,14 +6,15 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { duesPayments, users } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { manualDuesPaymentSchema } from "@/lib/validation";
 import { currentDuesYear } from "@/lib/dues";
 import { recordAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!session || !(await hasPermission(session, "dues"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

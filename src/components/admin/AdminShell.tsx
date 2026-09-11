@@ -24,30 +24,35 @@ import {
   IconCheckCircle,
   IconUserCheck,
 } from "@/components/ui/icons";
+import type { PermissionKey } from "@/lib/permissions";
+import { AdminPermissionsProvider } from "@/lib/permissionsContext";
 
 interface NavItem {
   href: string;
   label: string;
   icon: (p: { className?: string }) => React.ReactElement;
   exact?: boolean;
+  // Shown to anyone with ANY of these permissions (undefined = always shown,
+  // e.g. the dashboard overview every admin-panel visitor can see).
+  requires?: PermissionKey[];
 }
 
 const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: IconLayoutDashboard, exact: true },
-  { href: "/admin/applications", label: "Applications", icon: IconClipboard },
-  { href: "/admin/service-requests", label: "Service Requests", icon: IconMessageSquare },
-  { href: "/admin/members", label: "Members", icon: IconUsers },
-  { href: "/admin/content", label: "Content", icon: IconFileText },
-  { href: "/admin/communications", label: "Communications", icon: IconMail },
-  { href: "/admin/reports", label: "Reports", icon: IconBarChart },
-  { href: "/admin/audit-log", label: "Audit Log", icon: IconHistory },
-];
-
-// Live email/SMS credentials — restricted to super admins, same as granting
-// admin access itself.
-const SUPER_ADMIN_NAV: NavItem[] = [
-  { href: "/admin/dues", label: "Dues", icon: IconCheckCircle },
-  { href: "/admin/settings", label: "Settings", icon: IconSettings },
+  { href: "/admin/applications", label: "Applications", icon: IconClipboard, requires: ["applications"] },
+  { href: "/admin/service-requests", label: "Service Requests", icon: IconMessageSquare, requires: ["serviceRequests"] },
+  { href: "/admin/members", label: "Members", icon: IconUsers, requires: ["membersView"] },
+  { href: "/admin/content", label: "Content", icon: IconFileText, requires: ["content"] },
+  { href: "/admin/communications", label: "Communications", icon: IconMail, requires: ["communications"] },
+  {
+    href: "/admin/reports",
+    label: "Reports",
+    icon: IconBarChart,
+    requires: ["reportsMembers", "reportsApplications", "reportsServiceRequests", "dues"],
+  },
+  { href: "/admin/audit-log", label: "Audit Log", icon: IconHistory, requires: ["auditLog"] },
+  { href: "/admin/dues", label: "Dues", icon: IconCheckCircle, requires: ["dues"] },
+  { href: "/admin/settings", label: "Settings", icon: IconSettings, requires: ["settings"] },
 ];
 
 // The admin back office ("member management platform") pairs a dark
@@ -61,17 +66,19 @@ export function AdminShell({
   fullName,
   email,
   role,
+  permissions,
 }: {
   children: React.ReactNode;
   fullName: string;
   email: string;
   role: string;
+  permissions: Record<PermissionKey, boolean>;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string, exact?: boolean) => (exact ? pathname === href : pathname.startsWith(href));
-  const navItems = role === "super_admin" ? [...NAV, ...SUPER_ADMIN_NAV] : NAV;
+  const navItems = NAV.filter((item) => !item.requires || item.requires.some((key) => permissions[key]));
 
   const sidebarContent = (
     <>
@@ -123,45 +130,47 @@ export function AdminShell({
   );
 
   return (
-    <div className="flex min-h-screen bg-paper-alt">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col bg-navy-900 lg:flex print:hidden">{sidebarContent}</aside>
+    <AdminPermissionsProvider value={permissions}>
+      <div className="flex min-h-screen bg-paper-alt">
+        {/* Desktop sidebar */}
+        <aside className="hidden w-64 shrink-0 flex-col bg-navy-900 lg:flex print:hidden">{sidebarContent}</aside>
 
-      {/* Mobile sidebar */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-navy-900">
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-4 rounded-full p-1.5 text-white/40 hover:bg-white/8"
-            >
-              <IconX className="h-5 w-5" />
-            </button>
-            {sidebarContent}
-          </div>
-        </div>
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md print:hidden sm:px-6">
-          <button onClick={() => setMobileOpen(true)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 lg:hidden">
-            <IconMenu className="h-5 w-5" />
-          </button>
-          <div className="hidden lg:block" />
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-navy-900">{fullName}</p>
-              <p className="text-xs text-slate-400">
-                {ROLE_LABELS[role] || role} · {email}
-              </p>
+        {/* Mobile sidebar */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-navy-900">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="absolute right-3 top-4 rounded-full p-1.5 text-white/40 hover:bg-white/8"
+              >
+                <IconX className="h-5 w-5" />
+              </button>
+              {sidebarContent}
             </div>
-            <Avatar name={fullName} size="sm" />
-            <LogoutButton className="ml-1" />
           </div>
-        </header>
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 print:p-0">{children}</main>
+        )}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md print:hidden sm:px-6">
+            <button onClick={() => setMobileOpen(true)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 lg:hidden">
+              <IconMenu className="h-5 w-5" />
+            </button>
+            <div className="hidden lg:block" />
+            <div className="flex items-center gap-3">
+              <div className="hidden text-right sm:block">
+                <p className="text-sm font-semibold text-navy-900">{fullName}</p>
+                <p className="text-xs text-slate-400">
+                  {ROLE_LABELS[role] || role} · {email}
+                </p>
+              </div>
+              <Avatar name={fullName} size="sm" />
+              <LogoutButton className="ml-1" />
+            </div>
+          </header>
+          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 print:p-0">{children}</main>
+        </div>
       </div>
-    </div>
+    </AdminPermissionsProvider>
   );
 }

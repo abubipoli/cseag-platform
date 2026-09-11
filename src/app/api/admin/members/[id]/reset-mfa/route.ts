@@ -6,12 +6,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { recordAudit } from "@/lib/audit";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "membersManage"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

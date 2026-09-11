@@ -5,7 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, memberProfiles } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { getPaymentSettings } from "@/lib/settings";
 import { getAllMemberDuesSummaries, currentDuesYear } from "@/lib/dues";
 import { reportResponse, parseReportFormat, type ReportColumn } from "@/lib/reportResponse";
@@ -34,7 +35,7 @@ const COLUMNS: ReportColumn<DuesRow>[] = [
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "super_admin")) {
+  if (!session || !(await hasPermission(session, "dues"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

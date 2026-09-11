@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { applications, memberProfiles, users } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { reportResponse, parseReportFormat, type ReportColumn } from "@/lib/reportResponse";
 
 interface ApplicationRow {
@@ -28,7 +29,7 @@ const COLUMNS: ReportColumn<ApplicationRow>[] = [
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "admin")) {
+  if (!session || !(await hasPermission(session, "reportsApplications"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

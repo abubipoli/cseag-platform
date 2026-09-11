@@ -7,14 +7,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { applications, users, memberProfiles } from "@/db/schema";
-import { getSession, roleAtLeast } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { decisionSchema } from "@/lib/validation";
 import { notify } from "@/lib/notifications";
 import { recordAudit } from "@/lib/audit";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || !roleAtLeast(session.role, "reviewer")) {
+  if (!session || !(await hasPermission(session, "applications"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
