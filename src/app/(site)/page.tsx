@@ -11,6 +11,7 @@ import {
   IconGlobe,
 } from "@/components/ui/icons";
 import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
+import { DonateSection } from "@/components/marketing/DonateSection";
 import { Reveal } from "@/components/ui/Reveal";
 import { listPublishedContent } from "@/lib/content";
 
@@ -252,6 +253,9 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Donate */}
+      <DonateSection />
 
       {/* CTA */}
       <section className="relative overflow-hidden bg-navy-950 text-white">

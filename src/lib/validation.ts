@@ -224,6 +224,19 @@ export const memberDuesPaySchema = z.object({
   amountGhs: z.coerce.number().int().min(1).optional(),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password"),
+  newPassword: strongPasswordSchema,
+});
+
+export const donationSchema = z.object({
+  fullName: z.string().min(2, "Enter your name").max(120),
+  email: z.string().email("Enter a valid email address"),
+  amountGhs: z.coerce.number().int().min(5, "Minimum donation is GHS 5").max(100000),
+  message: z.string().max(500).optional(),
+  website: z.string().max(0).optional(), // honeypot — real visitors never fill this in
+});
+
 export const adminCreateUserSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Enter a valid email address"),

@@ -324,3 +324,25 @@ export const duesPayments = pgTable("dues_payments", {
   note: text("note"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
+
+// ---------------------------------------------------------------------------
+// Public donations: separate from member dues on purpose. Dues are tied to
+// a member's account and their annual obligation; a donation is a one-off
+// gift from anyone — no account or login required — so it gets its own
+// table, its own Paystack reference prefix ("donation_"), and its own
+// reconciliation path (see src/lib/donations.ts) rather than being folded
+// into duesPayments.
+// ---------------------------------------------------------------------------
+export const DONATION_STATUSES = ["pending", "success", "failed"] as const;
+export type DonationStatus = (typeof DONATION_STATUSES)[number];
+
+export const donations = pgTable("donations", {
+  id: text("id").primaryKey(),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  amountGhs: integer("amount_ghs").notNull(),
+  status: text("status", { enum: DONATION_STATUSES }).notNull().default("pending"),
+  paystackReference: text("paystack_reference").unique(),
+  message: text("message"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});

@@ -23,6 +23,7 @@ import {
   IconExternalLink,
   IconCheckCircle,
   IconUserCheck,
+  IconLock,
 } from "@/components/ui/icons";
 import type { PermissionKey } from "@/lib/permissions";
 import { AdminPermissionsProvider } from "@/lib/permissionsContext";
@@ -111,6 +112,13 @@ export function AdminShell({
       </nav>
 
       <div className="border-t border-white/8 px-3 py-4">
+        <Link
+          href="/admin/profile"
+          className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
+        >
+          <IconLock className="h-4.5 w-4.5" />
+          My account
+        </Link>
         <Link
           href="/dashboard"
           className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"

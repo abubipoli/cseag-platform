@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { getPaymentSettings } from "@/lib/settings";
 import { reconcilePaystackPayment } from "@/lib/dues";
+import { reconcileDonation } from "@/lib/donations";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -30,9 +31,15 @@ export async function POST(req: NextRequest) {
   }
 
   const event = JSON.parse(rawBody);
-  const reference = event?.data?.reference;
+  const reference: string | undefined = event?.data?.reference;
   if (event?.event === "charge.success" && reference) {
-    await reconcilePaystackPayment(reference, settings.paystackSecretKey);
+    // Dues and donations are separate flows with separate reference
+    // prefixes (see db/schema.ts) — route to whichever this reference is.
+    if (reference.startsWith("donation_")) {
+      await reconcileDonation(reference, settings.paystackSecretKey);
+    } else {
+      await reconcilePaystackPayment(reference, settings.paystackSecretKey);
+    }
   }
 
   // Paystack only cares about a 200 — it retries on anything else.

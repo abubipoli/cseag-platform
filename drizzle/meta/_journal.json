@@ -57,6 +57,13 @@
       "when": 1789082847634,
       "tag": "0007_little_wendell_rand",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789131480429,
+      "tag": "0008_cold_ikaris",
+      "breakpoints": true
     }
   ]
 }
