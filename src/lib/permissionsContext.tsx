@@ -5,7 +5,7 @@
 // a separate fetch — AdminShell provides it, any admin page/drawer can read
 // it via useAdminPermissions().
 import { createContext, useContext } from "react";
-import type { PermissionKey } from "./permissions";
+import { PERMISSION_KEYS, type PermissionKey } from "./permissionKeys";
 
 const AdminPermissionsContext = createContext<Record<PermissionKey, boolean> | null>(null);
 
@@ -24,22 +24,5 @@ export function AdminPermissionsProvider({
 export function useAdminPermissions(): Record<PermissionKey, boolean> {
   const ctx = useContext(AdminPermissionsContext);
   if (ctx) return ctx;
-  return Object.fromEntries(
-    (
-      [
-        "applications",
-        "membersView",
-        "membersManage",
-        "serviceRequests",
-        "content",
-        "communications",
-        "auditLog",
-        "reportsMembers",
-        "reportsApplications",
-        "reportsServiceRequests",
-        "dues",
-        "settings",
-      ] as PermissionKey[]
-    ).map((k) => [k, false])
-  ) as Record<PermissionKey, boolean>;
+  return Object.fromEntries(PERMISSION_KEYS.map((k) => [k, false])) as Record<PermissionKey, boolean>;
 }

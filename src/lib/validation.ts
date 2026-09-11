@@ -180,6 +180,11 @@ export const contentItemSchema = z.object({
   isMemberOnly: z.boolean().optional(),
 });
 
+export const newsletterSendSchema = z.object({
+  subject: z.string().min(1, "Enter a subject").max(200),
+  message: z.string().min(1, "Enter a message").max(4000),
+});
+
 export const broadcastSchema = z.object({
   audience: z.enum(["all_members", "applicants", "reviewers_admins", "custom"]),
   customUserIds: z.array(z.string()).optional(),
