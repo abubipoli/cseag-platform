@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/marketing/PageHero";
+import { GhanaTechMap } from "@/components/marketing/GhanaTechMap";
 import { ButtonLink } from "@/components/ui/Button";
 import { IconTarget, IconGlobe, IconUsers, IconShieldCheck } from "@/components/ui/icons";
 
@@ -66,6 +67,25 @@ export default function AboutPage() {
               To be the primary driver of a secure and resilient digital ecosystem throughout Ghana — safeguarding
               digital rights, privacy, and data integrity for every citizen and institution.
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden bg-navy-950 py-16 text-white">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-accent-400">Nationwide reach</p>
+            <h2 className="font-serif-display mt-2 text-2xl sm:text-3xl">
+              Securing every corner of Ghana&rsquo;s digital economy
+            </h2>
+            <p className="mt-4 text-white/70">
+              From Accra&rsquo;s financial institutions to universities, government agencies, and businesses
+              upcountry, CSEAG members work across every region and sector — one connected network of expertise
+              defending Ghana&rsquo;s digital infrastructure.
+            </p>
+          </div>
+          <div className="mx-auto w-full max-w-[260px] lg:max-w-xs">
+            <GhanaTechMap className="h-auto w-full drop-shadow-[0_0_50px_rgba(14,165,233,0.3)]" />
           </div>
         </div>
       </section>
