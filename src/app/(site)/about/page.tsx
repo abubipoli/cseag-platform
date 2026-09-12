@@ -110,13 +110,13 @@ export default function AboutPage() {
               <p className="mt-4 text-sm font-semibold text-white/60">— Abubakar Issaka, President, CSEAG</p>
             </div>
             <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 shadow-[0_0_40px_-8px_rgba(14,165,233,0.35)]">
-              <GhanaTechMap preserveAspectRatio="xMidYMid slice" className="h-full w-full" />
+              <GhanaTechMap className="h-full w-full" />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-slate-50 py-14 text-center">
+      <section className="relative overflow-hidden bg-white py-14 text-center">
         <div className="bg-grid absolute inset-0 opacity-50 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
         <div className="relative">
           <h2 className="font-serif-display text-2xl text-navy-900">Want to be part of it?</h2>
