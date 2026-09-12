@@ -272,8 +272,7 @@ export default async function HomePage() {
           <h2 className="font-serif-display text-2xl sm:text-3xl">Ready to join CSEAG?</h2>
           <p className="mx-auto mt-3 max-w-xl text-white/70">
             Whether you&rsquo;re a student, a working professional, or represent an organization, there&rsquo;s a
-            place for you. Apply online and hear back from our membership committee — you&rsquo;ll get an
-            immediate email and SMS confirmation the moment you apply.
+            place for you. Apply online and hear back from our membership committee.
           </p>
           <ButtonLink href="/apply" size="lg" className="mt-7">
             Start Your Application
