@@ -50,9 +50,24 @@ const CHIPS: [number, number, number, number][] = [
   [110, 198, 22, 13.2],
 ];
 
-export function GhanaTechMap({ className }: { className?: string }) {
+export function GhanaTechMap({
+  className,
+  preserveAspectRatio = "xMidYMid meet",
+}: {
+  className?: string;
+  // The artwork's own viewBox is tall/portrait; a caller placing it in a
+  // shorter, wider box should pass "xMidYMid slice" so it fills that box by
+  // cropping top/bottom instead of letterboxing with empty space.
+  preserveAspectRatio?: string;
+}) {
   return (
-    <svg viewBox="-20 -20 300 425" className={className} role="img" aria-label="Map of Ghana rendered as a glowing circuit board">
+    <svg
+      viewBox="-20 -20 300 425"
+      preserveAspectRatio={preserveAspectRatio}
+      className={className}
+      role="img"
+      aria-label="Map of Ghana rendered as a glowing circuit board"
+    >
       <defs>
         <clipPath id="ghana-shape">
           <path d={GHANA_PATH} />

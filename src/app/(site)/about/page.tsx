@@ -91,22 +91,27 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static leadership photo, not worth next/image config */}
-            <img
-              src="/uploads/abubakar-issaka.jpg"
-              alt="Abubakar Issaka, President of CSEAG"
-              className="h-28 w-28 rounded-full object-cover ring-4 ring-white shadow-[var(--shadow-card)]"
-            />
-            <blockquote className="font-serif-display mt-6 text-xl text-navy-900 sm:text-2xl">
-              &ldquo;Cybersecurity is not a battle won by one person, but a war fought by united experts.&rdquo;
-            </blockquote>
-            <p className="mt-4 text-sm font-semibold text-slate-500">— Abubakar Issaka, President, CSEAG</p>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-navy-950 shadow-[var(--shadow-card)]">
-            <GhanaTechMap className="h-full w-full" />
+      <section className="relative overflow-hidden py-16">
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative section backdrop photo */}
+        <img src="/marketing/network-mesh.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" aria-hidden />
+        <div className="absolute inset-0 bg-navy-950/75" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static leadership photo, not worth next/image config */}
+              <img
+                src="/uploads/abubakar-issaka.jpg"
+                alt="Abubakar Issaka, President of CSEAG"
+                className="h-28 w-28 rounded-full object-cover ring-4 ring-white/80 shadow-[var(--shadow-card)]"
+              />
+              <blockquote className="font-serif-display mt-6 text-xl text-white sm:text-2xl">
+                &ldquo;Cybersecurity is not a battle won by one person, but a war fought by united experts.&rdquo;
+              </blockquote>
+              <p className="mt-4 text-sm font-semibold text-white/60">— Abubakar Issaka, President, CSEAG</p>
+            </div>
+            <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 shadow-[0_0_40px_-8px_rgba(14,165,233,0.35)]">
+              <GhanaTechMap preserveAspectRatio="xMidYMid slice" className="h-full w-full" />
+            </div>
           </div>
         </div>
       </section>
