@@ -350,3 +350,24 @@ export const donations = pgTable("donations", {
   message: text("message"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
+
+// ---------------------------------------------------------------------------
+// Site visit log: one row per page view on the public/member ("site") route
+// group — recorded from middleware, so it catches every navigation
+// (including client-side ones, which still hit the server for their RSC
+// payload). userId is set only when the visitor has a live session; country
+// is resolved best-effort, after the response is already sent, from a free
+// IP-geolocation lookup (see lib/analytics.ts) so it never adds latency to
+// the visitor's own page load.
+// ---------------------------------------------------------------------------
+export const siteVisits = pgTable("site_visits", {
+  id: text("id").primaryKey(),
+  path: text("path").notNull(),
+  userId: text("user_id"),
+  ip: text("ip"),
+  country: text("country"),
+  city: text("city"),
+  referrer: text("referrer"),
+  userAgent: text("user_agent"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});

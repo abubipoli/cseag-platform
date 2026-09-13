@@ -25,6 +25,7 @@ import {
   IconUserCheck,
   IconLock,
   IconSend,
+  IconActivity,
 } from "@/components/ui/icons";
 import type { PermissionKey } from "@/lib/permissions";
 import { AdminPermissionsProvider } from "@/lib/permissionsContext";
@@ -47,6 +48,7 @@ const NAV: NavItem[] = [
   { href: "/admin/content", label: "Content", icon: IconFileText, requires: ["content"] },
   { href: "/admin/communications", label: "Communications", icon: IconMail, requires: ["communications"] },
   { href: "/admin/newsletter", label: "Newsletter", icon: IconSend, requires: ["newsletter"] },
+  { href: "/admin/analytics", label: "Analytics", icon: IconActivity, requires: ["analytics"] },
   {
     href: "/admin/reports",
     label: "Reports",

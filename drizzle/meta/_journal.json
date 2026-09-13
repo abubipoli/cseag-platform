@@ -71,6 +71,13 @@
       "when": 1789264722584,
       "tag": "0009_medical_ben_grimm",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789274425557,
+      "tag": "0010_lumpy_gideon",
+      "breakpoints": true
     }
   ]
 }
