@@ -33,6 +33,7 @@ interface Detail {
   profile: {
     title: string | null;
     fullName: string;
+    membershipId: string | null;
     phone: string;
     photoUrl: string | null;
     ageGroup: string | null;
@@ -153,6 +154,9 @@ export default function MemberDetailDrawer({
                 {detail.profile.fullName}
               </p>
               <p className="text-sm text-slate-500">{detail.user.email} · {detail.profile.phone}</p>
+              {detail.profile.membershipId && (
+                <p className="text-xs font-medium text-accent-700">{detail.profile.membershipId}</p>
+              )}
             </div>
             <Badge tone={detail.user.isActive ? "accent" : "red"} className="ml-auto">
               {detail.user.isActive ? "Active" : "Inactive"}

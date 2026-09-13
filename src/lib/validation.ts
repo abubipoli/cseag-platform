@@ -91,7 +91,13 @@ export const profileUpdateSchema = z.object({
   csaAccredited: z.boolean().optional(),
   csaAccreditationTier: z.enum(CSA_ACCREDITATION_TIERS).optional(),
   bio: z.string().max(3000).optional(),
-  photoUrl: z.string().url().optional().or(z.literal("")),
+  // Not a strict URL on purpose: this is always either "" or whatever
+  // /api/uploads returned, which is a same-origin relative path
+  // (/files/<uuid>.ext — see that route), not an absolute URL. A stricter
+  // check here previously rejected every save that included a photo,
+  // since the whole form is sent together regardless of which field
+  // actually changed.
+  photoUrl: z.string().optional(),
 
   bioIsPublic: z.boolean().optional(),
   yearsOfExperienceIsPublic: z.boolean().optional(),

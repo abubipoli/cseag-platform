@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
       lastLoginAt: users.lastLoginAt,
       createdAt: users.createdAt,
       fullName: memberProfiles.fullName,
+      membershipId: memberProfiles.membershipId,
       phone: memberProfiles.phone,
       photoUrl: memberProfiles.photoUrl,
       membershipCategory: memberProfiles.membershipCategory,
@@ -47,7 +48,11 @@ export async function GET(req: NextRequest) {
   let shaped = rows;
   if (q) {
     shaped = shaped.filter(
-      (r) => r.fullName.toLowerCase().includes(q) || r.email.toLowerCase().includes(q) || (r.phone || "").includes(q)
+      (r) =>
+        r.fullName.toLowerCase().includes(q) ||
+        r.email.toLowerCase().includes(q) ||
+        (r.phone || "").includes(q) ||
+        (r.membershipId || "").toLowerCase().includes(q)
     );
   }
   if (role) shaped = shaped.filter((r) => r.role === role);

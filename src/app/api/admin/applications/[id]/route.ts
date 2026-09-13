@@ -12,6 +12,7 @@ import { hasPermission } from "@/lib/permissions";
 import { decisionSchema } from "@/lib/validation";
 import { notify } from "@/lib/notifications";
 import { recordAudit } from "@/lib/audit";
+import { assignMembershipId } from "@/lib/members";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -53,6 +54,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (membershipCategory && membershipCategory !== applicantProfile.membershipCategory) {
       await db.update(memberProfiles).set({ membershipCategory }).where(eq(memberProfiles.userId, applicantUser.id));
     }
+    await assignMembershipId(applicantUser.id);
     await notify({
       userId: applicantUser.id,
       templateKey: "application_approved",

@@ -22,6 +22,7 @@ export interface MemberRow {
   lastLoginAt: string | null;
   createdAt: string;
   fullName: string;
+  membershipId: string | null;
   phone: string;
   photoUrl: string | null;
   membershipCategory: string | null;
@@ -95,7 +96,7 @@ export default function AdminMembersPage() {
           <div className="relative flex-1">
             <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
-              placeholder="Search by name, email, or phone"
+              placeholder="Search by name, email, phone, or member ID"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="w-full rounded-lg border border-slate-300 py-2.5 pl-9 pr-3 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
@@ -142,7 +143,10 @@ export default function AdminMembersPage() {
                         <Avatar name={m.fullName} photoUrl={m.photoUrl} size="sm" />
                         <div className="min-w-0">
                           <p className="truncate font-medium text-navy-900">{m.fullName}</p>
-                          <p className="truncate text-xs text-slate-400">{m.email}</p>
+                          <p className="truncate text-xs text-slate-400">
+                            {m.email}
+                            {m.membershipId && ` · ${m.membershipId}`}
+                          </p>
                         </div>
                       </div>
                     </td>

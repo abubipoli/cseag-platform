@@ -89,6 +89,11 @@ export const memberProfiles = pgTable("member_profiles", {
   photoUrl: text("photo_url"),
 
   membershipCategory: text("membership_category", { enum: MEMBERSHIP_CATEGORIES }),
+  // A permanent, human-readable member number (e.g. "CSEAG-00001") — assigned
+  // once, the moment an application is approved (see lib/members.ts), never
+  // reused or reassigned even if the member later leaves and rejoins.
+  // Applicants have none until approved.
+  membershipId: text("membership_id").unique(),
 
   // Visibility flags: true = shown on the public Experts directory.
   // Sensitive fields (DOB, national ID, physical address) intentionally have

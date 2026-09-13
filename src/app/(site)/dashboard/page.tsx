@@ -30,6 +30,7 @@ import {
 
 interface Profile {
   fullName: string;
+  membershipId: string | null;
   phone: string;
   employer: string | null;
   currentRole: string | null;
@@ -183,6 +184,7 @@ function DashboardPageInner() {
             <Avatar name={profile.fullName} photoUrl={profile.photoUrl} size="xl" className="ring-4 ring-white/20" />
             <div>
               <h1 className="text-xl font-bold sm:text-2xl">{profile.fullName}</h1>
+              {profile.membershipId && <p className="mt-0.5 text-sm text-white/60">Member ID: {profile.membershipId}</p>}
               <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                 <Badge tone="sky">{MEMBERSHIP_CATEGORY_LABELS[profile.membershipCategory] || "Member"}</Badge>
                 {application && (
@@ -251,6 +253,7 @@ function DashboardPageInner() {
               </CardHeader>
               <CardBody className="space-y-4 text-sm">
                 <Row label="Full name" value={profile.fullName} />
+                {profile.membershipId && <Row label="Member ID" value={profile.membershipId} />}
                 <Row label="Email" value={session.email} />
                 <Row label="Phone" value={profile.phone} />
                 <Row label="Membership category" value={MEMBERSHIP_CATEGORY_LABELS[profile.membershipCategory] || "—"} />

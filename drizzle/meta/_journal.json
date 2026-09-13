@@ -78,6 +78,13 @@
       "when": 1789274425557,
       "tag": "0010_lumpy_gideon",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789325919890,
+      "tag": "0011_flaky_the_captain",
+      "breakpoints": true
     }
   ]
 }
