@@ -8,7 +8,7 @@ import { Badge, statusTone } from "@/components/ui/Badge";
 import { Tabs } from "@/components/ui/Tabs";
 import { Drawer } from "@/components/ui/Drawer";
 import { Button } from "@/components/ui/Button";
-import { Textarea } from "@/components/ui/Field";
+import { Textarea, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconClipboard, IconFileText } from "@/components/ui/icons";
 import { APPLICATION_STATUS_LABELS, MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
@@ -37,6 +37,7 @@ export default function AdminApplicationsPage() {
   const [tab, setTab] = useState<FilterTab>("pending");
   const [active, setActive] = useState<AppRow | null>(null);
   const [notes, setNotes] = useState("");
+  const [category, setCategory] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -59,11 +60,12 @@ export default function AdminApplicationsPage() {
     await fetch(`/api/admin/applications/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ decision, notes }),
+      body: JSON.stringify({ decision, notes, membershipCategory: decision === "approved" ? category : undefined }),
     });
     setBusy(false);
     setActive(null);
     setNotes("");
+    setCategory("");
     load();
   }
 
@@ -104,7 +106,15 @@ export default function AdminApplicationsPage() {
       ) : (
         <div className="grid gap-3">
           {filtered.map((r) => (
-            <button key={r.applicationId} onClick={() => { setActive(r); setNotes(r.reviewerNotes || ""); }} className="text-left">
+            <button
+              key={r.applicationId}
+              onClick={() => {
+                setActive(r);
+                setNotes(r.reviewerNotes || "");
+                setCategory(r.membershipCategory);
+              }}
+              className="text-left"
+            >
               <Card className="transition-shadow hover:shadow-md">
                 <CardBody className="flex flex-wrap items-center gap-4">
                   <Avatar name={r.fullName} />
@@ -141,7 +151,24 @@ export default function AdminApplicationsPage() {
             <dl className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 text-sm">
               <div>
                 <dt className="text-xs text-slate-400">Category</dt>
-                <dd className="font-medium text-navy-900">{MEMBERSHIP_CATEGORY_LABELS[active.membershipCategory] || active.membershipCategory}</dd>
+                {active.status === "pending" || active.status === "more_info_requested" ? (
+                  <>
+                    <Select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1">
+                      {Object.entries(MEMBERSHIP_CATEGORY_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </Select>
+                    {category !== active.membershipCategory && (
+                      <p className="mt-1 text-xs text-amber-600">
+                        Applicant requested {MEMBERSHIP_CATEGORY_LABELS[active.membershipCategory] || active.membershipCategory}.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <dd className="font-medium text-navy-900">{MEMBERSHIP_CATEGORY_LABELS[active.membershipCategory] || active.membershipCategory}</dd>
+                )}
               </div>
               <div>
                 <dt className="text-xs text-slate-400">Experience</dt>

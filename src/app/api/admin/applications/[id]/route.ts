@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
-  const { decision, notes } = parsed.data;
+  const { decision, notes, membershipCategory } = parsed.data;
 
   const application = await db.query.applications.findFirst({ where: eq(applications.id, id) });
   if (!application) return NextResponse.json({ error: "Application not found" }, { status: 404 });
@@ -50,6 +50,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (decision === "approved") {
     await db.update(users).set({ role: "member" }).where(eq(users.id, applicantUser.id));
+    if (membershipCategory && membershipCategory !== applicantProfile.membershipCategory) {
+      await db.update(memberProfiles).set({ membershipCategory }).where(eq(memberProfiles.userId, applicantUser.id));
+    }
     await notify({
       userId: applicantUser.id,
       templateKey: "application_approved",
@@ -81,7 +84,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     action: `application.${decision}`,
     targetType: "application",
     targetId: id,
-    details: { notes },
+    details:
+      decision === "approved" && membershipCategory && membershipCategory !== applicantProfile.membershipCategory
+        ? { notes, requestedCategory: applicantProfile.membershipCategory, approvedCategory: membershipCategory }
+        : { notes },
   });
 
   return NextResponse.json({ ok: true });

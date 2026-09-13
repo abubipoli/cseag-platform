@@ -70,6 +70,10 @@ export const mfaLoginVerifySchema = z.object({
 export const decisionSchema = z.object({
   decision: z.enum(["approved", "rejected", "more_info_requested"]),
   notes: z.string().max(2000).optional(),
+  // Lets an admin correct the applicant's self-selected category at
+  // approval time (e.g. someone applies as "professional" but the reviewer
+  // determines they're actually a student or associate).
+  membershipCategory: z.enum(MEMBERSHIP_CATEGORIES).optional(),
 });
 
 export const profileUpdateSchema = z.object({
