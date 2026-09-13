@@ -18,7 +18,12 @@ function LoginForm() {
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
 
-  function goToDestination(role: string) {
+  function goToDestination(role: string, mustChangePassword?: boolean) {
+    if (mustChangePassword) {
+      router.push("/change-password");
+      router.refresh();
+      return;
+    }
     router.push(role === "admin" || role === "super_admin" || role === "reviewer" ? "/admin" : "/dashboard");
     router.refresh();
   }
@@ -42,7 +47,7 @@ function LoginForm() {
       return;
     }
     if (res.ok) {
-      goToDestination(data.role);
+      goToDestination(data.role, data.mustChangePassword);
       return;
     }
     setError(data.error || "Login failed. Please check your credentials.");
@@ -63,7 +68,7 @@ function LoginForm() {
     const data = await res.json().catch(() => ({}));
 
     if (res.ok) {
-      goToDestination(data.role);
+      goToDestination(data.role, data.mustChangePassword);
       return;
     }
     setError(data.error || "That code isn't valid.");

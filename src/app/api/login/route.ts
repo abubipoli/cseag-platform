@@ -37,5 +37,5 @@ export async function POST(req: NextRequest) {
   await setSessionCookie({ userId: user.id, role: user.role, email: user.email });
   await recordAudit({ actorUserId: user.id, action: "login.success" });
 
-  return NextResponse.json({ ok: true, role: user.role });
+  return NextResponse.json({ ok: true, role: user.role, mustChangePassword: user.mustChangePassword });
 }

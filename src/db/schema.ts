@@ -47,6 +47,10 @@ export const users = pgTable("users", {
   mfaSecret: text("mfa_secret"), // base32 TOTP secret; set on setup, kept even if mfaEnabled is still false until confirmed
   mfaBackupCodes: text("mfa_backup_codes"), // JSON-encoded [{ hash, usedAt }] — one-time recovery codes, hashed like passwordResetTokenHash
   isActive: boolean("is_active").notNull().default(true),
+  // Set true whenever a temporary/shared password is issued on the user's
+  // behalf (bulk credential resets, admin-triggered resets) — checked at
+  // login to force a change before the account can be used further.
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
   lastLoginAt: text("last_login_at"),
   passwordResetTokenHash: text("password_reset_token_hash"),
   passwordResetExpiresAt: text("password_reset_expires_at"),
