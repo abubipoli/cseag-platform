@@ -114,6 +114,11 @@ function DashboardPageInner() {
 
   const { session, profile, application } = data;
   const isApplicantOnly = session.role === "applicant";
+  // Student members aren't shown the opt-in for the Experts directory — the
+  // directory is meant for members offering services/expertise. Existing
+  // eligibility checks (isActive, role, isListedInDirectory) are unchanged,
+  // so a student already listed some other way stays listed.
+  const isStudent = profile.membershipCategory === "student";
   // Applicants get status + account security only — everything else is a
   // member benefit that unlocks on approval (see the banner below).
   const effectiveTab: TabKey = isApplicantOnly && tab !== "overview" && tab !== "security" ? "overview" : tab;
@@ -359,12 +364,18 @@ function DashboardPageInner() {
                     {isApplicantOnly && " These choices take effect once your membership is approved."}
                   </p>
                   <div className="mt-3 divide-y divide-slate-100">
-                    <Switch
-                      label="List me in the public Experts directory"
-                      description="Off by default. Turn this on when you're ready to appear in the directory — nothing is shown publicly until you do."
-                      checked={form.isListedInDirectory as boolean}
-                      onChange={(e) => setForm((f) => ({ ...f, isListedInDirectory: e.target.checked }))}
-                    />
+                    {isStudent ? (
+                      <p className="py-3 text-sm text-slate-500">
+                        The Experts directory isn&apos;t available for student members.
+                      </p>
+                    ) : (
+                      <Switch
+                        label="List me in the public Experts directory"
+                        description="Off by default. Turn this on when you're ready to appear in the directory — nothing is shown publicly until you do."
+                        checked={form.isListedInDirectory as boolean}
+                        onChange={(e) => setForm((f) => ({ ...f, isListedInDirectory: e.target.checked }))}
+                      />
+                    )}
                     <Switch
                       label="Show my bio publicly"
                       checked={form.bioIsPublic as boolean}
