@@ -104,37 +104,37 @@ export function AdminShell({
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
                 active ? "bg-accent-500/15 text-accent-300" : "text-white/50 hover:bg-white/6 hover:text-white"
               )}
             >
-              <item.icon className="h-4.5 w-4.5" />
+              <item.icon className="h-4.5 w-4.5 shrink-0" />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-white/8 px-3 py-4">
+      <div className="space-y-1 border-t border-white/8 px-3 py-4">
         <Link
           href="/admin/profile"
-          className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
+          className="flex items-center gap-3 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
         >
-          <IconLock className="h-4.5 w-4.5" />
+          <IconLock className="h-4.5 w-4.5 shrink-0" />
           My account
         </Link>
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
+          className="flex items-center gap-3 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
         >
-          <IconUserCheck className="h-4.5 w-4.5" />
+          <IconUserCheck className="h-4.5 w-4.5 shrink-0" />
           My member dashboard
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
+          className="flex items-center gap-3 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-medium text-white/40 hover:bg-white/6 hover:text-white"
         >
-          <IconExternalLink className="h-4.5 w-4.5" />
+          <IconExternalLink className="h-4.5 w-4.5 shrink-0" />
           View public site
         </Link>
       </div>

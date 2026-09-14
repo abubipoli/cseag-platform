@@ -174,9 +174,9 @@ export default function AnalyticsPage() {
               <EmptyState icon={<IconActivity className="h-5 w-5" />} title="No visits recorded yet" />
             </div>
           ) : (
-            <div className="mt-3 overflow-x-auto">
+            <div className="mt-3 max-h-96 overflow-y-auto overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-y border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                <thead className="sticky top-0 border-y border-slate-100 bg-white text-xs uppercase tracking-wide text-slate-400">
                   <tr>
                     <th className="py-2.5 pr-3 font-medium">Who</th>
                     <th className="py-2.5 pr-3 font-medium">Page</th>
