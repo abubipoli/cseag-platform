@@ -4,11 +4,60 @@
 
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db/client";
-import { duesPayments } from "@/db/schema";
+import { duesPayments, users, memberProfiles } from "@/db/schema";
 import { verifyPaystackTransaction } from "./paystack";
+import { notify } from "./notifications";
+import { generateDuesReceiptPdf } from "./receipts";
+import { getPaymentSettings } from "./settings";
 
 export function currentDuesYear(): string {
   return new Date().getFullYear().toString();
+}
+
+// Emails a PDF receipt for one successful payment — called once, right
+// after a payment first transitions to "success" (see call sites below),
+// never on every re-check of an already-settled payment. A failure here
+// (e.g. SMTP misconfigured) is logged but never blocks the payment itself
+// from being recorded — the money has already moved either way.
+export async function sendDuesReceiptEmail(payment: typeof duesPayments.$inferSelect) {
+  try {
+    const user = await db.query.users.findFirst({ where: eq(users.id, payment.userId) });
+    const profile = await db.query.memberProfiles.findFirst({ where: eq(memberProfiles.userId, payment.userId) });
+    if (!user || !profile) return;
+
+    const settings = await getPaymentSettings();
+    const summary = await getMemberDuesSummary(payment.userId, settings.duesAmountGhs, payment.year);
+    const balanceGhs = summary.balanceGhs;
+
+    const pdf = await generateDuesReceiptPdf({
+      payment,
+      member: {
+        fullName: profile.fullName,
+        title: profile.title,
+        email: user.email,
+        membershipId: profile.membershipId,
+        membershipCategory: profile.membershipCategory,
+      },
+      duesAmountGhs: settings.duesAmountGhs,
+      totalPaidGhs: summary.totalPaidGhs,
+    });
+
+    const amountLabel = `GHS ${payment.amountGhs.toLocaleString()}`;
+    await notify({
+      userId: user.id,
+      templateKey: "dues_payment_receipt",
+      email: user.email,
+      data: {
+        name: profile.fullName,
+        amount: amountLabel,
+        year: payment.year,
+        balanceNote: balanceGhs > 0 ? `A balance of GHS ${balanceGhs.toLocaleString()} remains for ${payment.year}.` : "",
+      },
+      attachments: [{ filename: `CSEAG-Dues-Receipt-${payment.year}-${payment.id.slice(0, 8)}.pdf`, content: pdf }],
+    });
+  } catch (err) {
+    console.error("Failed to send dues receipt email:", err);
+  }
 }
 
 export type DuesStatus = "paid" | "partial" | "unpaid";
@@ -69,6 +118,9 @@ export async function reconcilePaystackPayment(
 
   const status = result.success ? "success" : "failed";
   await db.update(duesPayments).set({ status }).where(eq(duesPayments.id, payment.id));
+  if (status === "success") {
+    await sendDuesReceiptEmail({ ...payment, status });
+  }
   return status;
 }
 

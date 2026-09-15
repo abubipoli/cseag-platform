@@ -9,7 +9,7 @@ import { duesPayments, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { manualDuesPaymentSchema } from "@/lib/validation";
-import { currentDuesYear } from "@/lib/dues";
+import { currentDuesYear, sendDuesReceiptEmail } from "@/lib/dues";
 import { recordAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
@@ -28,16 +28,21 @@ export async function POST(req: NextRequest) {
   const member = await db.query.users.findFirst({ where: eq(users.id, input.userId) });
   if (!member) return NextResponse.json({ error: "Member not found" }, { status: 404 });
 
+  const paymentId = randomUUID();
+  const year = currentDuesYear();
   await db.insert(duesPayments).values({
-    id: randomUUID(),
+    id: paymentId,
     userId: input.userId,
-    year: currentDuesYear(),
+    year,
     amountGhs: input.amountGhs,
     method: "manual",
     status: "success",
     recordedBy: session.userId,
     note: input.note,
   });
+
+  const payment = await db.query.duesPayments.findFirst({ where: eq(duesPayments.id, paymentId) });
+  if (payment) await sendDuesReceiptEmail(payment);
 
   await recordAudit({
     actorUserId: session.userId,

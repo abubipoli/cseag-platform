@@ -811,6 +811,14 @@ function MembershipDues() {
                     <Badge tone={statusTone(p.status === "success" ? "active" : p.status === "failed" ? "inactive" : "pending")}>
                       {p.status}
                     </Badge>
+                    {p.status === "success" && (
+                      <a
+                        href={`/api/member/dues/${p.id}/receipt`}
+                        className="text-xs font-medium text-accent-700 hover:underline"
+                      >
+                        Receipt
+                      </a>
+                    )}
                   </span>
                 </div>
               ))}

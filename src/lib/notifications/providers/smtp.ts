@@ -37,6 +37,7 @@ export function createSmtpEmailProvider(config: {
           subject: message.subject,
           html: message.html,
           text: message.text,
+          attachments: message.attachments,
         });
         return { ok: true, providerMessageId: info.messageId };
       } catch (err) {

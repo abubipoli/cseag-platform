@@ -22,7 +22,7 @@ import { createSmtpEmailProvider } from "./providers/smtp";
 import { createArkeselSmsProvider } from "./providers/arkesel";
 import { createMnotifySmsProvider } from "./providers/mnotify";
 import { createKairosSmsProvider } from "./providers/kairos";
-import type { EmailProvider, SmsProvider } from "./types";
+import type { EmailProvider, SmsProvider, EmailAttachment } from "./types";
 import type { TemplateKey } from "./templates";
 import { resolveTemplate } from "./store";
 
@@ -63,6 +63,7 @@ interface NotifyArgs {
   phone?: string;
   replyTo?: string;
   data: Record<string, string>;
+  attachments?: EmailAttachment[];
 }
 
 /**
@@ -70,7 +71,7 @@ interface NotifyArgs {
  * provided) using a named template, and logs the attempt to the
  * notifications table (SRS Section 6.10 — centralized notification log).
  */
-export async function notify({ userId, templateKey, email, phone, replyTo, data }: NotifyArgs) {
+export async function notify({ userId, templateKey, email, phone, replyTo, data, attachments }: NotifyArgs) {
   const settings = await getNotificationSettings();
   const emailProvider = resolveEmailProvider(settings);
   const smsProvider = resolveSmsProvider(settings);
@@ -84,6 +85,7 @@ export async function notify({ userId, templateKey, email, phone, replyTo, data 
       html: rendered.emailHtml,
       text: rendered.emailText,
       replyTo,
+      attachments,
     });
     await db.insert(notifications).values({
       id: randomUUID(),

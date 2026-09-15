@@ -302,9 +302,19 @@ export default function DuesReport() {
                     </p>
                     {p.note && <p className="mt-1 text-xs text-slate-500">{p.note}</p>}
                   </div>
-                  <Badge tone={statusTone(p.status === "success" ? "active" : p.status === "failed" ? "inactive" : "pending")}>
-                    {PAYMENT_STATUS_LABELS[p.status]}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge tone={statusTone(p.status === "success" ? "active" : p.status === "failed" ? "inactive" : "pending")}>
+                      {PAYMENT_STATUS_LABELS[p.status]}
+                    </Badge>
+                    {p.status === "success" && (
+                      <a
+                        href={`/api/member/dues/${p.id}/receipt`}
+                        className="text-xs font-medium text-accent-700 hover:underline"
+                      >
+                        Receipt
+                      </a>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

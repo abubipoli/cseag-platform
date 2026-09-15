@@ -6,12 +6,18 @@
 // (src/lib/notifications/index.ts) rather than a change everywhere
 // notifications are triggered.
 
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+}
+
 export interface EmailMessage {
   to: string;
   subject: string;
   html: string;
   text: string;
   replyTo?: string;
+  attachments?: EmailAttachment[];
 }
 
 export interface SmsMessage {

@@ -12,6 +12,9 @@ export const consoleEmailProvider: EmailProvider = {
     console.log("To:", message.to);
     console.log("Subject:", message.subject);
     console.log(message.text);
+    if (message.attachments?.length) {
+      console.log("Attachments:", message.attachments.map((a) => a.filename).join(", "));
+    }
     console.log("--- end email ---\n");
     return { ok: true, providerMessageId: "console-dev" };
   },

@@ -19,6 +19,7 @@ export type TemplateKey =
   | "service_request_new_message"
   | "newsletter_confirmation"
   | "event_rsvp_confirmation"
+  | "dues_payment_receipt"
   | "custom";
 
 export interface Rendered {
@@ -45,6 +46,7 @@ export const TEMPLATE_LABELS: Record<Exclude<TemplateKey, "custom">, string> = {
   service_request_new_message: "New chat message",
   newsletter_confirmation: "Newsletter subscription confirmation",
   event_rsvp_confirmation: "Event RSVP confirmation",
+  dues_payment_receipt: "Dues payment receipt",
 };
 
 export const TEMPLATE_VARIABLES: Record<Exclude<TemplateKey, "custom">, string[]> = {
@@ -62,6 +64,7 @@ export const TEMPLATE_VARIABLES: Record<Exclude<TemplateKey, "custom">, string[]
   service_request_new_message: ["name", "fromName", "message", "chatUrl"],
   newsletter_confirmation: [],
   event_rsvp_confirmation: ["name", "eventTitle", "eventDate", "eventLocation"],
+  dues_payment_receipt: ["name", "amount", "year", "balanceNote"],
 };
 
 export function renderTemplate(key: TemplateKey, data: Record<string, string>): Rendered {
@@ -187,6 +190,18 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
           data.eventLocation ? ` at ${data.eventLocation}` : ""
         }.</p><p>See you there!</p><p>— CSEAG</p>`,
         sms: `CSEAG: You're registered for "${data.eventTitle}". See you there!`,
+      };
+
+    case "dues_payment_receipt":
+      return {
+        emailSubject: `Your CSEAG dues payment receipt — ${data.year}`,
+        emailText: `Hi ${name},\n\nWe've received your CSEAG membership dues payment of ${data.amount} for ${data.year}.${
+          data.balanceNote ? ` ${data.balanceNote}` : ""
+        }\n\nYour receipt is attached to this email as a PDF — keep it as proof of payment.\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>We've received your CSEAG membership dues payment of <strong>${data.amount}</strong> for ${
+          data.year
+        }.${data.balanceNote ? ` ${data.balanceNote}` : ""}</p><p>Your receipt is attached to this email as a PDF — keep it as proof of payment.</p><p>— CSEAG</p>`,
+        sms: `CSEAG: Payment of ${data.amount} received for ${data.year} dues. Receipt sent to your email.`,
       };
 
     case "custom":
