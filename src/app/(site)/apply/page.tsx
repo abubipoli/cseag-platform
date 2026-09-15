@@ -193,6 +193,8 @@ export default function ApplyPage() {
         kicker="Membership Application"
         title="Become a CSEAG Member"
         description="Takes about 5 minutes. You'll get an email and SMS confirmation the moment you submit, and hear back from our membership committee soon after."
+        image="/hero/it-professional-server-room.jpg"
+        dark
         compact
       />
 
