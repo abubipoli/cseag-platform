@@ -258,14 +258,21 @@ export default function AdminApplicationsPage() {
               </div>
             )}
 
-            {active.supportingDocumentUrl && (
-              <a
-                href={active.supportingDocumentUrl}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-700 hover:text-accent-800"
-              >
-                <IconFileText className="h-4 w-4" /> View supporting document
-              </a>
-            )}
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-400">CV / Resume</p>
+              {active.supportingDocumentUrl ? (
+                <a
+                  href={active.supportingDocumentUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-700 hover:text-accent-800"
+                >
+                  <IconFileText className="h-4 w-4" /> View CV / Resume
+                </a>
+              ) : (
+                <p className="mt-1 text-sm text-slate-400">Not provided (applied before this was required).</p>
+              )}
+            </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Note to applicant (optional)</label>

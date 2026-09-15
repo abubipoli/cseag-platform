@@ -45,7 +45,9 @@ export const registrationSchema = z.object({
   membershipCategory: z.enum(MEMBERSHIP_CATEGORIES),
   bio: z.string().max(3000).optional(),
   statementOfInterest: z.string().max(2000).optional(),
-  supportingDocumentUrl: z.string().optional(),
+  // A relative /files/<uuid>.ext path from /api/uploads, not an absolute
+  // URL — see profileUpdateSchema.photoUrl for why this isn't .url().
+  supportingDocumentUrl: z.string().min(1, "Please upload your CV/Resume."),
   codeOfConductAccepted: z.literal(true, { message: "You must accept the Code of Conduct" }),
   privacyConsentAccepted: z.literal(true, { message: "You must accept the privacy notice" }),
   // Honeypot — see contactFormSchema for rationale.

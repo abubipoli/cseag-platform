@@ -33,6 +33,10 @@ export default function ApplyPage() {
   const [isEmployed, setIsEmployed] = useState(true);
   const [csaAccredited, setCsaAccredited] = useState(false);
   const [showCodeOfConduct, setShowCodeOfConduct] = useState(false);
+  const [supportingDocumentUrl, setSupportingDocumentUrl] = useState("");
+  const [cvFileName, setCvFileName] = useState("");
+  const [uploadingCv, setUploadingCv] = useState(false);
+  const [cvError, setCvError] = useState<string | null>(null);
 
   const [fields, setFields] = useState({
     title: "",
@@ -61,6 +65,27 @@ export default function ApplyPage() {
     setExpertise((prev) => (prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]));
   }
 
+  async function handleCvSelected(file: File) {
+    setCvError(null);
+    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    if (![".pdf", ".doc", ".docx"].includes(ext)) {
+      setCvError("Please upload a PDF or Word document.");
+      return;
+    }
+    setUploadingCv(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/uploads", { method: "POST", body: fd });
+    setUploadingCv(false);
+    if (!res.ok) {
+      setCvError("Couldn't upload that file. Please try again.");
+      return;
+    }
+    const data = await res.json();
+    setSupportingDocumentUrl(data.url);
+    setCvFileName(file.name);
+  }
+
   const stepErrors = useMemo(() => {
     if (step === 0) {
       const e: string[] = [];
@@ -78,6 +103,7 @@ export default function ApplyPage() {
       if (!fields.highestCertificate.trim()) e.push("Enter your highest certificate obtained.");
       if (csaAccredited && !fields.csaAccreditationTier) e.push("Select your Cyber Security Authority accreditation tier.");
       if (expertise.length === 0) e.push("Select at least one area of expertise.");
+      if (!supportingDocumentUrl) e.push("Upload your CV/Resume.");
       return e;
     }
     if (step === 2) {
@@ -87,7 +113,7 @@ export default function ApplyPage() {
       return e;
     }
     return [];
-  }, [step, fields, expertise, csaAccredited]);
+  }, [step, fields, expertise, csaAccredited, supportingDocumentUrl]);
 
   function goNext() {
     if (stepErrors.length > 0) {
@@ -130,6 +156,7 @@ export default function ApplyPage() {
       csaAccreditationTier: csaAccredited ? fields.csaAccreditationTier : undefined,
       areasOfExpertise: expertise,
       membershipCategory: fields.membershipCategory,
+      supportingDocumentUrl,
       codeOfConductAccepted: fields.codeOfConductAccepted,
       privacyConsentAccepted: fields.privacyConsentAccepted,
     };
@@ -360,6 +387,23 @@ export default function ApplyPage() {
                     ))}
                   </div>
                 </FieldWrap>
+                <FieldWrap label="CV / Resume" required hint="PDF or Word document, max 25MB — used by our membership committee for vetting">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500 hover:border-accent-500 hover:text-accent-700">
+                    <span>
+                      {uploadingCv ? "Uploading..." : cvFileName ? `Selected: ${cvFileName}` : "Choose a file to upload"}
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleCvSelected(file);
+                      }}
+                    />
+                  </label>
+                  {cvError && <p className="mt-1.5 text-xs text-red-600">{cvError}</p>}
+                </FieldWrap>
               </div>
             )}
 
@@ -370,6 +414,7 @@ export default function ApplyPage() {
                   <p>{fields.email} · {fields.phone}</p>
                   <p className="mt-1">{MEMBERSHIP_CATEGORY_LABELS[fields.membershipCategory]} membership</p>
                   <p className="mt-1">{expertise.length} area(s) of expertise selected</p>
+                  <p className="mt-1">CV/Resume: {cvFileName || "—"}</p>
                 </div>
                 <Checkbox
                   label={
