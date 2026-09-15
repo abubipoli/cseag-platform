@@ -29,6 +29,15 @@ export async function GET() {
       membershipCategory: memberProfiles.membershipCategory,
       areasOfExpertise: memberProfiles.areasOfExpertise,
       yearsOfExperience: memberProfiles.yearsOfExperience,
+      title: memberProfiles.title,
+      ageGroup: memberProfiles.ageGroup,
+      region: memberProfiles.region,
+      employer: memberProfiles.employer,
+      currentRole: memberProfiles.currentRole,
+      highestCertificate: memberProfiles.highestCertificate,
+      certifications: memberProfiles.certifications,
+      csaAccredited: memberProfiles.csaAccredited,
+      csaAccreditationTier: memberProfiles.csaAccreditationTier,
     })
     .from(applications)
     .innerJoin(users, eq(applications.userId, users.id))

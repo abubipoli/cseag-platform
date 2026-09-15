@@ -7,6 +7,11 @@ import { memberProfiles } from "@/db/schema";
 
 const PREFIX = "CSEAG-";
 const PAD_LENGTH = 5;
+// Numbers start at 10001 rather than 1, so every member number reads as a
+// full 5-digit ID from day one instead of looking like a placeholder
+// ("CSEAG-00001"). Once real IDs pass 10000 this floor is irrelevant —
+// MAX+1 naturally takes over — so it's safe to leave here permanently.
+const STARTING_NUMBER = 10000;
 
 // Reads the current highest-numbered ID and returns the next one. A plain
 // MAX+1 query rather than a DB sequence — approvals are a rare, one-at-a-time
@@ -14,11 +19,13 @@ const PAD_LENGTH = 5;
 // leaves is an acceptable tradeoff for not needing a dedicated sequence.
 async function nextMembershipId(): Promise<string> {
   const rows = await db
-    .select({ maxNum: sql<number>`coalesce(max(cast(substring(${memberProfiles.membershipId} from ${PREFIX.length + 1}) as integer)), 0)` })
+    .select({
+      maxNum: sql<number>`greatest(coalesce(max(cast(substring(${memberProfiles.membershipId} from ${PREFIX.length + 1}) as integer)), 0), ${STARTING_NUMBER})`,
+    })
     .from(memberProfiles)
     .where(sql`${memberProfiles.membershipId} is not null`);
 
-  const next = (rows[0]?.maxNum ?? 0) + 1;
+  const next = (rows[0]?.maxNum ?? STARTING_NUMBER) + 1;
   return `${PREFIX}${String(next).padStart(PAD_LENGTH, "0")}`;
 }
 

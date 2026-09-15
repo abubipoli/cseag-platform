@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconClipboard, IconFileText } from "@/components/ui/icons";
-import { APPLICATION_STATUS_LABELS, MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
+import { APPLICATION_STATUS_LABELS, MEMBERSHIP_CATEGORY_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
 
 interface AppRow {
   applicationId: string;
@@ -27,6 +27,15 @@ interface AppRow {
   membershipCategory: string;
   areasOfExpertise: string;
   yearsOfExperience: number | null;
+  title: string | null;
+  ageGroup: string | null;
+  region: string | null;
+  employer: string | null;
+  currentRole: string | null;
+  highestCertificate: string | null;
+  certifications: string | null;
+  csaAccredited: boolean;
+  csaAccreditationTier: string | null;
 }
 
 type FilterTab = "pending" | "approved" | "rejected" | "all";
@@ -173,6 +182,58 @@ export default function AdminApplicationsPage() {
               <div>
                 <dt className="text-xs text-slate-400">Experience</dt>
                 <dd className="font-medium text-navy-900">{active.yearsOfExperience ?? "—"} yrs</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-400">Title / age group</dt>
+                <dd className="font-medium text-navy-900">
+                  {active.title || "—"}
+                  {active.ageGroup ? ` · ${active.ageGroup}` : ""}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-400">Region</dt>
+                <dd className="font-medium text-navy-900">{active.region || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-400">Employer / role</dt>
+                <dd className="font-medium text-navy-900">
+                  {active.employer || "—"}
+                  {active.currentRole ? ` · ${active.currentRole}` : ""}
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-slate-400">Highest certificate</dt>
+                <dd className="font-medium text-navy-900">{active.highestCertificate || "—"}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-slate-400">Certifications</dt>
+                <dd className="mt-1 flex flex-wrap gap-1.5">
+                  {(() => {
+                    let list: string[] = [];
+                    try {
+                      list = JSON.parse(active.certifications || "[]");
+                    } catch {
+                      list = [];
+                    }
+                    return list.length > 0 ? (
+                      list.map((c) => (
+                        <Badge key={c} tone="accent">
+                          {c}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="font-medium text-navy-900">—</span>
+                    );
+                  })()}
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-slate-400">Cyber Security Authority accreditation</dt>
+                <dd className="font-medium text-navy-900">
+                  {active.csaAccredited
+                    ? CSA_ACCREDITATION_TIER_LABELS[active.csaAccreditationTier || ""] || active.csaAccreditationTier || "Accredited"
+                    : "Not accredited"}
+                </dd>
               </div>
               <div className="col-span-2">
                 <dt className="text-xs text-slate-400">Areas of expertise</dt>
