@@ -198,7 +198,35 @@ export default function ApplyPage() {
         compact
       />
 
-      <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:grid lg:grid-cols-[280px_1fr] lg:items-start lg:gap-10">
+        <aside className="mb-8 lg:sticky lg:top-24 lg:order-2 lg:mb-0">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">Before you apply</p>
+            <p className="mt-1.5 font-semibold text-navy-900">Which membership is right for you?</p>
+            <dl className="mt-4 space-y-4 text-slate-600">
+              <div>
+                <dt className="font-semibold text-navy-900">Full / Professional Members</dt>
+                <dd className="mt-0.5">
+                  Certified cybersecurity practitioners with proven working experience. Full voting rights and
+                  eligible for elective office.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-navy-900">Associate Members</dt>
+                <dd className="mt-0.5">
+                  Senior, experienced professionals from allied sectors — legal, finance, telecom, academia, law
+                  enforcement — who want to be part of CSEAG without practising as core cybersecurity professionals.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-navy-900">Student Members</dt>
+                <dd className="mt-0.5">Currently pursuing a programme in cybersecurity or a related security discipline.</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+
+        <div className="lg:order-1">
         {/* Stepper */}
         <ol className="flex items-center justify-between">
           {STEPS.map((label, i) => (
@@ -337,35 +365,6 @@ export default function ApplyPage() {
                     </Select>
                   </FieldWrap>
                 </div>
-                <details className="group rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm">
-                  <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-accent-700 [&::-webkit-details-marker]:hidden">
-                    What&rsquo;s the difference between membership types?
-                    <IconChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-90" />
-                  </summary>
-                  <dl className="mt-3 space-y-2.5 border-t border-slate-200 pt-3 text-slate-600">
-                    <div>
-                      <dt className="font-semibold text-navy-900">Full / Professional Members</dt>
-                      <dd className="mt-0.5">
-                        Certified cybersecurity practitioners with proven working experience. Full voting rights and
-                        eligible for elective office.
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-semibold text-navy-900">Associate Members</dt>
-                      <dd className="mt-0.5">
-                        Senior, experienced professionals from allied sectors — legal, finance, telecom, academia,
-                        law enforcement — who want to be part of CSEAG without practising as core cybersecurity
-                        professionals.
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-semibold text-navy-900">Student Members</dt>
-                      <dd className="mt-0.5">
-                        Currently pursuing a programme in cybersecurity or a related security discipline.
-                      </dd>
-                    </div>
-                  </dl>
-                </details>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FieldWrap label="Highest certificate obtained" required hint="e.g. BSc Computer Science">
                     <Input value={fields.highestCertificate} onChange={(e) => set("highestCertificate", e.target.value)} />
@@ -487,6 +486,7 @@ export default function ApplyPage() {
               {submitting ? "Submitting..." : "Submit Application"}
             </Button>
           )}
+        </div>
         </div>
       </div>
 
