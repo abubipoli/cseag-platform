@@ -337,6 +337,35 @@ export default function ApplyPage() {
                     </Select>
                   </FieldWrap>
                 </div>
+                <details className="group rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 text-sm">
+                  <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-accent-700 [&::-webkit-details-marker]:hidden">
+                    What&rsquo;s the difference between membership types?
+                    <IconChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <dl className="mt-3 space-y-2.5 border-t border-slate-200 pt-3 text-slate-600">
+                    <div>
+                      <dt className="font-semibold text-navy-900">Full / Professional Members</dt>
+                      <dd className="mt-0.5">
+                        Certified cybersecurity practitioners with proven working experience. Full voting rights and
+                        eligible for elective office.
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-navy-900">Associate Members</dt>
+                      <dd className="mt-0.5">
+                        Senior, experienced professionals from allied sectors — legal, finance, telecom, academia,
+                        law enforcement — who want to be part of CSEAG without practising as core cybersecurity
+                        professionals.
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-navy-900">Student Members</dt>
+                      <dd className="mt-0.5">
+                        Currently pursuing a programme in cybersecurity or a related security discipline.
+                      </dd>
+                    </div>
+                  </dl>
+                </details>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FieldWrap label="Highest certificate obtained" required hint="e.g. BSc Computer Science">
                     <Input value={fields.highestCertificate} onChange={(e) => set("highestCertificate", e.target.value)} />
