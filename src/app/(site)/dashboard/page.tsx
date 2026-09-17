@@ -13,6 +13,7 @@ import { PasswordRequirements, isStrongPassword } from "@/components/ui/Password
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ServiceRequestChat } from "@/components/ServiceRequestChat";
+import { NewsBell } from "@/components/NewsBell";
 import { MiniCalendar } from "@/components/ui/MiniCalendar";
 import {
   IconBriefcase,
@@ -183,7 +184,10 @@ function DashboardPageInner() {
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
       {/* Profile header */}
-      <div className="bg-gradient-to-br from-navy-900 to-navy-700 pb-16 pt-8 text-white sm:pb-20">
+      <div className="relative bg-gradient-to-br from-navy-900 to-navy-700 pb-16 pt-8 text-white sm:pb-20">
+        <div className="absolute right-4 top-4 sm:right-6">
+          <NewsBell />
+        </div>
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
             <Avatar name={profile.fullName} photoUrl={profile.photoUrl} size="xl" className="ring-4 ring-white/20" />

@@ -4,7 +4,7 @@
 // Targets Postgres (see src/db/client.ts) — required for Vercel's serverless
 // runtime, which has no persistent local filesystem for SQLite.
 
-import { pgTable, text, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { CSA_ACCREDITATION_TIERS } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
@@ -175,6 +175,23 @@ export const contentItems = pgTable("content_items", {
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
+
+// Tracks which members have opened which content item — powers the
+// unread-news notification bell on the member dashboard. One row per
+// (user, item) the member has actually opened; absence of a row means
+// unread. Deliberately per-item rather than a single "last seen" timestamp
+// per member, so reading item B doesn't silently mark an older, still-unread
+// item A as read too.
+export const contentReads = pgTable(
+  "content_reads",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    contentId: text("content_id").notNull(),
+    readAt: text("read_at").notNull().$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [uniqueIndex("content_reads_user_content_idx").on(table.userId, table.contentId)]
+);
 
 // ---------------------------------------------------------------------------
 // Event RSVPs (Section 6.9 — sign-up/RSVP capture for training/events).
