@@ -7,6 +7,7 @@ import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select, Input } from "@/components/ui/Field";
 import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
+import { cn } from "@/lib/cn";
 
 interface DuesPaymentItem {
   id: string;
@@ -69,6 +70,7 @@ export default function MemberDetailDrawer({
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageIsError, setMessageIsError] = useState(false);
   const [emailDraft, setEmailDraft] = useState("");
   const [phoneDraft, setPhoneDraft] = useState("");
   const [dues, setDues] = useState<DuesSummary | null>(null);
@@ -83,6 +85,7 @@ export default function MemberDetailDrawer({
       return;
     }
     setMessage(null);
+    setMessageIsError(false);
     /* eslint-enable react-hooks/set-state-in-effect */
     fetch(`/api/admin/members/${memberId}`)
       .then((r) => r.json())
@@ -110,6 +113,7 @@ export default function MemberDetailDrawer({
     setBusy(false);
     if (res.ok) {
       setMessage(successMessage);
+      setMessageIsError(false);
       onChanged();
       fetch(`/api/admin/members/${memberId}`)
         .then((r) => r.json())
@@ -121,6 +125,7 @@ export default function MemberDetailDrawer({
     } else {
       const data = await res.json().catch(() => ({}));
       setMessage(typeof data.error === "string" ? data.error : "That action isn't permitted.");
+      setMessageIsError(true);
     }
   }
 
@@ -132,11 +137,13 @@ export default function MemberDetailDrawer({
     setBusy(false);
     if (res.ok) {
       setMessage("2FA has been turned off for this member.");
+      setMessageIsError(false);
       fetch(`/api/admin/members/${memberId}`)
         .then((r) => r.json())
         .then(setDetail);
     } else {
       setMessage("Couldn't reset 2FA.");
+      setMessageIsError(true);
     }
   }
 
@@ -163,7 +170,16 @@ export default function MemberDetailDrawer({
             </Badge>
           </div>
 
-          {message && <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{message}</p>}
+          {message && (
+            <p
+              className={cn(
+                "rounded-lg px-3 py-2 text-sm",
+                messageIsError ? "bg-red-50 text-red-700" : "bg-accent-50 text-accent-800"
+              )}
+            >
+              {message}
+            </p>
+          )}
 
           <dl className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 text-sm">
             <div>
