@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getPublishedContentBySlug } from "@/lib/content";
+import { getPublishedContentBySlug, type Viewer } from "@/lib/content";
 import { IconCalendar, IconMapPin, IconLock } from "@/components/ui/icons";
 import { SidebarAd } from "@/components/marketing/SidebarAd";
 import RsvpForm from "./RsvpForm";
@@ -12,7 +12,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const { slug } = await params;
   const session = await getSession();
   const isMember = !!session && session.role !== "applicant";
-  const item = await getPublishedContentBySlug(slug, isMember);
+  // Category targeting only applies to news (see lib/content.ts), so events
+  // don't need the extra membershipCategory lookup getViewer() does.
+  const viewer: Viewer = { isMember, category: null };
+  const item = await getPublishedContentBySlug(slug, viewer);
   if (!item || item.type !== "event") notFound();
 
   return (

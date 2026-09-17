@@ -13,7 +13,7 @@ import {
 import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 import { DonateSection } from "@/components/marketing/DonateSection";
 import { Reveal } from "@/components/ui/Reveal";
-import { listPublishedContent } from "@/lib/content";
+import { listPublishedContent, getViewer } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +81,8 @@ interface NewsItem {
 }
 
 async function getLatestNews(): Promise<NewsItem[]> {
-  const items = await listPublishedContent("news", false);
+  const viewer = await getViewer();
+  const items = await listPublishedContent("news", viewer);
   return items.slice(0, 3);
 }
 

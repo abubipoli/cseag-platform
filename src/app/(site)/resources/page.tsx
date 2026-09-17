@@ -4,16 +4,15 @@ import { PageHero } from "@/components/marketing/PageHero";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { IconFileText, IconDownload, IconLock } from "@/components/ui/icons";
-import { getSession } from "@/lib/auth";
-import { listPublishedContent } from "@/lib/content";
+import { listPublishedContent, getViewer } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Resources" };
 export const dynamic = "force-dynamic";
 
 export default async function ResourcesPage() {
-  const session = await getSession();
-  const isMember = !!session && session.role !== "applicant";
-  const items = await listPublishedContent("resource", isMember);
+  const viewer = await getViewer();
+  const isMember = viewer.isMember;
+  const items = await listPublishedContent("resource", viewer);
 
   return (
     <div>

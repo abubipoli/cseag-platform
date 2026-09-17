@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { getPublishedContentBySlug } from "@/lib/content";
+import { getPublishedContentBySlug, getViewer } from "@/lib/content";
 import { IconArrowRight } from "@/components/ui/icons";
 import { SidebarAd } from "@/components/marketing/SidebarAd";
 
@@ -9,9 +8,8 @@ export const dynamic = "force-dynamic";
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const session = await getSession();
-  const isMember = !!session && session.role !== "applicant";
-  const item = await getPublishedContentBySlug(slug, isMember);
+  const viewer = await getViewer();
+  const item = await getPublishedContentBySlug(slug, viewer);
   if (!item || item.type !== "news") notFound();
 
   return (

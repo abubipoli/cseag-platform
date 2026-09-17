@@ -4,17 +4,15 @@
 // rendered to non-members by the page itself.
 import { NextRequest, NextResponse } from "next/server";
 import { CONTENT_TYPES } from "@/db/schema";
-import { getSession } from "@/lib/auth";
-import { listPublishedContent } from "@/lib/content";
+import { listPublishedContent, getViewer } from "@/lib/content";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
-  const session = await getSession();
-  const isMember = !!session && session.role !== "applicant";
+  const viewer = await getViewer();
 
   const validType = type && (CONTENT_TYPES as readonly string[]).includes(type) ? (type as (typeof CONTENT_TYPES)[number]) : undefined;
-  const items = await listPublishedContent(validType, isMember);
+  const items = await listPublishedContent(validType, viewer);
 
   return NextResponse.json({ items });
 }

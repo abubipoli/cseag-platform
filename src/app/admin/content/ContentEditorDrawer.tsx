@@ -5,7 +5,13 @@ import { Drawer } from "@/components/ui/Drawer";
 import { FieldWrap, Input, Textarea, Select, Checkbox } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { IconUpload } from "@/components/ui/icons";
+import { MEMBERSHIP_CATEGORIES } from "@/db/schema";
+import { MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
 import type { ContentItem } from "./page";
+
+// Corporate accounts aren't a self-service application category (see the
+// apply page), so it doesn't make sense as a news-targeting option either.
+const NEWS_AUDIENCE_CATEGORIES = MEMBERSHIP_CATEGORIES.filter((c) => c !== "corporate");
 
 function slugify(title: string) {
   return title
@@ -39,6 +45,7 @@ export default function ContentEditorDrawer({
     eventDate: "",
     eventLocation: "",
     isMemberOnly: false,
+    audienceCategory: null as string | null,
     fileUrl: "",
     imageUrl: "",
   });
@@ -64,6 +71,7 @@ export default function ContentEditorDrawer({
         eventDate: item.eventDate ? item.eventDate.slice(0, 16) : "",
         eventLocation: item.eventLocation || "",
         isMemberOnly: item.isMemberOnly,
+        audienceCategory: item.audienceCategory,
         fileUrl: item.fileUrl || "",
         imageUrl: item.imageUrl || "",
       });
@@ -80,6 +88,7 @@ export default function ContentEditorDrawer({
         eventDate: "",
         eventLocation: "",
         isMemberOnly: false,
+        audienceCategory: null,
         fileUrl: "",
         imageUrl: "",
       });
@@ -241,6 +250,28 @@ export default function ContentEditorDrawer({
         <FieldWrap label="Body" required>
           <Textarea rows={8} value={form.body} onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))} />
         </FieldWrap>
+
+        {form.type === "news" && (
+          <FieldWrap label="Who can see this" hint="Members-only news is hidden from the public site and, when a category is chosen, from other member categories too.">
+            <Select
+              value={form.isMemberOnly ? form.audienceCategory || "all_members" : "public"}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "public") setForm((f) => ({ ...f, isMemberOnly: false, audienceCategory: null }));
+                else if (value === "all_members") setForm((f) => ({ ...f, isMemberOnly: true, audienceCategory: null }));
+                else setForm((f) => ({ ...f, isMemberOnly: true, audienceCategory: value }));
+              }}
+            >
+              <option value="public">Public — everyone</option>
+              <option value="all_members">All members</option>
+              {NEWS_AUDIENCE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {MEMBERSHIP_CATEGORY_LABELS[c]} members only
+                </option>
+              ))}
+            </Select>
+          </FieldWrap>
+        )}
 
         {form.type === "event" && (
           <div className="grid gap-4 sm:grid-cols-2">

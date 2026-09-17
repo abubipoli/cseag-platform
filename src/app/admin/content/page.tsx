@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconFileText, IconPlus, IconEdit, IconTrash } from "@/components/ui/icons";
-import { CONTENT_TYPE_LABELS } from "@/lib/constants";
+import { CONTENT_TYPE_LABELS, MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
 import ContentEditorDrawer from "./ContentEditorDrawer";
 
 export interface ContentItem {
@@ -25,6 +25,7 @@ export interface ContentItem {
   eventDate: string | null;
   eventLocation: string | null;
   isMemberOnly: boolean;
+  audienceCategory: string | null;
   createdAt: string;
 }
 
@@ -100,7 +101,11 @@ export default function AdminContentPage() {
                   <div className="flex items-center gap-2">
                     <p className="truncate font-semibold text-navy-900">{item.title}</p>
                     <Badge tone={item.status === "published" ? "accent" : "amber"}>{item.status}</Badge>
-                    {item.isMemberOnly && <Badge tone="navy">Members only</Badge>}
+                    {item.isMemberOnly && (
+                      <Badge tone="navy">
+                        {item.audienceCategory ? `${MEMBERSHIP_CATEGORY_LABELS[item.audienceCategory]} only` : "Members only"}
+                      </Badge>
+                    )}
                   </div>
                   <p className="truncate text-xs text-slate-400">/{item.type}/{item.slug}</p>
                 </div>

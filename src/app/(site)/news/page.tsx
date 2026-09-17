@@ -3,13 +3,14 @@ import Link from "next/link";
 import { PageHero } from "@/components/marketing/PageHero";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconFileText, IconArrowRight } from "@/components/ui/icons";
-import { listPublishedContent } from "@/lib/content";
+import { listPublishedContent, getViewer } from "@/lib/content";
 
 export const metadata: Metadata = { title: "News" };
 export const dynamic = "force-dynamic";
 
 export default async function NewsPage() {
-  const items = await listPublishedContent("news", false);
+  const viewer = await getViewer();
+  const items = await listPublishedContent("news", viewer);
 
   return (
     <div>

@@ -190,6 +190,10 @@ export const contentItemSchema = z.object({
   eventDate: z.string().optional(),
   eventLocation: z.string().optional(),
   isMemberOnly: z.boolean().optional(),
+  // Only meaningful (and enforced) when isMemberOnly is true and type is
+  // "news" — see contentItems.audienceCategory in db/schema.ts. Nullable so
+  // the admin can explicitly clear it back to "any member category".
+  audienceCategory: z.enum(MEMBERSHIP_CATEGORIES).nullable().optional(),
 });
 
 export const newsletterSendSchema = z.object({

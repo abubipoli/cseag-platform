@@ -171,6 +171,12 @@ export const contentItems = pgTable("content_items", {
   eventDate: text("event_date"), // only used when type = "event"
   eventLocation: text("event_location"),
   isMemberOnly: boolean("is_member_only").notNull().default(false),
+  // Only meaningful when isMemberOnly is true, and currently only enforced
+  // for type = "news" (see lib/content.ts) — null means "any member
+  // category", set means "only this one category". Resource/event/page
+  // items ignore this; isMemberOnly keeps its original narrower meaning for
+  // them (gates the file download, not the item's visibility).
+  audienceCategory: text("audience_category", { enum: MEMBERSHIP_CATEGORIES }),
   publishedAt: text("published_at"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
