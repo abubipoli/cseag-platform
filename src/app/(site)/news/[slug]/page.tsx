@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPublishedContentBySlug, getViewer } from "@/lib/content";
 import { IconArrowRight } from "@/components/ui/icons";
 import { SidebarAd } from "@/components/marketing/SidebarAd";
+import { Linkify } from "@/components/Linkify";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           // eslint-disable-next-line @next/next/no-img-element -- static content photo from local uploads/content dir
           <img src={item.imageUrl} alt="" className="mt-6 h-64 w-full rounded-2xl object-cover sm:h-80" />
         )}
-        <div className="prose prose-slate mt-6 max-w-none whitespace-pre-line text-slate-700">{item.body}</div>
+        <Linkify text={item.body} className="prose prose-slate mt-6 max-w-none whitespace-pre-line text-slate-700" />
 
         <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
           <p className="font-semibold text-navy-900">Stay in the loop</p>

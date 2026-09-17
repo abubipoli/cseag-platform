@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { getPublishedContentBySlug, type Viewer } from "@/lib/content";
 import { IconCalendar, IconMapPin, IconLock } from "@/components/ui/icons";
 import { SidebarAd } from "@/components/marketing/SidebarAd";
+import { Linkify } from "@/components/Linkify";
 import RsvpForm from "./RsvpForm";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           <img src={item.imageUrl} alt="" className="mt-6 h-64 w-full rounded-2xl object-cover sm:h-80" />
         )}
 
-        <div className="prose prose-slate mt-6 max-w-none whitespace-pre-line text-slate-700">{item.body}</div>
+        <Linkify text={item.body} className="prose prose-slate mt-6 max-w-none whitespace-pre-line text-slate-700" />
 
         <div className="mt-10">
           {isMember ? (
