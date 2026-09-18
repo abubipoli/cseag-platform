@@ -6,7 +6,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FieldWrap, Input, Textarea } from "@/components/ui/Field";
-import { IconSend, IconMail, IconDownload, IconTrash } from "@/components/ui/icons";
+import { IconSend, IconMail, IconDownload, IconTrash, IconPlus } from "@/components/ui/icons";
 import { toCsv } from "@/lib/csv";
 
 interface Subscriber {
@@ -22,6 +22,9 @@ export default function NewsletterPage() {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   function load() {
     fetch("/api/admin/newsletter")
@@ -59,6 +62,25 @@ export default function NewsletterPage() {
     if (res.ok) load();
   }
 
+  async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setAdding(true);
+    setAddError(null);
+    const res = await fetch("/api/admin/newsletter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: newEmail }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setAdding(false);
+    if (res.ok) {
+      setNewEmail("");
+      load();
+    } else {
+      setAddError(typeof data?.error === "string" ? data.error : "Couldn't add that email.");
+    }
+  }
+
   function handleExport() {
     const csv = toCsv(subscribers || [], [
       { key: "email", header: "Email" },
@@ -77,7 +99,7 @@ export default function NewsletterPage() {
     <div className="space-y-6">
       <PageHeader
         title="Newsletter"
-        description="Everyone who signed up for updates via the public 'Stay Updated' form."
+        description="Everyone signed up for updates — via the public 'Stay Updated' form, or added here directly."
         actions={
           subscribers && subscribers.length > 0 ? (
             <Button variant="outline" onClick={handleExport}>
@@ -101,6 +123,22 @@ export default function NewsletterPage() {
                 className="max-w-[200px]"
               />
             </div>
+
+            <form onSubmit={handleAdd} className="mt-3 flex items-start gap-2">
+              <div className="flex-1">
+                <Input
+                  type="email"
+                  placeholder="Add an email address..."
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  required
+                />
+                {addError && <p className="mt-1 text-xs text-red-600">{addError}</p>}
+              </div>
+              <Button type="submit" variant="outline" disabled={adding}>
+                <IconPlus className="h-4 w-4" /> {adding ? "Adding..." : "Add"}
+              </Button>
+            </form>
 
             {!subscribers ? (
               <p className="mt-4 text-sm text-slate-400">Loading…</p>
