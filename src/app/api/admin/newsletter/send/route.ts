@@ -11,6 +11,7 @@ import { hasPermission } from "@/lib/permissions";
 import { newsletterSendSchema } from "@/lib/validation";
 import { notify } from "@/lib/notifications";
 import { recordAudit } from "@/lib/audit";
+import { getBaseUrl } from "@/lib/base-url";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -29,12 +30,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "There are no newsletter subscribers yet." }, { status: 400 });
   }
 
+  const baseUrl = await getBaseUrl();
   const results = await Promise.all(
     subscribers.map((s) =>
       notify({
         templateKey: "custom",
         email: s.email,
-        data: { subject: parsed.data.subject, message: parsed.data.message },
+        data: {
+          subject: parsed.data.subject,
+          message: parsed.data.message,
+          unsubscribeUrl: `${baseUrl}/unsubscribe?id=${s.id}`,
+        },
       })
     )
   );

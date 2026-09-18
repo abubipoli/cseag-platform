@@ -94,7 +94,7 @@ function messageToHtml(message: string): string {
     .join("");
 }
 
-function renderBrandedEmail(subject: string, bodyHtml: string): string {
+function renderBrandedEmail(subject: string, bodyHtml: string, unsubscribeUrl?: string): string {
   return `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;padding:32px 16px;">
   <tr>
@@ -133,7 +133,13 @@ function renderBrandedEmail(subject: string, bodyHtml: string): string {
               &nbsp;&middot;&nbsp;
               <a href="tel:${SITE_CONFIG.phoneHref}" style="color:#14b871;text-decoration:none;">${SITE_CONFIG.phone}</a>
             </p>
-            <p style="margin:0;">You're receiving this because you subscribed for updates at ${SITE_CONFIG.domain}.</p>
+            <p style="margin:0;">
+              You're receiving this because you subscribed for updates at ${SITE_CONFIG.domain}.${
+                unsubscribeUrl
+                  ? ` <a href="${unsubscribeUrl}" style="color:#94a3b8;text-decoration:underline;">Unsubscribe</a>`
+                  : ""
+              }
+            </p>
           </td>
         </tr>
       </table>
@@ -284,8 +290,8 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
       const message = data.message || "";
       return {
         emailSubject: subject,
-        emailText: message,
-        emailHtml: renderBrandedEmail(subject, messageToHtml(message)),
+        emailText: data.unsubscribeUrl ? `${message}\n\n---\nUnsubscribe: ${data.unsubscribeUrl}` : message,
+        emailHtml: renderBrandedEmail(subject, messageToHtml(message), data.unsubscribeUrl),
         sms: message.slice(0, 300),
       };
     }
