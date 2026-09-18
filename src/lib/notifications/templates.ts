@@ -4,6 +4,8 @@
 // exactly as the SRS specifies. Keeping them centralized here already gets
 // most of the value: one place to change the wording for every applicant.
 
+import { SITE_CONFIG } from "@/lib/constants";
+
 export type TemplateKey =
   | "application_received"
   | "application_approved"
@@ -66,6 +68,79 @@ export const TEMPLATE_VARIABLES: Record<Exclude<TemplateKey, "custom">, string[]
   event_rsvp_confirmation: ["name", "eventTitle", "eventDate", "eventLocation"],
   dues_payment_receipt: ["name", "amount", "year", "balanceNote"],
 };
+
+// --- Branded HTML wrapper for one-off admin messages (newsletter sends and
+// the admin broadcast tool — both use templateKey "custom") -----------------
+// The compose box is plain text, so this turns it into a proper-looking
+// email: escape first (admin-typed text, not markup), then split into
+// paragraphs and linkify URLs, matching the same treatment news/event
+// article bodies get on the site (see components/Linkify.tsx).
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function linkifyHtml(text: string): string {
+  return text.replace(
+    /(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g,
+    (url) => `<a href="${url}" style="color:#14b871;text-decoration:underline;">${url}</a>`
+  );
+}
+
+function messageToHtml(message: string): string {
+  return escapeHtml(message)
+    .split(/\n{2,}/)
+    .map((para) => `<p style="margin:0 0 16px;">${linkifyHtml(para).replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+}
+
+function renderBrandedEmail(subject: string, bodyHtml: string): string {
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;padding:32px 16px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">
+        <tr>
+          <td style="background-color:#0a0c12;padding:28px 32px;text-align:center;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+              <tr>
+                <td style="padding-right:10px;vertical-align:middle;">
+                  <img src="https://${SITE_CONFIG.domain}/brand/cseag-logo.png" width="36" height="40" alt="" style="display:block;" />
+                </td>
+                <td style="vertical-align:middle;text-align:left;">
+                  <span style="display:block;font-size:17px;font-weight:bold;color:#ffffff;">${SITE_CONFIG.name}</span>
+                  <span style="display:block;font-size:11px;color:rgba(255,255,255,0.6);">${SITE_CONFIG.fullName}</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="height:4px;background-color:#14b871;line-height:4px;font-size:0;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td style="padding:36px 32px;color:#334155;font-size:15px;line-height:1.6;">
+            <h1 style="margin:0 0 20px;font-size:20px;color:#0a0c12;">${subject}</h1>
+            ${bodyHtml}
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#f8fafc;padding:24px 32px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;">
+            <p style="margin:0 0 8px;font-weight:600;color:#475569;">${SITE_CONFIG.fullName}</p>
+            <p style="margin:0 0 8px;">${SITE_CONFIG.address}</p>
+            <p style="margin:0 0 12px;">
+              <a href="mailto:${SITE_CONFIG.email}" style="color:#14b871;text-decoration:none;">${SITE_CONFIG.email}</a>
+              &nbsp;&middot;&nbsp;
+              <a href="tel:${SITE_CONFIG.phoneHref}" style="color:#14b871;text-decoration:none;">${SITE_CONFIG.phone}</a>
+            </p>
+            <p style="margin:0;">You're receiving this because you subscribed for updates at ${SITE_CONFIG.domain}.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
 
 export function renderTemplate(key: TemplateKey, data: Record<string, string>): Rendered {
   const name = data.name || "there";
@@ -204,12 +279,15 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
         sms: `CSEAG: Payment of ${data.amount} received for ${data.year} dues. Receipt sent to your email.`,
       };
 
-    case "custom":
+    case "custom": {
+      const subject = data.subject || "A message from CSEAG";
+      const message = data.message || "";
       return {
-        emailSubject: data.subject || "A message from CSEAG",
-        emailText: data.message || "",
-        emailHtml: `<p>${(data.message || "").replace(/\n/g, "<br/>")}</p>`,
-        sms: (data.message || "").slice(0, 300),
+        emailSubject: subject,
+        emailText: message,
+        emailHtml: renderBrandedEmail(subject, messageToHtml(message)),
+        sms: message.slice(0, 300),
       };
+    }
   }
 }

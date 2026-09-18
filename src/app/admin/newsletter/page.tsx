@@ -160,7 +160,9 @@ export default function NewsletterPage() {
             <h3 className="flex items-center gap-2 font-semibold text-navy-900">
               <IconSend className="h-4 w-4 text-accent-600" /> Send an update
             </h3>
-            <p className="mt-1 text-xs text-slate-500">Emails every current subscriber. Sent as plain text/HTML, no template.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Emails every current subscriber using the CSEAG branded template — just write the message, links are made clickable automatically.
+            </p>
 
             <form onSubmit={handleSend} className="mt-4 space-y-3">
               {result && <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">{result}</p>}
