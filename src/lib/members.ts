@@ -17,10 +17,21 @@ const STARTING_NUMBER = 10000;
 // MAX+1 query rather than a DB sequence — approvals are a rare, one-at-a-time
 // admin action, not a high-concurrency path, so the tiny race window this
 // leaves is an acceptable tradeoff for not needing a dedicated sequence.
+//
+// The substring position is inlined via sql.raw rather than passed as a
+// normal interpolated value: binding an integer as a query parameter for
+// substring(text FROM $n) confused the driver/planner here and silently
+// made the whole expression evaluate to that parameter's own value instead
+// of a per-row substring — verified directly against the database, not a
+// hypothetical — so every real approval after the ~10113 backfill would
+// have collided on "CSEAG-10001" and failed with a duplicate-key error.
+// Safe to inline like this only because PREFIX is a fixed internal
+// constant, never external input.
 async function nextMembershipId(): Promise<string> {
+  const substringStart = sql.raw(String(PREFIX.length + 1));
   const rows = await db
     .select({
-      maxNum: sql<number>`greatest(coalesce(max(cast(substring(${memberProfiles.membershipId} from ${PREFIX.length + 1}) as integer)), 0), ${STARTING_NUMBER})`,
+      maxNum: sql<number>`greatest(coalesce(max(cast(substring(${memberProfiles.membershipId} from ${substringStart}) as integer)), 0), ${STARTING_NUMBER})`,
     })
     .from(memberProfiles)
     .where(sql`${memberProfiles.membershipId} is not null`);

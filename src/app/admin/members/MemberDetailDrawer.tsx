@@ -7,6 +7,7 @@ import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select, Input } from "@/components/ui/Field";
 import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
+import { IconFileText } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
 interface DuesPaymentItem {
@@ -49,7 +50,15 @@ interface Detail {
     membershipCategory: string | null;
     isListedInDirectory: boolean;
   };
-  applications: { id: string; status: string; submittedAt: string; decisionAt: string | null }[];
+  applications: {
+    id: string;
+    status: string;
+    submittedAt: string;
+    decisionAt: string | null;
+    statementOfInterest: string | null;
+    supportingDocumentUrl: string | null;
+    reviewerNotes: string | null;
+  }[];
 }
 
 export default function MemberDetailDrawer({
@@ -294,11 +303,33 @@ export default function MemberDetailDrawer({
           {detail.applications.length > 0 && (
             <div>
               <p className="text-xs font-semibold uppercase text-slate-400">Application history</p>
-              <ul className="mt-2 space-y-1.5 text-sm">
+              <ul className="mt-2 space-y-3 text-sm">
                 {detail.applications.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between">
-                    <span className="text-slate-600">{new Date(a.submittedAt).toLocaleDateString()}</span>
-                    <Badge tone={statusTone(a.status)}>{APPLICATION_STATUS_LABELS[a.status] || a.status}</Badge>
+                  <li key={a.id} className="rounded-lg border border-slate-100 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-600">{new Date(a.submittedAt).toLocaleDateString()}</span>
+                      <Badge tone={statusTone(a.status)}>{APPLICATION_STATUS_LABELS[a.status] || a.status}</Badge>
+                    </div>
+                    {a.statementOfInterest && (
+                      <p className="mt-2 text-xs italic text-slate-600">&ldquo;{a.statementOfInterest}&rdquo;</p>
+                    )}
+                    {a.reviewerNotes && (
+                      <p className="mt-2 text-xs text-slate-500">
+                        <span className="font-medium text-slate-600">Reviewer note:</span> {a.reviewerNotes}
+                      </p>
+                    )}
+                    {a.supportingDocumentUrl ? (
+                      <a
+                        href={a.supportingDocumentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 hover:text-accent-800"
+                      >
+                        <IconFileText className="h-3.5 w-3.5" /> View CV / Resume
+                      </a>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-400">No CV/Resume on file for this application.</p>
+                    )}
                   </li>
                 ))}
               </ul>
