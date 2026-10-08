@@ -4,6 +4,7 @@
 // Targets Postgres (see src/db/client.ts) — required for Vercel's serverless
 // runtime, which has no persistent local filesystem for SQLite.
 
+import { sql } from "drizzle-orm";
 import { pgTable, text, integer, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { CSA_ACCREDITATION_TIERS } from "@/lib/constants";
 
@@ -234,6 +235,13 @@ export type ServiceRequestStatus = (typeof SERVICE_REQUEST_STATUSES)[number];
 
 export const serviceRequests = pgTable("service_requests", {
   id: text("id").primaryKey(),
+  // Human-friendly ticket reference (e.g. "SR-10001") shown to requesters,
+  // experts and admins. Filled by the database from a sequence, so it is
+  // unique even under concurrent submissions.
+  ticketNumber: text("ticket_number")
+    .notNull()
+    .unique()
+    .default(sql`'SR-' || nextval('service_request_ticket_seq')::text`),
   // The expert the visitor originally asked for — immutable, kept for
   // context even after reassignment.
   expertUserId: text("expert_user_id").notNull(),

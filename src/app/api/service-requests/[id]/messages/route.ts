@@ -67,6 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     viewerRole: viewer.role,
     ticket: {
       id: ticket.id,
+      ticketNumber: ticket.ticketNumber,
       status: ticket.status,
       message: ticket.message,
       requesterName: ticket.requesterName,
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       userId: expertUser.id,
       templateKey: "service_request_new_message",
       email: expertUser.email,
-      data: { name: expertProfile.fullName, fromName: viewer.name, message: parsed.data.message, chatUrl: dashboardUrlForExpert },
+      data: { ticket: ticket.ticketNumber, name: expertProfile.fullName, fromName: viewer.name, message: parsed.data.message, chatUrl: dashboardUrlForExpert },
     });
   };
 
@@ -136,7 +137,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await notify({
       templateKey: "service_request_new_message",
       email: ticket.requesterEmail,
-      data: { name: ticket.requesterName, fromName: viewer.name, message: parsed.data.message, chatUrl: chatUrlForRequester },
+      data: { ticket: ticket.ticketNumber, name: ticket.requesterName, fromName: viewer.name, message: parsed.data.message, chatUrl: chatUrlForRequester },
     });
   };
 

@@ -10,6 +10,7 @@ import { hasPermission } from "@/lib/permissions";
 import { reportResponse, parseReportFormat, type ReportColumn } from "@/lib/reportResponse";
 
 interface ServiceRequestRow {
+  ticketNumber: string;
   expertName: string;
   assignedExpertName: string | null;
   requesterName: string;
@@ -21,6 +22,7 @@ interface ServiceRequestRow {
 }
 
 const COLUMNS: ReportColumn<ServiceRequestRow>[] = [
+  { key: "ticketNumber", header: "Ticket" },
   { key: "expertName", header: "Requested expert" },
   { key: "assignedExpertName", header: "Assigned to" },
   { key: "requesterName", header: "Requester" },
@@ -41,6 +43,7 @@ export async function GET(req: NextRequest) {
 
   const rows: ServiceRequestRow[] = await db
     .select({
+      ticketNumber: serviceRequests.ticketNumber,
       expertName: memberProfiles.fullName,
       assignedExpertName: assignedProfile.fullName,
       requesterName: serviceRequests.requesterName,

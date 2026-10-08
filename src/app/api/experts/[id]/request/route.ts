@@ -36,20 +36,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const requestId = randomUUID();
-  await db.insert(serviceRequests).values({
+  const [created] = await db.insert(serviceRequests).values({
     id: requestId,
     expertUserId: expert.userId,
     requesterName: parsed.data.requesterName,
     requesterEmail: parsed.data.requesterEmail,
     requesterPhone: parsed.data.requesterPhone,
     message: parsed.data.message,
-  });
+  }).returning({ ticketNumber: serviceRequests.ticketNumber });
+  const ticket = created.ticketNumber;
 
   await notify({
     templateKey: "service_request_received_admin",
     email: SITE_CONFIG.email,
     replyTo: parsed.data.requesterEmail,
     data: {
+      ticket,
       expertName: expert.fullName,
       fromName: parsed.data.requesterName,
       fromEmail: parsed.data.requesterEmail,
@@ -58,12 +60,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
   });
 
+  // The requester has no account, so this is their only record of the ticket.
+  await notify({
+    templateKey: "service_request_received_requester",
+    email: parsed.data.requesterEmail,
+    phone: parsed.data.requesterPhone || undefined,
+    data: { ticket, name: parsed.data.requesterName, expertName: expert.fullName },
+  });
+
   await recordAudit({
     action: "service_request.created",
     targetType: "service_request",
     targetId: requestId,
-    details: { expertUserId: expert.userId },
+    details: { expertUserId: expert.userId, ticket },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ticketNumber: ticket });
 }

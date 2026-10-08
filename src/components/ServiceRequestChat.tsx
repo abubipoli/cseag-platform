@@ -18,6 +18,7 @@ interface ThreadData {
   viewerRole: "expert" | "admin" | "requester";
   ticket: {
     id: string;
+    ticketNumber: string;
     status: string;
     message: string;
     requesterName: string;
@@ -92,6 +93,9 @@ export function ServiceRequestChat({ serviceRequestId, token }: { serviceRequest
 
   return (
     <div className="flex flex-col">
+      <p className="mb-2 text-xs text-slate-400">
+        Ticket <span className="font-mono font-semibold text-slate-600">{data.ticket.ticketNumber}</span>
+      </p>
       <div className="max-h-96 min-h-[12rem] space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/60 p-4 scrollbar-thin">
         {data.messages.length === 0 && (
           <p className="text-center text-sm text-slate-400">No messages yet — say hello to get started.</p>

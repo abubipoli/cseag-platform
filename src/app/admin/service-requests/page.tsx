@@ -8,13 +8,14 @@ import { Badge, statusTone } from "@/components/ui/Badge";
 import { Tabs } from "@/components/ui/Tabs";
 import { Drawer } from "@/components/ui/Drawer";
 import { Button } from "@/components/ui/Button";
-import { Textarea, Select } from "@/components/ui/Field";
+import { Input, Textarea, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ServiceRequestChat } from "@/components/ServiceRequestChat";
 import { IconMessageSquare, IconMail, IconPhone } from "@/components/ui/icons";
 
 interface Ticket {
   id: string;
+  ticketNumber: string;
   expertUserId: string;
   expertName: string;
   assignedExpertUserId: string | null;
@@ -50,6 +51,7 @@ export default function ServiceRequestsPage() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [experts, setExperts] = useState<ExpertOption[]>([]);
   const [tab, setTab] = useState<FilterTab>("open");
+  const [query, setQuery] = useState("");
   const [active, setActive] = useState<Ticket | null>(null);
   const [assignTo, setAssignTo] = useState("");
   const [notes, setNotes] = useState("");
@@ -108,8 +110,14 @@ export default function ServiceRequestsPage() {
 
   if (!tickets) return <p className="text-sm text-slate-400">Loading…</p>;
 
+  const needle = query.trim().toLowerCase();
+  const matchesQuery = (t: Ticket) =>
+    !needle ||
+    [t.ticketNumber, t.requesterName, t.requesterEmail, t.expertName].some((v) => (v || "").toLowerCase().includes(needle));
+  // Searching spans every tab, so a ticket number can be found even if it's closed.
   const filtered = tickets.filter((t) => {
-    if (tab === "all") return true;
+    if (!matchesQuery(t)) return false;
+    if (needle || tab === "all") return true;
     if (tab === "resolved") return t.status === "resolved" || t.status === "declined";
     return t.status !== "resolved" && t.status !== "declined";
   });
@@ -138,6 +146,13 @@ export default function ServiceRequestsPage() {
         ]}
       />
 
+      <Input
+        placeholder="Search by ticket number, name or email (e.g. SR-10001)"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="sm:max-w-md"
+      />
+
       {filtered.length === 0 ? (
         <EmptyState icon={<IconMessageSquare className="h-5 w-5" />} title="Nothing here" body="No service requests match this filter." />
       ) : (
@@ -148,7 +163,10 @@ export default function ServiceRequestsPage() {
                 <CardBody className="flex flex-wrap items-center gap-4">
                   <Avatar name={t.requesterName} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-navy-900">{t.requesterName}</p>
+                    <p className="truncate font-semibold text-navy-900">
+                      <span className="mr-2 font-mono text-xs font-medium text-slate-500">{t.ticketNumber}</span>
+                      {t.requesterName}
+                    </p>
                     <p className="truncate text-xs text-slate-500">
                       wants <span className="font-medium text-slate-700">{t.expertName}</span> — {t.message}
                     </p>
@@ -167,7 +185,7 @@ export default function ServiceRequestsPage() {
         </div>
       )}
 
-      <Drawer open={!!active} onClose={() => setActive(null)} title="Service Request" wide>
+      <Drawer open={!!active} onClose={() => setActive(null)} title={active ? `Service Request ${active.ticketNumber}` : "Service Request"} wide>
         {active && (
           <div className="space-y-5">
             <div className="flex items-center gap-3">

@@ -19,6 +19,7 @@ export async function GET() {
   const rows = await db
     .select({
       id: serviceRequests.id,
+      ticketNumber: serviceRequests.ticketNumber,
       expertUserId: serviceRequests.expertUserId,
       expertName: memberProfiles.fullName,
       assignedExpertUserId: serviceRequests.assignedExpertUserId,

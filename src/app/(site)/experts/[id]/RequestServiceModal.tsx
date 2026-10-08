@@ -16,6 +16,7 @@ export default function RequestServiceModal({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -35,8 +36,11 @@ export default function RequestServiceModal({
       }),
     });
     setSubmitting(false);
-    if (res.ok) setDone(true);
-    else setError("Something went wrong. Please try again.");
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setTicketNumber(typeof data?.ticketNumber === "string" ? data.ticketNumber : null);
+      setDone(true);
+    } else setError("Something went wrong. Please try again.");
   }
 
   return (
@@ -58,7 +62,16 @@ export default function RequestServiceModal({
           <div className="flex flex-col items-center py-8 text-center">
             <IconCheckCircle className="h-9 w-9 text-accent-700" />
             <p className="mt-3 font-medium text-navy-900">Request sent</p>
-            <p className="mt-1 text-sm text-slate-500">Our team will be in touch shortly.</p>
+            {ticketNumber && (
+              <>
+                <p className="mt-3 text-xs uppercase tracking-wide text-slate-400">Your ticket number</p>
+                <p className="mt-1 rounded-lg bg-slate-50 px-4 py-2 font-mono text-lg font-semibold tracking-wide text-navy-900">
+                  {ticketNumber}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">Keep this number and quote it in any follow-up.</p>
+              </>
+            )}
+            <p className="mt-3 text-sm text-slate-500">Our team will be in touch shortly.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">

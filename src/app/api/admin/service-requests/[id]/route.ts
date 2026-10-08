@@ -61,6 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       phone: usablePhone,
       replyTo: ticket.requesterEmail,
       data: {
+        ticket: ticket.ticketNumber,
         name: expertProfile.fullName,
         fromName: ticket.requesterName,
         fromEmail: ticket.requesterEmail,
@@ -74,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       templateKey: "service_request_chat_link_requester",
       email: ticket.requesterEmail,
       phone: ticket.requesterPhone || undefined,
-      data: { name: ticket.requesterName, expertName: expertProfile.fullName, chatUrl },
+      data: { ticket: ticket.ticketNumber, name: ticket.requesterName, expertName: expertProfile.fullName, chatUrl },
     });
 
     updates.assignedExpertUserId = input.assignExpertUserId;
