@@ -11,7 +11,11 @@ import {
   IconArrowRight,
 } from "@/components/ui/icons";
 
-export const metadata: Metadata = { title: "What We Do" };
+export const metadata: Metadata = {
+  title: "What We Do",
+  description:
+    "CSEAG's programs for Ghana's cybersecurity community: professional certification, training and capacity building, policy advocacy, incident response coordination, and public awareness.",
+};
 
 // The six focus areas and photos below are CSEAG's own, migrated from the
 // matching "What We Do" section on cyberexpertgh.org.

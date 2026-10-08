@@ -6,7 +6,11 @@ import { IconCalendar, IconMapPin, IconArrowRight } from "@/components/ui/icons"
 import { MiniCalendar } from "@/components/ui/MiniCalendar";
 import { listPublishedContent, getViewer } from "@/lib/content";
 
-export const metadata: Metadata = { title: "Events" };
+export const metadata: Metadata = {
+  title: "Events",
+  description:
+    "Upcoming cybersecurity training sessions, workshops, and events hosted by the Cyber Security Experts Association of Ghana (CSEAG).",
+};
 export const dynamic = "force-dynamic";
 
 type EventItem = Awaited<ReturnType<typeof listPublishedContent>>[number];

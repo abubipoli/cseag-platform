@@ -8,6 +8,7 @@
 // hostname). Querying the database directly here removes that whole class
 // of failure and is simply more efficient regardless of host.
 
+import { cache } from "react";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { contentItems, memberProfiles, CONTENT_TYPES, type MembershipCategory } from "@/db/schema";
@@ -23,12 +24,15 @@ export interface Viewer {
   category: MembershipCategory | null;
 }
 
-export async function getViewer(): Promise<Viewer> {
+// Cached per-request: generateMetadata() and the page component below both
+// need this (and getPublishedContentBySlug), so without caching every
+// content detail page would hit the database twice for the same data.
+export const getViewer = cache(async function getViewer(): Promise<Viewer> {
   const session = await getSession();
   if (!session || session.role === "applicant") return { isMember: false, category: null };
   const profile = await db.query.memberProfiles.findFirst({ where: eq(memberProfiles.userId, session.userId) });
   return { isMember: true, category: profile?.membershipCategory ?? null };
-}
+});
 
 // Full-item audience gate — currently only enforced for type = "news".
 // Resource/event/page items keep isMemberOnly's original, narrower meaning
@@ -60,10 +64,13 @@ export async function listPublishedContent(type: ContentType | undefined, viewer
   return rows.filter((r) => isNewsVisibleToViewer(r, viewer)).map((r) => withFileUrlGate(r, viewer.isMember));
 }
 
-export async function getPublishedContentBySlug(slug: string, viewer: Viewer) {
+export const getPublishedContentBySlug = cache(async function getPublishedContentBySlug(
+  slug: string,
+  viewer: Viewer
+) {
   const item = await db.query.contentItems.findFirst({
     where: and(eq(contentItems.slug, slug), eq(contentItems.status, "published")),
   });
   if (!item || !isNewsVisibleToViewer(item, viewer)) return null;
   return withFileUrlGate(item, viewer.isMember);
-}
+});

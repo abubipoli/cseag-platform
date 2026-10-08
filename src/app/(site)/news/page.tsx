@@ -5,7 +5,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { IconFileText, IconArrowRight } from "@/components/ui/icons";
 import { listPublishedContent, getViewer } from "@/lib/content";
 
-export const metadata: Metadata = { title: "News" };
+export const metadata: Metadata = {
+  title: "News",
+  description: "Latest news, announcements, and updates from the Cyber Security Experts Association of Ghana (CSEAG).",
+};
 export const dynamic = "force-dynamic";
 
 export default async function NewsPage() {

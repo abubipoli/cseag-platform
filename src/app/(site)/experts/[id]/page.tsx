@@ -1,54 +1,68 @@
-"use client";
-
-import { useEffect, useState, use as usePromise } from "react";
-import Link from "next/link";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { IconBriefcase, IconMessageSquare } from "@/components/ui/icons";
+import { IconBriefcase } from "@/components/ui/icons";
 import { SidebarAd } from "@/components/marketing/SidebarAd";
-import RequestServiceModal from "./RequestServiceModal";
+import { SITE_CONFIG } from "@/lib/constants";
+import { getExpertById } from "@/lib/experts";
+import { ExpertContactButton } from "./ExpertContactButton";
 
-interface Expert {
-  id: string;
-  name: string;
-  photoUrl: string | null;
-  bio: string | null;
-  yearsOfExperience: number | null;
-  employer: string | null;
-  currentRole: string | null;
-  areasOfExpertise: string[];
-  certifications: string[];
-  allowPublicContact: boolean;
+export const dynamic = "force-dynamic";
+
+function describeRole(expert: NonNullable<Awaited<ReturnType<typeof getExpertById>>>): string {
+  return [expert.currentRole, expert.employer].filter(Boolean).join(" at ");
 }
 
-export default function ExpertProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = usePromise(params);
-  const [expert, setExpert] = useState<Expert | null | undefined>(undefined);
-  const [requestOpen, setRequestOpen] = useState(false);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const expert = await getExpertById(id);
+  if (!expert) return { title: "Expert Not Found" };
 
-  useEffect(() => {
-    fetch(`/api/experts/${id}`)
-      .then(async (r) => (r.ok ? (await r.json()).expert : null))
-      .then(setExpert);
-  }, [id]);
+  const role = describeRole(expert);
+  const descriptionParts = [
+    role && `${expert.name} — ${role}.`,
+    expert.yearsOfExperience !== null && `${expert.yearsOfExperience} years of experience.`,
+    expert.areasOfExpertise.length > 0 && `Areas of expertise: ${expert.areasOfExpertise.join(", ")}.`,
+  ].filter(Boolean);
+  const description =
+    descriptionParts.join(" ") ||
+    `${expert.name}'s verified profile in the CSEAG Expert Directory of cybersecurity professionals in Ghana.`;
 
-  if (expert === undefined) {
-    return <div className="mx-auto max-w-2xl px-4 py-16 text-sm text-slate-500">Loading…</div>;
-  }
-  if (expert === null) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-sm text-slate-500">Expert not found.</p>
-        <Link href="/experts" className="mt-3 inline-block text-sm font-medium text-accent-700">
-          &larr; Back to directory
-        </Link>
-      </div>
-    );
-  }
+  return {
+    title: role ? `${expert.name} — ${role}` : expert.name,
+    description,
+    openGraph: {
+      title: `${expert.name} | CSEAG Expert Directory`,
+      description,
+      images: expert.photoUrl ? [{ url: expert.photoUrl }] : undefined,
+    },
+  };
+}
+
+export default async function ExpertProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const expert = await getExpertById(id);
+  if (!expert) notFound();
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: expert.name,
+    jobTitle: expert.currentRole || undefined,
+    worksFor: expert.employer ? { "@type": "Organization", name: expert.employer } : undefined,
+    description: expert.bio || undefined,
+    image: expert.photoUrl || undefined,
+    knowsAbout: expert.areasOfExpertise.length > 0 ? expert.areasOfExpertise : undefined,
+    url: `https://${SITE_CONFIG.domain}/experts/${expert.id}`,
+    memberOf: { "@type": "Organization", name: SITE_CONFIG.fullName, url: `https://${SITE_CONFIG.domain}` },
+  };
 
   return (
     <div className="bg-slate-50">
+      {/* eslint-disable-next-line react/no-danger -- static JSON-LD built from server data, not user-supplied HTML */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
       <div className="h-44 bg-gradient-to-r from-navy-900 to-navy-700" />
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-4 pb-16 sm:px-6 lg:grid-cols-[1fr_260px]">
         <div className="-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-[var(--shadow-card)] sm:p-8">
@@ -62,7 +76,7 @@ export default function ExpertProfilePage({ params }: { params: Promise<{ id: st
               {(expert.employer || expert.currentRole) && (
                 <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-slate-500 sm:justify-start">
                   <IconBriefcase className="h-4 w-4" />
-                  {[expert.currentRole, expert.employer].filter(Boolean).join(" at ")}
+                  {describeRole(expert)}
                 </p>
               )}
             </div>
@@ -95,21 +109,13 @@ export default function ExpertProfilePage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          {expert.allowPublicContact && (
-            <Button onClick={() => setRequestOpen(true)} className="mt-8">
-              <IconMessageSquare className="h-4 w-4" /> Request Service
-            </Button>
-          )}
+          {expert.allowPublicContact && <ExpertContactButton expertId={expert.id} expertName={expert.name} />}
         </div>
 
         <div className="lg:-mt-24">
           <SidebarAd />
         </div>
       </div>
-
-      {requestOpen && (
-        <RequestServiceModal expertId={expert.id} expertName={expert.name} onClose={() => setRequestOpen(false)} />
-      )}
     </div>
   );
 }

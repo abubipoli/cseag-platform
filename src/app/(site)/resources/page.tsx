@@ -6,7 +6,11 @@ import { Badge } from "@/components/ui/Badge";
 import { IconFileText, IconDownload, IconLock } from "@/components/ui/icons";
 import { listPublishedContent, getViewer } from "@/lib/content";
 
-export const metadata: Metadata = { title: "Resources" };
+export const metadata: Metadata = {
+  title: "Resources",
+  description:
+    "Download cybersecurity guides, policy templates, and training materials published by the Cyber Security Experts Association of Ghana (CSEAG).",
+};
 export const dynamic = "force-dynamic";
 
 export default async function ResourcesPage() {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublishedContentBySlug, getViewer } from "@/lib/content";
@@ -6,6 +7,25 @@ import { SidebarAd } from "@/components/marketing/SidebarAd";
 import { Linkify } from "@/components/Linkify";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const viewer = await getViewer();
+  const item = await getPublishedContentBySlug(slug, viewer);
+  if (!item || item.type !== "news") return { title: "News" };
+
+  const description = item.summary || item.body.slice(0, 160);
+  return {
+    title: item.title,
+    description,
+    openGraph: {
+      title: item.title,
+      description,
+      type: "article",
+      images: item.imageUrl ? [{ url: item.imageUrl }] : undefined,
+    },
+  };
+}
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

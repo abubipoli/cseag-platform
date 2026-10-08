@@ -4,7 +4,11 @@ import { GhanaTechMap } from "@/components/marketing/GhanaTechMap";
 import { ButtonLink } from "@/components/ui/Button";
 import { IconTarget, IconGlobe, IconUsers, IconShieldCheck } from "@/components/ui/icons";
 
-export const metadata: Metadata = { title: "About Us" };
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "Learn about CSEAG — the Cyber Security Experts Association of Ghana. Our mission, values, and the professional community uniting Ghana's cybersecurity experts to secure the nation's digital future.",
+};
 
 const VALUES = [
   ["Integrity", "Honesty, transparency, and accountability in cybersecurity practice."],

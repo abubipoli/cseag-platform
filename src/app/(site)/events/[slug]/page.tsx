@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
@@ -8,6 +9,26 @@ import { Linkify } from "@/components/Linkify";
 import RsvpForm from "./RsvpForm";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const session = await getSession();
+  const viewer: Viewer = { isMember: !!session && session.role !== "applicant", category: null };
+  const item = await getPublishedContentBySlug(slug, viewer);
+  if (!item || item.type !== "event") return { title: "Events" };
+
+  const description = item.summary || item.body.slice(0, 160);
+  return {
+    title: item.title,
+    description,
+    openGraph: {
+      title: item.title,
+      description,
+      type: "article",
+      images: item.imageUrl ? [{ url: item.imageUrl }] : undefined,
+    },
+  };
+}
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

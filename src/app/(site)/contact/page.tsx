@@ -4,7 +4,11 @@ import { SITE_CONFIG } from "@/lib/constants";
 import { IconMail, IconMapPin, IconPhone } from "@/components/ui/icons";
 import ContactForm from "./ContactForm";
 
-export const metadata: Metadata = { title: "Contact Us" };
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with the Cyber Security Experts Association of Ghana (CSEAG). Find our office address, phone number, and email for membership, training, and partnership inquiries.",
+};
 
 export default function ContactPage() {
   return (
