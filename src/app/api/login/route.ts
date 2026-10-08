@@ -5,6 +5,7 @@ import { users } from "@/db/schema";
 import { loginSchema } from "@/lib/validation";
 import { verifyPassword, setSessionCookie, signMfaChallenge } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
+import { emailMatches } from "@/lib/user-email";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Enter a valid email and password" }, { status: 422 });
   }
 
-  const user = await db.query.users.findFirst({ where: eq(users.email, parsed.data.email) });
+  const user = await db.query.users.findFirst({ where: emailMatches(parsed.data.email) });
   if (!user || !user.isActive) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }

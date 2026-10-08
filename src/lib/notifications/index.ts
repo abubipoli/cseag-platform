@@ -15,6 +15,7 @@
 
 import { randomUUID } from "node:crypto";
 import { db } from "@/db/client";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { notifications } from "@/db/schema";
 import { getNotificationSettings, type NotificationSettings } from "@/lib/settings";
 import { consoleEmailProvider, consoleSmsProvider } from "./providers/console";
@@ -56,6 +57,25 @@ export function resolveSmsProvider(settings: NotificationSettings): SmsProvider 
   }
 }
 
+// The mail host (UltraHost/cPanel) silently DISCARDS every message once a
+// domain passes 50 emails in an hour — and our provider still reports "sent"
+// because our own mail server accepted it. Bulk sends (templateKey "custom":
+// broadcasts, newsletters, campaigns) therefore stop at this cap and are
+// recorded as "queued" instead, so one big send can no longer starve
+// password-reset and application emails of the remaining headroom. Only
+// applies while sending through the host's own mail server; an external
+// relay has its own, much higher limits.
+const BULK_EMAIL_HOURLY_CAP = 35;
+
+async function emailsSentInLastHour(): Promise<number> {
+  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const rows = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(notifications)
+    .where(and(eq(notifications.channel, "email"), eq(notifications.status, "sent"), gte(notifications.sentAt, since)));
+  return Number(rows[0]?.n ?? 0);
+}
+
 interface NotifyArgs {
   userId?: string;
   templateKey: TemplateKey;
@@ -76,9 +96,26 @@ export async function notify({ userId, templateKey, email, phone, replyTo, data,
   const emailProvider = resolveEmailProvider(settings);
   const smsProvider = resolveSmsProvider(settings);
   const rendered = await resolveTemplate(templateKey, data);
-  const results: { channel: "email" | "sms"; ok: boolean }[] = [];
+  const results: { channel: "email" | "sms"; ok: boolean; held?: boolean }[] = [];
 
-  if (email) {
+  if (
+    email &&
+    templateKey === "custom" &&
+    settings.smtpHost.endsWith("cyberexpertgh.org") &&
+    (await emailsSentInLastHour()) >= BULK_EMAIL_HOURLY_CAP
+  ) {
+    await db.insert(notifications).values({
+      id: randomUUID(),
+      userId,
+      channel: "email",
+      templateKey,
+      recipient: email,
+      status: "queued",
+      errorMessage: "Held: hourly email limit reached (host allows 50/hour). Use Resend in the next hour.",
+      payload: JSON.stringify({ data, replyTo }),
+    });
+    results.push({ channel: "email", ok: false, held: true });
+  } else if (email) {
     const result = await emailProvider.send({
       to: email,
       subject: rendered.emailSubject,

@@ -127,7 +127,7 @@ function LoginForm() {
           ) : (
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <FieldWrap label="Email" required>
-                <Input name="email" type="email" required autoFocus />
+                <Input name="email" type="email" required autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} />
               </FieldWrap>
               <div>
                 <div className="mb-1.5 flex items-center justify-between">

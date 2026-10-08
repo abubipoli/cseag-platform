@@ -10,6 +10,7 @@ import { users, memberProfiles } from "@/db/schema";
 import { getSession, generateTemporaryPassword, hashPassword } from "@/lib/auth";
 import { hasPermission, canAssignRole } from "@/lib/permissions";
 import { adminCreateUserSchema } from "@/lib/validation";
+import { emailMatches } from "@/lib/user-email";
 import { recordAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
 import { ROLE_LABELS } from "@/lib/constants";
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Only a super admin can grant administrator access." }, { status: 403 });
   }
 
-  const existing = await db.query.users.findFirst({ where: eq(users.email, input.email) });
+  const existing = await db.query.users.findFirst({ where: emailMatches(input.email) });
   if (existing) {
     return NextResponse.json({ error: { formErrors: ["An account with this email already exists."] } }, { status: 409 });
   }

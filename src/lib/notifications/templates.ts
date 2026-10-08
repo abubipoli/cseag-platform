@@ -16,6 +16,7 @@ export type TemplateKey =
   | "account_created_by_admin"
   | "contact_form_relay"
   | "service_request_received_admin"
+  | "service_request_received_requester"
   | "service_request_assigned_expert"
   | "service_request_chat_link_requester"
   | "service_request_new_message"
@@ -43,6 +44,7 @@ export const TEMPLATE_LABELS: Record<Exclude<TemplateKey, "custom">, string> = {
   account_created_by_admin: "Account created by admin",
   contact_form_relay: "Contact form message (to admin)",
   service_request_received_admin: "New service request (to admin)",
+  service_request_received_requester: "Service request received (to requester)",
   service_request_assigned_expert: "Service request assigned (to expert)",
   service_request_chat_link_requester: "Expert assigned (to requester)",
   service_request_new_message: "New chat message",
@@ -60,10 +62,11 @@ export const TEMPLATE_VARIABLES: Record<Exclude<TemplateKey, "custom">, string[]
   password_reset_by_admin: ["name", "tempPassword"],
   account_created_by_admin: ["name", "role", "email", "tempPassword"],
   contact_form_relay: ["fromName", "fromEmail", "subject", "message"],
-  service_request_received_admin: ["expertName", "fromName", "fromEmail", "fromPhone", "message"],
-  service_request_assigned_expert: ["name", "fromName", "fromEmail", "fromPhone", "message", "dashboardUrl"],
-  service_request_chat_link_requester: ["name", "expertName", "chatUrl"],
-  service_request_new_message: ["name", "fromName", "message", "chatUrl"],
+  service_request_received_admin: ["ticket", "expertName", "fromName", "fromEmail", "fromPhone", "message"],
+  service_request_received_requester: ["ticket", "name", "expertName"],
+  service_request_assigned_expert: ["ticket", "name", "fromName", "fromEmail", "fromPhone", "message", "dashboardUrl"],
+  service_request_chat_link_requester: ["ticket", "name", "expertName", "chatUrl"],
+  service_request_new_message: ["ticket", "name", "fromName", "message", "chatUrl"],
   newsletter_confirmation: [],
   event_rsvp_confirmation: ["name", "eventTitle", "eventDate", "eventLocation"],
   dues_payment_receipt: ["name", "amount", "year", "balanceNote"],
@@ -193,8 +196,11 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
       return {
         emailSubject: "Reset your CSEAG password",
         emailText: `Hi ${name},\n\nWe received a request to reset your CSEAG account password. This link expires in 1 hour:\n\n${data.resetUrl}\n\nIf you didn't request this, you can safely ignore this email.\n\n— CSEAG`,
-        emailHtml: `<p>Hi ${name},</p><p>We received a request to reset your CSEAG account password. This link expires in 1 hour:</p><p><a href="${data.resetUrl}">${data.resetUrl}</a></p><p>If you didn't request this, you can safely ignore this email.</p><p>— CSEAG</p>`,
-        sms: `CSEAG: A password reset was requested for your account. Check your email for the reset link (expires in 1 hour). Ignore if this wasn't you.`,
+        emailHtml: renderBrandedEmail(
+          "Reset your CSEAG password",
+          `<p style="margin:0 0 14px;">Hi ${escapeHtml(name)},</p><p style="margin:0 0 20px;">We received a request to reset your CSEAG account password. Use the button below to choose a new one. The link expires in 1 hour.</p><p style="margin:0 0 20px;"><a href="${data.resetUrl}" style="display:inline-block;background-color:#14b871;color:#05060a;text-decoration:none;font-weight:bold;padding:12px 24px;border-radius:999px;">Reset my password</a></p><p style="margin:0 0 14px;font-size:13px;color:#64748b;">If the button doesn't work, copy this link into your browser:<br><a href="${data.resetUrl}" style="color:#0c5a49;word-break:break-all;">${data.resetUrl}</a></p><p style="margin:0;font-size:13px;color:#64748b;">If you didn't request this, you can safely ignore this email. Your password won't change.</p>`
+        ),
+        sms: `CSEAG password reset link (valid 1 hour): ${data.resetUrl} If you didn't ask for this, ignore it.`,
       };
 
     case "password_reset_by_admin":
@@ -223,34 +229,42 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
 
     case "service_request_received_admin":
       return {
-        emailSubject: `New service request for ${data.expertName}`,
-        emailText: `A new service request came in via the public Expert Directory.\n\nRequested expert: ${data.expertName}\nFrom: ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})\n\nMessage:\n"${data.message}"\n\nReview and action it from /admin/service-requests.`,
-        emailHtml: `<p>A new service request came in via the public Expert Directory.</p><p><strong>Requested expert:</strong> ${data.expertName}<br/><strong>From:</strong> ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})</p><p><strong>Message:</strong><br/>"${data.message}"</p><p>Review and action it from <code>/admin/service-requests</code>.</p>`,
-        sms: `CSEAG: New service request for ${data.expertName} from ${data.fromName}. Check /admin/service-requests.`,
+        emailSubject: `New service request ${data.ticket} for ${data.expertName}`,
+        emailText: `A new service request came in via the public Expert Directory.\n\nTicket: ${data.ticket}\nRequested expert: ${data.expertName}\nFrom: ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})\n\nMessage:\n"${data.message}"\n\nReview and action it from /admin/service-requests.`,
+        emailHtml: `<p>A new service request came in via the public Expert Directory.</p><p><strong>Ticket:</strong> ${data.ticket}<br/><strong>Requested expert:</strong> ${data.expertName}<br/><strong>From:</strong> ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})</p><p><strong>Message:</strong><br/>"${data.message}"</p><p>Review and action it from <code>/admin/service-requests</code>.</p>`,
+        sms: `CSEAG: New service request ${data.ticket} for ${data.expertName} from ${data.fromName}. Check /admin/service-requests.`,
+      };
+
+    case "service_request_received_requester":
+      return {
+        emailSubject: `We've received your request (Ticket ${data.ticket})`,
+        emailText: `Hi ${name},\n\nThank you for contacting CSEAG. We've received your service request for ${data.expertName}.\n\nYour ticket number is ${data.ticket}. Please quote it in any follow-up so we can find your request quickly.\n\nOur team will review it and connect you with the expert. You'll hear from us shortly.\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>Thank you for contacting CSEAG. We've received your service request for ${data.expertName}.</p><p>Your ticket number is <strong>${data.ticket}</strong>. Please quote it in any follow-up so we can find your request quickly.</p><p>Our team will review it and connect you with the expert. You'll hear from us shortly.</p><p>— CSEAG</p>`,
+        sms: `CSEAG: We've received your request for ${data.expertName}. Your ticket number is ${data.ticket}. We'll be in touch shortly.`,
       };
 
     case "service_request_assigned_expert":
       return {
-        emailSubject: `You've been assigned a service request via CSEAG`,
-        emailText: `Hi ${name},\n\nAn admin has assigned you a service request from the CSEAG Expert Directory.\n\nFrom: ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})\n\nWhat they need:\n"${data.message}"\n\nLog in to your dashboard's "My Requests" tab to message them directly:\n${data.dashboardUrl}\n\n— CSEAG`,
-        emailHtml: `<p>Hi ${name},</p><p>An admin has assigned you a service request from the CSEAG Expert Directory.</p><p><strong>From:</strong> ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})</p><p><strong>What they need:</strong><br/>"${data.message}"</p><p>Log in to your dashboard's "My Requests" tab to message them directly: <a href="${data.dashboardUrl}">${data.dashboardUrl}</a></p><p>— CSEAG</p>`,
-        sms: `CSEAG: You've been assigned a service request from ${data.fromName}. Log in to your dashboard's My Requests tab to respond.`,
+        emailSubject: `You've been assigned service request ${data.ticket} via CSEAG`,
+        emailText: `Hi ${name},\n\nAn admin has assigned you service request ${data.ticket} from the CSEAG Expert Directory.\n\nFrom: ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})\n\nWhat they need:\n"${data.message}"\n\nLog in to your dashboard's "My Requests" tab to message them directly:\n${data.dashboardUrl}\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>An admin has assigned you service request <strong>${data.ticket}</strong> from the CSEAG Expert Directory.</p><p><strong>From:</strong> ${data.fromName} (${data.fromEmail}${data.fromPhone ? `, ${data.fromPhone}` : ""})</p><p><strong>What they need:</strong><br/>"${data.message}"</p><p>Log in to your dashboard's "My Requests" tab to message them directly: <a href="${data.dashboardUrl}">${data.dashboardUrl}</a></p><p>— CSEAG</p>`,
+        sms: `CSEAG: You've been assigned request ${data.ticket} from ${data.fromName}. Log in to your dashboard's My Requests tab to respond.`,
       };
 
     case "service_request_chat_link_requester":
       return {
-        emailSubject: `${data.expertName} has been assigned to your CSEAG request`,
-        emailText: `Hi ${name},\n\n${data.expertName} has been assigned to your request and can now message you directly.\n\nOpen your conversation here (no login needed):\n${data.chatUrl}\n\n— CSEAG`,
-        emailHtml: `<p>Hi ${name},</p><p>${data.expertName} has been assigned to your request and can now message you directly.</p><p>Open your conversation here (no login needed): <a href="${data.chatUrl}">${data.chatUrl}</a></p><p>— CSEAG</p>`,
-        sms: `CSEAG: ${data.expertName} has been assigned to your request. Chat here: ${data.chatUrl}`,
+        emailSubject: `${data.expertName} has been assigned to your CSEAG request (${data.ticket})`,
+        emailText: `Hi ${name},\n\n${data.expertName} has been assigned to your request (ticket ${data.ticket}) and can now message you directly.\n\nOpen your conversation here (no login needed):\n${data.chatUrl}\n\n— CSEAG`,
+        emailHtml: `<p>Hi ${name},</p><p>${data.expertName} has been assigned to your request (ticket <strong>${data.ticket}</strong>) and can now message you directly.</p><p>Open your conversation here (no login needed): <a href="${data.chatUrl}">${data.chatUrl}</a></p><p>— CSEAG</p>`,
+        sms: `CSEAG: ${data.expertName} has been assigned to your request ${data.ticket}. Chat here: ${data.chatUrl}`,
       };
 
     case "service_request_new_message":
       return {
-        emailSubject: `New message from ${data.fromName}`,
+        emailSubject: `New message on ${data.ticket} from ${data.fromName}`,
         emailText: `Hi ${name},\n\n${data.fromName} sent you a new message:\n\n"${data.message}"\n\nReply here:\n${data.chatUrl}\n\n— CSEAG`,
         emailHtml: `<p>Hi ${name},</p><p>${data.fromName} sent you a new message:</p><p>"${data.message}"</p><p><a href="${data.chatUrl}">Reply here</a></p><p>— CSEAG</p>`,
-        sms: `CSEAG: New message from ${data.fromName}. Check your email to reply.`,
+        sms: `CSEAG: New message on ${data.ticket} from ${data.fromName}. Check your email to reply.`,
       };
 
     case "newsletter_confirmation":
@@ -292,7 +306,7 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
         emailSubject: subject,
         emailText: data.unsubscribeUrl ? `${message}\n\n---\nUnsubscribe: ${data.unsubscribeUrl}` : message,
         emailHtml: renderBrandedEmail(subject, messageToHtml(message), data.unsubscribeUrl),
-        sms: message.slice(0, 300),
+        sms: message.slice(0, 480),
       };
     }
   }

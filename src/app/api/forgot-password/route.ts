@@ -9,6 +9,7 @@ import { users, memberProfiles } from "@/db/schema";
 import { forgotPasswordSchema } from "@/lib/validation";
 import { generatePasswordResetToken } from "@/lib/auth";
 import { notify } from "@/lib/notifications";
+import { emailMatches } from "@/lib/user-email";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -17,8 +18,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Enter a valid email address" }, { status: 422 });
   }
 
-  const user = await db.query.users.findFirst({ where: eq(users.email, parsed.data.email) });
-  if (user && user.isActive) {
+  const user = await db.query.users.findFirst({ where: emailMatches(parsed.data.email) });
+  // Throttle repeat requests: the token lasts 1 hour, so an expiry more than
+  // 58 minutes away means a link was issued under 2 minutes ago. Members who
+  // don't see the first email tend to hammer the button, which only piles
+  // more mail onto the host and costs SMS credits.
+  const recentlyIssued =
+    !!user?.passwordResetExpiresAt && new Date(user.passwordResetExpiresAt).getTime() > Date.now() + 58 * 60 * 1000;
+
+  if (user && user.isActive && !recentlyIssued) {
     const { token, tokenHash, expiresAt } = generatePasswordResetToken();
     await db
       .update(users)
@@ -32,6 +40,9 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       templateKey: "password_reset",
       email: user.email,
+      // The link also goes by SMS: the mail host has been silently dropping
+      // outgoing email, and SMS is the channel that reliably reaches members.
+      phone: profile?.phone,
       data: {
         name: profile?.fullName || "there",
         resetUrl: `${origin}/reset-password?token=${token}`,

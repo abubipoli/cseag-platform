@@ -113,7 +113,11 @@ export default function CommunicationsPage() {
     setSending(false);
     if (res.ok) {
       const data = await res.json();
-      setResult(`Sent to ${data.sent} recipient(s).`);
+      setResult(
+        data.held
+          ? `Sent to ${data.sent} recipient(s). ${data.held} email(s) were held because the mail host allows only 50 emails per hour. They are marked "queued" in the log below; use Resend in the next hour.`
+          : `Sent to ${data.sent} recipient(s).`
+      );
       setBroadcast((b) => ({ ...b, subject: "", message: "" }));
       setSelectedIds(new Set());
       load();
@@ -143,6 +147,7 @@ export default function CommunicationsPage() {
                 <FieldWrap label="Audience" required>
                   <Select value={broadcast.audience} onChange={(e) => setBroadcast((b) => ({ ...b, audience: e.target.value }))}>
                     <option value="all_members">All members</option>
+                    <option value="never_logged_in">Members who have never logged in</option>
                     <option value="applicants">Applicants</option>
                     <option value="reviewers_admins">Reviewers &amp; admins</option>
                     <option value="custom">Specific people…</option>

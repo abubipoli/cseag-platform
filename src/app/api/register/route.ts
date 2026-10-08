@@ -17,6 +17,7 @@ import { registrationSchema } from "@/lib/validation";
 import { hashPassword, setSessionCookie } from "@/lib/auth";
 import { notify } from "@/lib/notifications";
 import { recordAudit } from "@/lib/audit";
+import { emailMatches } from "@/lib/user-email";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
-  const existing = await db.query.users.findFirst({ where: eq(users.email, input.email) });
+  const existing = await db.query.users.findFirst({ where: emailMatches(input.email) });
   if (existing) {
     return NextResponse.json(
       { error: { formErrors: ["An account with this email already exists. Try logging in instead."] } },
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   await db.insert(users).values({
     id: userId,
-    email: input.email,
+    email: input.email.trim().toLowerCase(),
     passwordHash,
     role: "applicant",
   });

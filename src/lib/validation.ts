@@ -26,7 +26,7 @@ export const strongPasswordSchema = z
 export const registrationSchema = z.object({
   title: z.enum(TITLE_OPTIONS, { message: "Select a title" }),
   fullName: z.string().min(2, "Full name is required"),
-  email: z.string().email("Enter a valid email address"),
+  email: z.string().trim().email("Enter a valid email address"),
   password: strongPasswordSchema,
   phone: z
     .string()
@@ -56,7 +56,7 @@ export const registrationSchema = z.object({
 export type RegistrationInput = z.infer<typeof registrationSchema>;
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
   password: z.string().min(1),
 });
 
@@ -112,7 +112,7 @@ export const profileUpdateSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
 });
 
 export const resetPasswordSchema = z.object({
@@ -122,7 +122,7 @@ export const resetPasswordSchema = z.object({
 
 export const contactFormSchema = z.object({
   name: z.string().min(2),
-  email: z.string().email(),
+  email: z.string().trim().email(),
   subject: z.string().min(2).max(200),
   message: z.string().min(5).max(4000),
   // Honeypot: real visitors never fill this hidden field. Basic bot
@@ -132,7 +132,7 @@ export const contactFormSchema = z.object({
 
 export const serviceRequestSchema = z.object({
   requesterName: z.string().min(2),
-  requesterEmail: z.string().email(),
+  requesterEmail: z.string().trim().email(),
   requesterPhone: z.string().optional(),
   message: z.string().min(5, "Tell us a little about what you need").max(4000),
   website: z.string().max(0).optional(),
@@ -151,12 +151,12 @@ export const serviceRequestMessageSchema = z.object({
 });
 
 export const newsletterSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
 });
 
 export const rsvpSchema = z.object({
   name: z.string().min(2),
-  email: z.string().email(),
+  email: z.string().trim().email(),
   phone: z.string().optional(),
   website: z.string().max(0).optional(),
 });
@@ -166,7 +166,7 @@ export const adminMemberUpdateSchema = z.object({
   isActive: z.boolean().optional(),
   membershipCategory: z.enum(MEMBERSHIP_CATEGORIES).optional(),
   resetPassword: z.boolean().optional(),
-  email: z.string().email("Enter a valid email address").optional(),
+  email: z.string().trim().email("Enter a valid email address").optional(),
   phone: z
     .string()
     .min(9)
@@ -202,7 +202,7 @@ export const newsletterSendSchema = z.object({
 });
 
 export const broadcastSchema = z.object({
-  audience: z.enum(["all_members", "applicants", "reviewers_admins", "custom"]),
+  audience: z.enum(["all_members", "never_logged_in", "applicants", "reviewers_admins", "custom"]),
   customUserIds: z.array(z.string()).optional(),
   channel: z.enum(["email", "sms", "both"]),
   subject: z.string().min(1).max(200),
@@ -252,7 +252,7 @@ export const changePasswordSchema = z.object({
 
 export const donationSchema = z.object({
   fullName: z.string().min(2, "Enter your name").max(120),
-  email: z.string().email("Enter a valid email address"),
+  email: z.string().trim().email("Enter a valid email address"),
   amountGhs: z.coerce.number().int().min(5, "Minimum donation is GHS 5").max(100000),
   message: z.string().max(500).optional(),
   website: z.string().max(0).optional(), // honeypot — real visitors never fill this in
@@ -260,7 +260,7 @@ export const donationSchema = z.object({
 
 export const adminCreateUserSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
-  email: z.string().email("Enter a valid email address"),
+  email: z.string().trim().email("Enter a valid email address"),
   phone: z
     .string()
     .min(9, "Enter a valid phone number")

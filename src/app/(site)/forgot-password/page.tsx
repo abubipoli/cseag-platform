@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <FieldWrap label="Email" required>
-                <Input name="email" type="email" required />
+                <Input name="email" type="email" required autoCapitalize="none" autoCorrect="off" spellCheck={false} />
               </FieldWrap>
               <Button type="submit" disabled={submitting} className="w-full">
                 {submitting ? "Sending..." : "Send reset link"}

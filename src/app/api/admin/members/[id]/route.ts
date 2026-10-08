@@ -11,6 +11,7 @@ import { hasPermission, canAssignRole } from "@/lib/permissions";
 import { adminMemberUpdateSchema } from "@/lib/validation";
 import { recordAudit } from "@/lib/audit";
 import { notify } from "@/lib/notifications";
+import { emailMatches } from "@/lib/user-email";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -67,7 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   if (input.email && input.email !== target.email) {
-    const emailOwner = await db.query.users.findFirst({ where: eq(users.email, input.email) });
+    const emailOwner = await db.query.users.findFirst({ where: emailMatches(input.email) });
     if (emailOwner && emailOwner.id !== id) {
       return NextResponse.json({ error: "That email address is already in use by another account." }, { status: 409 });
     }

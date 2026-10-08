@@ -1,7 +1,7 @@
 // POST /api/admin/notifications/broadcast — bulk/targeted email or SMS to
 // members or applicants (SRS 6.7 "communication tools").
 import { NextRequest, NextResponse } from "next/server";
-import { inArray, eq, ne } from "drizzle-orm";
+import { and, inArray, eq, ne, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, memberProfiles } from "@/db/schema";
 import { getSession } from "@/lib/auth";
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
 
   let recipientFilter;
   if (input.audience === "all_members") recipientFilter = ne(users.role, "applicant");
+  else if (input.audience === "never_logged_in") recipientFilter = and(eq(users.role, "member"), isNull(users.lastLoginAt));
   else if (input.audience === "applicants") recipientFilter = eq(users.role, "applicant");
   else if (input.audience === "reviewers_admins") recipientFilter = inArray(users.role, ["reviewer", "admin", "super_admin"]);
   else recipientFilter = input.customUserIds?.length ? inArray(users.id, input.customUserIds) : eq(users.id, "__none__");
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   const active = recipients.filter((r) => r.isActive);
 
-  await Promise.all(
+  const outcomes = await Promise.all(
     active.map((r) =>
       notify({
         userId: r.id,
@@ -49,11 +50,13 @@ export async function POST(req: NextRequest) {
     )
   );
 
+  const held = outcomes.filter((o) => o.some((x) => x.held)).length;
+
   await recordAudit({
     actorUserId: session.userId,
     action: "communication.broadcast",
-    details: { audience: input.audience, channel: input.channel, recipientCount: active.length, subject: input.subject },
+    details: { audience: input.audience, channel: input.channel, recipientCount: active.length, held, subject: input.subject },
   });
 
-  return NextResponse.json({ ok: true, sent: active.length });
+  return NextResponse.json({ ok: true, sent: active.length - held, held });
 }
