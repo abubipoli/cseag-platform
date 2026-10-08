@@ -129,6 +129,7 @@ export default function AdminMembersPage() {
               <thead className="border-y border-slate-100 text-xs uppercase tracking-wide text-slate-400">
                 <tr>
                   <th className="px-5 py-3 font-medium">Member</th>
+                  <th className="hidden whitespace-nowrap px-3 py-3 font-medium sm:table-cell">ID</th>
                   <th className="hidden px-3 py-3 font-medium sm:table-cell">Category</th>
                   <th className="hidden px-3 py-3 font-medium md:table-cell">Role</th>
                   <th className="px-3 py-3 font-medium">Status</th>
@@ -143,12 +144,15 @@ export default function AdminMembersPage() {
                         <Avatar name={m.fullName} photoUrl={m.photoUrl} size="sm" />
                         <div className="min-w-0">
                           <p className="truncate font-medium text-navy-900">{m.fullName}</p>
-                          <p className="truncate text-xs text-slate-400">
-                            {m.email}
-                            {m.membershipId && ` · ${m.membershipId}`}
-                          </p>
+                          <p className="truncate text-xs text-slate-400">{m.email}</p>
+                          {m.membershipId && (
+                            <p className="truncate font-mono text-[11px] text-slate-400 sm:hidden">{m.membershipId}</p>
+                          )}
                         </div>
                       </div>
+                    </td>
+                    <td className="hidden whitespace-nowrap px-3 py-3 font-mono text-xs text-slate-600 sm:table-cell">
+                      {m.membershipId || "—"}
                     </td>
                     <td className="hidden px-3 py-3 text-slate-600 sm:table-cell">
                       {m.membershipCategory ? MEMBERSHIP_CATEGORY_LABELS[m.membershipCategory] : "—"}

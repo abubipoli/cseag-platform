@@ -7,6 +7,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/Button";
+import { MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
 import {
   IconUsers,
   IconUserCheck,
@@ -26,6 +27,8 @@ interface Stats {
   newsletterSubscribers: number;
   openServiceRequests: number;
   recentActivity: { id: string; action: string; actorName: string | null; createdAt: string; targetType: string | null }[];
+  newMembers: { userId: string; fullName: string; membershipId: string | null; category: string | null; approvedAt: string }[];
+  newApplicants: { userId: string; fullName: string; category: string | null; submittedAt: string }[];
 }
 
 export default function AdminDashboardPage() {
@@ -53,6 +56,65 @@ export default function AdminDashboardPage() {
             <StatCard tone="red" icon={<IconXCircle className="h-5 w-5" />} label="Rejected Applications" value={stats.rejectedApplications} />
             <StatCard tone="amber" icon={<IconMessageSquare className="h-5 w-5" />} label="Open Service Requests" value={stats.openServiceRequests} hint="Awaiting expert follow-up" />
             <StatCard tone="navy" icon={<IconMail className="h-5 w-5" />} label="Newsletter Subscribers" value={stats.newsletterSubscribers} />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader className="flex items-center justify-between">
+                <p className="font-semibold text-navy-900">Newly approved members</p>
+                <Link href="/admin/members" className="text-xs font-medium text-accent-700 hover:text-accent-800">
+                  All members
+                </Link>
+              </CardHeader>
+              <CardBody>
+                {stats.newMembers.length === 0 ? (
+                  <EmptyState icon={<IconUserCheck className="h-5 w-5" />} title="No approvals yet" />
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {stats.newMembers.map((m) => (
+                      <li key={m.userId} className="flex items-center justify-between gap-3 py-3 text-sm">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-navy-900">{m.fullName}</p>
+                          <p className="truncate text-xs text-slate-500">
+                            <span className="font-mono">{m.membershipId || "ID pending"}</span>
+                            {m.category && ` · ${MEMBERSHIP_CATEGORY_LABELS[m.category] || m.category}`}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-xs text-slate-400">{timeAgo(m.approvedAt)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex items-center justify-between">
+                <p className="font-semibold text-navy-900">New applications awaiting review</p>
+                <Link href="/admin/applications" className="text-xs font-medium text-accent-700 hover:text-accent-800">
+                  Review
+                </Link>
+              </CardHeader>
+              <CardBody>
+                {stats.newApplicants.length === 0 ? (
+                  <EmptyState icon={<IconClipboard className="h-5 w-5" />} title="Nothing waiting" />
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {stats.newApplicants.map((a) => (
+                      <li key={a.userId} className="flex items-center justify-between gap-3 py-3 text-sm">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-navy-900">{a.fullName}</p>
+                          {a.category && (
+                            <p className="truncate text-xs text-slate-500">{MEMBERSHIP_CATEGORY_LABELS[a.category] || a.category}</p>
+                          )}
+                        </div>
+                        <span className="shrink-0 text-xs text-slate-400">{timeAgo(a.submittedAt)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">

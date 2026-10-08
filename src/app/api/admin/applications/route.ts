@@ -19,6 +19,8 @@ export async function GET() {
       applicationId: applications.id,
       status: applications.status,
       submittedAt: applications.submittedAt,
+      decisionAt: applications.decisionAt,
+      membershipId: memberProfiles.membershipId,
       reviewerNotes: applications.reviewerNotes,
       statementOfInterest: applications.statementOfInterest,
       supportingDocumentUrl: applications.supportingDocumentUrl,

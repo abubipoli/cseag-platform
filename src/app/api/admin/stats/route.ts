@@ -1,6 +1,6 @@
 // GET /api/admin/stats — dashboard counts (SRS 6.7).
 import { NextResponse } from "next/server";
-import { and, eq, gte, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { applications, users, memberProfiles, newsletterSubscribers, auditLog, serviceRequests } from "@/db/schema";
 import { getSession, roleAtLeast } from "@/lib/auth";
@@ -24,6 +24,8 @@ export async function GET() {
     newsletterCount,
     openServiceRequests,
     recentActivity,
+    newMembers,
+    newApplicants,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(users).where(ne(users.role, "applicant")),
     db
@@ -57,6 +59,33 @@ export async function GET() {
       .leftJoin(memberProfiles, eq(memberProfiles.userId, auditLog.actorUserId))
       .orderBy(sql`${auditLog.createdAt} desc`)
       .limit(8),
+    // Newest approvals first — the people who have just been accepted.
+    db
+      .select({
+        userId: applications.userId,
+        fullName: memberProfiles.fullName,
+        membershipId: memberProfiles.membershipId,
+        category: memberProfiles.membershipCategory,
+        approvedAt: applications.decisionAt,
+      })
+      .from(applications)
+      .innerJoin(memberProfiles, eq(memberProfiles.userId, applications.userId))
+      .where(and(eq(applications.status, "approved"), sql`${applications.decisionAt} is not null`))
+      .orderBy(desc(applications.decisionAt))
+      .limit(8),
+    // Newest applications still waiting for a decision.
+    db
+      .select({
+        userId: applications.userId,
+        fullName: memberProfiles.fullName,
+        category: memberProfiles.membershipCategory,
+        submittedAt: applications.submittedAt,
+      })
+      .from(applications)
+      .innerJoin(memberProfiles, eq(memberProfiles.userId, applications.userId))
+      .where(sql`${applications.status} in ('pending', 'more_info_requested')`)
+      .orderBy(desc(applications.submittedAt))
+      .limit(8),
   ]);
 
   return NextResponse.json({
@@ -68,5 +97,7 @@ export async function GET() {
     newsletterSubscribers: newsletterCount[0].count,
     openServiceRequests: openServiceRequests[0].count,
     recentActivity,
+    newMembers,
+    newApplicants,
   });
 }

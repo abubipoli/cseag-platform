@@ -12,11 +12,14 @@ import { Textarea, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconClipboard, IconFileText } from "@/components/ui/icons";
 import { APPLICATION_STATUS_LABELS, MEMBERSHIP_CATEGORY_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
+import { sortApplications, type SortKey } from "@/lib/application-sort";
 
 interface AppRow {
   applicationId: string;
   status: string;
   submittedAt: string;
+  decisionAt: string | null;
+  membershipId: string | null;
   reviewerNotes: string | null;
   statementOfInterest: string | null;
   supportingDocumentUrl?: string | null;
@@ -39,11 +42,11 @@ interface AppRow {
 }
 
 type FilterTab = "pending" | "approved" | "rejected" | "all";
-
 export default function AdminApplicationsPage() {
   const [rows, setRows] = useState<AppRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<FilterTab>("pending");
+  const [sortKey, setSortKey] = useState<SortKey>("date_desc");
   const [active, setActive] = useState<AppRow | null>(null);
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState("");
@@ -81,11 +84,14 @@ export default function AdminApplicationsPage() {
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!rows) return <p className="text-sm text-slate-400">Loading…</p>;
 
-  const filtered = rows.filter((r) => {
-    if (tab === "all") return true;
-    if (tab === "pending") return r.status === "pending" || r.status === "more_info_requested";
-    return r.status === tab;
-  });
+  const filtered = sortApplications(
+    rows.filter((r) => {
+      if (tab === "all") return true;
+      if (tab === "pending") return r.status === "pending" || r.status === "more_info_requested";
+      return r.status === tab;
+    }),
+    sortKey
+  );
 
   const counts = {
     pending: rows.filter((r) => r.status === "pending" || r.status === "more_info_requested").length,
@@ -110,6 +116,19 @@ export default function AdminApplicationsPage() {
         ]}
       />
 
+      <div className="flex items-center gap-2">
+        <label htmlFor="app-sort" className="text-xs font-medium text-slate-500">
+          Sort by
+        </label>
+        <Select id="app-sort" value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} className="sm:w-60">
+          <option value="date_desc">Date: newest first</option>
+          <option value="date_asc">Date: oldest first</option>
+          <option value="category">Category (A–Z)</option>
+          <option value="id_asc">Member ID: low to high</option>
+          <option value="id_desc">Member ID: high to low</option>
+        </Select>
+      </div>
+
       {filtered.length === 0 ? (
         <EmptyState icon={<IconClipboard className="h-5 w-5" />} title="Nothing here" body="No applications match this filter." />
       ) : (
@@ -129,12 +148,18 @@ export default function AdminApplicationsPage() {
                   <Avatar name={r.fullName} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-navy-900">{r.fullName}</p>
-                    <p className="truncate text-xs text-slate-500">{r.email} · {r.phone}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {r.membershipId && <span className="mr-1.5 font-mono font-medium text-slate-600">{r.membershipId} ·</span>}
+                      {r.email} · {r.phone}
+                    </p>
                   </div>
                   <Badge>{MEMBERSHIP_CATEGORY_LABELS[r.membershipCategory] || r.membershipCategory}</Badge>
                   <Badge tone={statusTone(r.status)}>{APPLICATION_STATUS_LABELS[r.status] || r.status}</Badge>
                   <span className="hidden text-xs text-slate-400 sm:block">
-                    {new Date(r.submittedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    {new Date(r.status === "approved" && r.decisionAt ? r.decisionAt : r.submittedAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                    })}
                   </span>
                 </CardBody>
               </Card>
