@@ -27,6 +27,7 @@ export const AREAS_OF_EXPERTISE = [
   "Cybersecurity Policy Development",
   "Endpoint Security",
   "Digital Forensics",
+  "Cybercrime Investigation",
   "Cybersecurity Risk Assessment",
   "Data Loss Prevention (DLP)",
   "Supply Chain Security",

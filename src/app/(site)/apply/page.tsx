@@ -198,7 +198,7 @@ export default function ApplyPage() {
         compact
       />
 
-      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:grid lg:grid-cols-[280px_1fr] lg:items-start lg:gap-10">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-10">
         <aside className="mb-8 lg:sticky lg:top-24 lg:order-2 lg:mb-0">
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-accent-700">Before you apply</p>
