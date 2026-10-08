@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ServiceRequestChat } from "@/components/ServiceRequestChat";
 import { NewsBell } from "@/components/NewsBell";
+import { NewsTicker } from "@/components/NewsTicker";
 import { MiniCalendar } from "@/components/ui/MiniCalendar";
 import {
   IconBriefcase,
@@ -41,6 +42,7 @@ interface Profile {
   membershipCategory: string;
   photoUrl: string | null;
   bioIsPublic: boolean;
+  photoIsPublic: boolean;
   yearsOfExperienceIsPublic: boolean;
   areasOfExpertiseIsPublic: boolean;
   employerRoleIsPublic: boolean;
@@ -88,6 +90,7 @@ function DashboardPageInner() {
             bio: d.profile.bio || "",
             photoUrl: d.profile.photoUrl || "",
             bioIsPublic: d.profile.bioIsPublic,
+            photoIsPublic: d.profile.photoIsPublic,
             yearsOfExperienceIsPublic: d.profile.yearsOfExperienceIsPublic,
             areasOfExpertiseIsPublic: d.profile.areasOfExpertiseIsPublic,
             employerRoleIsPublic: d.profile.employerRoleIsPublic,
@@ -183,17 +186,58 @@ function DashboardPageInner() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
-      {/* Profile header */}
-      <div className="relative bg-gradient-to-br from-navy-900 to-navy-700 pb-16 pt-8 text-white sm:pb-20">
+      {/* Profile header — "tech blue" theme: deep navy-to-sky gradient,
+          circuit-grid texture, soft glow accents drifting on the left/right
+          edges, and a glass panel to lift the avatar/name/ID off the
+          background. */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-sky-900 pb-14 pt-8 text-white sm:pb-16">
+        {/* Circuit texture wash */}
+        <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-40" />
+
+        {/* Decorative glows — left/right edges only, hidden on narrow screens
+            so they never crowd the centered content column. */}
+        <div className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
+          <div className="animate-float-slow absolute -left-24 top-0 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" />
+          <div
+            className="animate-float-slow absolute -right-20 top-10 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl"
+            style={{ animationDelay: "-3.5s" }}
+          />
+          {/* Thin circuit-line accents tracing the far edges */}
+          <svg className="absolute -left-6 bottom-0 h-40 w-40 text-sky-400/25" viewBox="0 0 160 160" fill="none">
+            <path d="M0 120h40l16-16h60" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M0 80h20l14 14v30" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="56" cy="104" r="3" fill="currentColor" />
+            <circle cx="116" cy="104" r="3" fill="currentColor" />
+            <circle cx="34" cy="94" r="3" fill="currentColor" />
+          </svg>
+          <svg className="absolute -right-6 top-6 h-40 w-40 text-sky-400/25" viewBox="0 0 160 160" fill="none">
+            <path d="M160 20h-40l-16 16h-60" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M160 60h-20l-14 14v30" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="104" cy="36" r="3" fill="currentColor" />
+            <circle cx="44" cy="36" r="3" fill="currentColor" />
+            <circle cx="126" cy="74" r="3" fill="currentColor" />
+          </svg>
+        </div>
+
         <div className="absolute right-4 top-4 sm:right-6">
           <NewsBell />
         </div>
-        <div className="mx-auto max-w-4xl px-4 sm:px-6">
-          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-            <Avatar name={profile.fullName} photoUrl={profile.photoUrl} size="xl" className="ring-4 ring-white/20" />
+
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6">
+          <div className="flex flex-col items-center gap-5 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)] backdrop-blur-sm sm:flex-row sm:text-left">
+            <Avatar
+              name={profile.fullName}
+              photoUrl={profile.photoUrl}
+              size="xl"
+              className="ring-4 ring-sky-400/40"
+            />
             <div>
               <h1 className="text-xl font-bold sm:text-2xl">{profile.fullName}</h1>
-              {profile.membershipId && <p className="mt-0.5 text-sm text-white/60">Member ID: {profile.membershipId}</p>}
+              {profile.membershipId && (
+                <p className="mt-0.5 text-sm text-white/60">
+                  Member ID: <span className="font-mono tracking-wide text-sky-300/90">{profile.membershipId}</span>
+                </p>
+              )}
               <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                 <Badge tone="sky">{MEMBERSHIP_CATEGORY_LABELS[profile.membershipCategory] || "Member"}</Badge>
                 {application && (
@@ -202,10 +246,14 @@ function DashboardPageInner() {
               </div>
             </div>
           </div>
+
+          <div className="mt-4">
+            <NewsTicker />
+          </div>
         </div>
       </div>
 
-      <div className="mx-auto -mt-10 max-w-4xl px-4 sm:-mt-12 sm:px-6">
+      <div className="mx-auto -mt-3 max-w-4xl px-4 sm:-mt-4 sm:px-6">
         {application && isApplicantOnly && (
           <Card className="mb-6 border-amber-200 bg-amber-50/60">
             <CardBody className="flex items-start gap-3">
@@ -381,6 +429,12 @@ function DashboardPageInner() {
                       />
                     )}
                     <Switch
+                      label="Show my profile picture publicly"
+                      description="Off by default. Members who upload a photo won't appear with it in the directory until this is on."
+                      checked={form.photoIsPublic as boolean}
+                      onChange={(e) => setForm((f) => ({ ...f, photoIsPublic: e.target.checked }))}
+                    />
+                    <Switch
                       label="Show my bio publicly"
                       checked={form.bioIsPublic as boolean}
                       onChange={(e) => setForm((f) => ({ ...f, bioIsPublic: e.target.checked }))}
@@ -419,7 +473,7 @@ function DashboardPageInner() {
                   <p className="mb-3 text-xs text-slate-500">This is what visitors will see on your public profile.</p>
                   <div className="rounded-xl border border-dashed border-slate-200 p-4">
                     <div className="flex items-center gap-3">
-                      <Avatar name={profile.fullName} photoUrl={profile.photoUrl} />
+                      <Avatar name={profile.fullName} photoUrl={form.photoIsPublic ? profile.photoUrl : null} />
                       <div>
                         <p className="font-semibold text-navy-900">{profile.fullName}</p>
                         {form.yearsOfExperienceIsPublic && profile.yearsOfExperience !== null && (
@@ -517,6 +571,7 @@ function SaveBar({ saving, saved, onSave }: { saving: boolean; saved: boolean; o
 
 interface ServiceRequestItem {
   id: string;
+  ticketNumber: string;
   requesterName: string;
   message: string;
   status: "new" | "contacted" | "in_progress" | "resolved" | "declined";
@@ -567,7 +622,10 @@ function MyServiceRequests() {
                 <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 p-4 transition-shadow hover:shadow-md">
                   <Avatar name={r.requesterName} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-navy-900">{r.requesterName}</p>
+                    <p className="truncate text-sm font-semibold text-navy-900">
+                      <span className="mr-2 font-mono text-xs font-medium text-slate-500">{r.ticketNumber}</span>
+                      {r.requesterName}
+                    </p>
                     <p className="truncate text-xs text-slate-500">{r.message}</p>
                   </div>
                   <Badge tone={statusTone(r.status)}>{REQUEST_STATUS_LABELS[r.status]}</Badge>
@@ -578,7 +636,7 @@ function MyServiceRequests() {
         )}
       </CardBody>
 
-      <Drawer open={!!active} onClose={() => setActive(null)} title={active?.requesterName || ""} wide>
+      <Drawer open={!!active} onClose={() => setActive(null)} title={active ? `${active.ticketNumber} · ${active.requesterName}` : ""} wide>
         {active && (
           <div className="space-y-4">
             <div className="rounded-xl bg-slate-50 p-4 text-sm">
