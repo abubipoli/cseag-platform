@@ -46,3 +46,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# iCloud-excluded dependency folder (symlinked as node_modules)
+node_modules.nosync
+node_modules-old.nosync

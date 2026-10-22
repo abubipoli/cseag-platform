@@ -26,6 +26,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   if (!user || !profile) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // The verification code is only ever handed out through the /qr endpoint.
+  const { verificationToken: _omit, ...safeProfile } = profile;
+  void _omit;
+
   return NextResponse.json({
     user: {
       id: user.id,
@@ -35,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       lastLoginAt: user.lastLoginAt,
       mfaEnabled: user.mfaEnabled,
     },
-    profile,
+    profile: safeProfile,
     applications: applicationHistory,
   });
 }
@@ -60,11 +64,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (input.role && !canAssignRole(session, input.role)) {
     return NextResponse.json({ error: "Only a super admin can grant administrator access." }, { status: 403 });
   }
+  // Category decides what dues a member owes, so like role/status/email it
+  // is admin-only. Members themselves can never change it (see /api/me).
   if (
-    (input.role || input.isActive !== undefined || input.email) &&
+    (input.role || input.isActive !== undefined || input.email || input.membershipCategory) &&
     !(await hasPermission(session, "membersManage"))
   ) {
-    return NextResponse.json({ error: "You don't have permission to change role, status, or email." }, { status: 403 });
+    return NextResponse.json(
+      { error: "You don't have permission to change role, status, email, or membership category." },
+      { status: 403 }
+    );
   }
 
   if (input.email && input.email !== target.email) {
@@ -84,6 +93,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const profileUpdates: Record<string, unknown> = {};
   if (input.membershipCategory) profileUpdates.membershipCategory = input.membershipCategory;
   if (input.phone) profileUpdates.phone = input.phone;
+  if (input.region) profileUpdates.region = input.region;
+  if (input.employer !== undefined) profileUpdates.employer = input.employer || null;
+  if (input.currentRole !== undefined) profileUpdates.currentRole = input.currentRole || null;
   if (Object.keys(profileUpdates).length > 0) {
     await db.update(memberProfiles).set(profileUpdates).where(eq(memberProfiles.userId, id));
   }

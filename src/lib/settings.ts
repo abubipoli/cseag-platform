@@ -48,16 +48,39 @@ export async function updateNotificationSettings(input: Partial<NotificationSett
 }
 
 export interface PaymentSettings {
-  duesAmountGhs: number;
+  duesFullProfessionalGhs: number;
+  duesAssociateGhs: number;
+  duesStudentGhs: number;
   paystackPublicKey: string;
   paystackSecretKey: string;
+}
+
+// The annual dues a member owes, decided by their membership category.
+// Categories with no configured amount (corporate, or staff with no
+// category) owe nothing.
+export function duesFor(
+  settings: Pick<PaymentSettings, "duesFullProfessionalGhs" | "duesAssociateGhs" | "duesStudentGhs">,
+  category: string | null | undefined
+): number {
+  switch (category) {
+    case "full_professional":
+      return settings.duesFullProfessionalGhs;
+    case "associate":
+      return settings.duesAssociateGhs;
+    case "student":
+      return settings.duesStudentGhs;
+    default:
+      return 0;
+  }
 }
 
 export async function getPaymentSettings(): Promise<PaymentSettings> {
   const row = await db.query.appSettings.findFirst({ where: eq(appSettings.id, SETTINGS_ID) });
 
   return {
-    duesAmountGhs: row?.duesAmountGhs ?? 0,
+    duesFullProfessionalGhs: row?.duesFullProfessionalGhs ?? 0,
+    duesAssociateGhs: row?.duesAssociateGhs ?? 0,
+    duesStudentGhs: row?.duesStudentGhs ?? 0,
     paystackPublicKey: row?.paystackPublicKey || "",
     paystackSecretKey: row?.paystackSecretKey || "",
   };

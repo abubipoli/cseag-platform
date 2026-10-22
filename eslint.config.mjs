@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // iCloud-excluded dependency folders (see node_modules symlink).
+    "node_modules.nosync/**",
+    "node_modules-old.nosync/**",
   ]),
 ]);
 

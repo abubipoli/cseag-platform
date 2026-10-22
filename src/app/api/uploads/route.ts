@@ -20,9 +20,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
+import { getSession, roleAtLeast } from "@/lib/auth";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25MB — resource PDFs/decks routinely exceed 8MB
 const ALLOWED_EXTENSIONS = new Set([".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp"]);
+// Extra document types for library resources. Only reviewers/admins can
+// upload these; the public application form keeps the narrow list above.
+const STAFF_EXTENSIONS = new Set([
+  ".ppt", ".pptx", ".xls", ".xlsx", ".csv", ".txt", ".rtf", ".odt", ".ods", ".odp", ".zip",
+]);
 const STORAGE_DIR = path.join(process.cwd(), "storage", "uploads");
 
 export async function POST(req: NextRequest) {
@@ -36,9 +42,11 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = path.extname(file.name).toLowerCase();
-  if (!ALLOWED_EXTENSIONS.has(ext)) {
+  const session = STAFF_EXTENSIONS.has(ext) ? await getSession() : null;
+  const isStaff = !!session && roleAtLeast(session.role, "reviewer");
+  if (!ALLOWED_EXTENSIONS.has(ext) && !(isStaff && STAFF_EXTENSIONS.has(ext))) {
     return NextResponse.json(
-      { error: "Unsupported file type. Allowed: PDF, Word, PNG, JPG, WEBP." },
+      { error: "Unsupported file type. Allowed: PDF, Word, PowerPoint, Excel, CSV, text, ZIP, PNG, JPG, WEBP." },
       { status: 415 }
     );
   }

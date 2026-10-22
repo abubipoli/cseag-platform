@@ -7,7 +7,7 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
-import { getPaymentSettings } from "@/lib/settings";
+import { duesFor, getPaymentSettings } from "@/lib/settings";
 import { getAllMemberDuesSummaries, currentDuesYear } from "@/lib/dues";
 
 export async function GET() {
@@ -22,9 +22,10 @@ export async function GET() {
   const members = await db.query.users.findMany({ where: ne(users.role, "applicant") });
   const profiles = await db.query.memberProfiles.findMany();
   const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
+  const duesByUser = new Map(members.map((m) => [m.id, duesFor(settings, profileByUserId.get(m.id)?.membershipCategory)]));
   const summaries = await getAllMemberDuesSummaries(
     members.map((m) => m.id),
-    settings.duesAmountGhs,
+    duesByUser,
     year
   );
 
@@ -39,13 +40,19 @@ export async function GET() {
       duesAmountGhs: summary.duesAmountGhs,
       totalPaidGhs: summary.totalPaidGhs,
       balanceGhs: summary.balanceGhs,
+      creditGhs: summary.creditGhs,
       status: summary.status,
     };
   });
 
   const summary = {
     year,
-    duesAmountGhs: settings.duesAmountGhs,
+    duesByCategory: {
+      full_professional: settings.duesFullProfessionalGhs,
+      associate: settings.duesAssociateGhs,
+      student: settings.duesStudentGhs,
+    },
+    totalCreditGhs: rows.reduce((sum, r) => sum + r.creditGhs, 0),
     totalCollectedGhs: rows.reduce((sum, r) => sum + r.totalPaidGhs, 0),
     totalOutstandingGhs: rows.reduce((sum, r) => sum + r.balanceGhs, 0),
     paidCount: rows.filter((r) => r.status === "paid").length,

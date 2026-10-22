@@ -18,6 +18,7 @@ export default function robots(): MetadataRoute.Robots {
           "/unsubscribe",
           "/requests",
           "/donate/thank-you",
+          "/verify",
         ],
       },
     ],

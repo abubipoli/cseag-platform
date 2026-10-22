@@ -6,8 +6,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select, Input } from "@/components/ui/Field";
-import { MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
+import { GHANA_REGIONS, MEMBERSHIP_CATEGORY_LABELS, ROLE_LABELS, APPLICATION_STATUS_LABELS, CSA_ACCREDITATION_TIER_LABELS } from "@/lib/constants";
 import { IconFileText } from "@/components/ui/icons";
+import { MemberQrCard } from "./MemberQrCard";
 import { cn } from "@/lib/cn";
 
 interface DuesPaymentItem {
@@ -24,6 +25,7 @@ interface DuesSummary {
   duesAmountGhs: number;
   totalPaidGhs: number;
   balanceGhs: number;
+  creditGhs: number;
   status: "paid" | "partial" | "unpaid";
   payments: DuesPaymentItem[];
 }
@@ -82,6 +84,9 @@ export default function MemberDetailDrawer({
   const [messageIsError, setMessageIsError] = useState(false);
   const [emailDraft, setEmailDraft] = useState("");
   const [phoneDraft, setPhoneDraft] = useState("");
+  const [regionDraft, setRegionDraft] = useState("");
+  const [employerDraft, setEmployerDraft] = useState("");
+  const [roleDraft, setRoleDraft] = useState("");
   const [dues, setDues] = useState<DuesSummary | null>(null);
 
   useEffect(() => {
@@ -102,6 +107,9 @@ export default function MemberDetailDrawer({
         setDetail(d);
         setEmailDraft(d?.user?.email || "");
         setPhoneDraft(d?.profile?.phone || "");
+        setRegionDraft(d?.profile?.region || "");
+        setEmployerDraft(d?.profile?.employer?.trim() || "");
+        setRoleDraft(d?.profile?.currentRole?.trim() || "");
       });
 
     if (canViewDues) {
@@ -130,6 +138,9 @@ export default function MemberDetailDrawer({
           setDetail(d);
           setEmailDraft(d?.user?.email || "");
           setPhoneDraft(d?.profile?.phone || "");
+          setRegionDraft(d?.profile?.region || "");
+          setEmployerDraft(d?.profile?.employer?.trim() || "");
+          setRoleDraft(d?.profile?.currentRole?.trim() || "");
         });
     } else {
       const data = await res.json().catch(() => ({}));
@@ -189,6 +200,8 @@ export default function MemberDetailDrawer({
               {message}
             </p>
           )}
+
+          {detail.user.role !== "applicant" && <MemberQrCard memberId={detail.user.id} canRegenerate />}
 
           <dl className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 text-sm">
             <div>
@@ -269,6 +282,52 @@ export default function MemberDetailDrawer({
             </div>
           </div>
 
+          <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+            <p className="text-xs font-semibold uppercase text-slate-400">Location &amp; workplace</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Location (region)</label>
+                <Select value={regionDraft} disabled={busy} onChange={(e) => setRegionDraft(e.target.value)}>
+                  <option value="">Not set</option>
+                  {GHANA_REGIONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Job title</label>
+                <Input value={roleDraft} disabled={busy} onChange={(e) => setRoleDraft(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Employer / workplace</label>
+              <Input value={employerDraft} disabled={busy} onChange={(e) => setEmployerDraft(e.target.value)} />
+            </div>
+            <Button
+              variant="outline"
+              disabled={
+                busy ||
+                (regionDraft === (detail.profile.region || "") &&
+                  employerDraft === (detail.profile.employer?.trim() || "") &&
+                  roleDraft === (detail.profile.currentRole?.trim() || ""))
+              }
+              onClick={() =>
+                patch(
+                  {
+                    ...(regionDraft ? { region: regionDraft } : {}),
+                    employer: employerDraft,
+                    currentRole: roleDraft,
+                  },
+                  "Location and workplace updated."
+                )
+              }
+            >
+              Update location &amp; workplace
+            </Button>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Role</label>
@@ -288,7 +347,7 @@ export default function MemberDetailDrawer({
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Membership category</label>
               <Select
                 value={detail.profile.membershipCategory || ""}
-                disabled={busy}
+                disabled={busy || !canManage}
                 onChange={(e) => patch({ membershipCategory: e.target.value }, "Category updated.")}
               >
                 {Object.entries(MEMBERSHIP_CATEGORY_LABELS).map(([value, label]) => (
@@ -358,6 +417,11 @@ export default function MemberDetailDrawer({
                   <p className="font-medium text-navy-900">GHS {dues.balanceGhs.toLocaleString()}</p>
                 </div>
               </div>
+              {dues.creditGhs > 0 && (
+                <p className="mt-2 text-xs text-sky-700">
+                  Paid GHS {dues.creditGhs.toLocaleString()} more than this year&rsquo;s dues &mdash; recorded as credit.
+                </p>
+              )}
 
               {dues.payments.length > 0 ? (
                 <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm">

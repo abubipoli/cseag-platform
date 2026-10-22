@@ -21,6 +21,11 @@ function slugify(title: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+function todayLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function ContentEditorDrawer({
   open,
   item,
@@ -138,12 +143,31 @@ export default function ContentEditorDrawer({
     }
   }
 
+  // A library resource is just a title, an upload date and a file: no slug,
+  // summary or body to fill in, and it is published straight away.
+  const isResource = form.type === "resource";
+  const uploadDate = form.publishedAt.slice(0, 10) || todayLocal();
+
   async function handleSave() {
-    setSaving(true);
     setError(null);
+    if (isResource) {
+      if (form.title.trim().length < 2) return setError("Enter a title for the resource.");
+      if (!form.fileUrl) return setError("Upload the file for this resource.");
+    }
+    setSaving(true);
+    const resourceFields = isResource
+      ? {
+          status: "published" as const,
+          slug: item ? form.slug : `${slugify(form.title) || "resource"}-${Date.now().toString(36)}`,
+          body: form.body || form.title,
+          publishedAt: `${uploadDate}T12:00`,
+        }
+      : {};
+    const publishedAt = resourceFields.publishedAt || form.publishedAt;
     const payload = {
       ...form,
-      publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : undefined,
+      ...resourceFields,
+      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
       eventDate: form.eventDate || undefined,
       eventLocation: form.eventLocation || undefined,
     };
@@ -190,15 +214,27 @@ export default function ContentEditorDrawer({
               <option value="page">Page</option>
             </Select>
           </FieldWrap>
-          <FieldWrap label="Status" required>
-            <Select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as "draft" | "published" }))}>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-            </Select>
-          </FieldWrap>
+          {!isResource && (
+            <FieldWrap label="Status" required>
+              <Select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as "draft" | "published" }))}>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </Select>
+            </FieldWrap>
+          )}
         </div>
 
-        {form.status === "published" && (
+        {isResource && (
+          <FieldWrap label="Date of upload" required>
+            <Input
+              type="date"
+              value={uploadDate}
+              onChange={(e) => setForm((f) => ({ ...f, publishedAt: e.target.value ? `${e.target.value}T12:00` : "" }))}
+            />
+          </FieldWrap>
+        )}
+
+        {!isResource && form.status === "published" && (
           <FieldWrap label="Published date" hint="Shown on the site as the article date. Leave blank to use now.">
             <Input type="datetime-local" value={form.publishedAt} onChange={(e) => setForm((f) => ({ ...f, publishedAt: e.target.value }))} />
           </FieldWrap>
@@ -214,6 +250,8 @@ export default function ContentEditorDrawer({
           />
         </FieldWrap>
 
+        {!isResource && (
+          <>
         <FieldWrap label="Slug" required hint="Used in the public URL, e.g. /news/your-slug">
           <Input
             value={form.slug}
@@ -250,6 +288,8 @@ export default function ContentEditorDrawer({
         <FieldWrap label="Body" required>
           <Textarea rows={8} value={form.body} onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))} />
         </FieldWrap>
+          </>
+        )}
 
         {form.type === "news" && (
           <FieldWrap label="Who can see this" hint="Members-only news is hidden from the public site and, when a category is chosen, from other member categories too.">
@@ -285,11 +325,11 @@ export default function ContentEditorDrawer({
         )}
 
         {form.type === "resource" && (
-          <FieldWrap label="Attachment">
+          <FieldWrap label="File" required hint="PDF, Word, PowerPoint, Excel, CSV, text, ZIP or an image (up to 25MB).">
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-slate-300 px-4 py-5 text-center hover:border-accent-400">
               <IconUpload className="h-5 w-5 text-slate-400" />
               <span className="text-sm text-slate-600">{uploading ? "Uploading..." : form.fileUrl ? "File attached — click to replace" : "Click to upload a file"}</span>
-              <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+              <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.ods,.odp,.zip,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
             </label>
             <Checkbox
               className="mt-3"

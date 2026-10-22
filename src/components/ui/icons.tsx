@@ -236,6 +236,13 @@ export const IconArrowRight = (p: IconProps) => (
   </Icon>
 );
 
+export const IconWallet = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M19 7V5.5A2.5 2.5 0 0 0 16.5 3h-11A2.5 2.5 0 0 0 3 5.5v13A2.5 2.5 0 0 0 5.5 21h13a2.5 2.5 0 0 0 2.5-2.5v-9A2.5 2.5 0 0 0 18.5 7H5" />
+    <path d="M16.5 14h.01" />
+  </Icon>
+);
+
 export const IconBriefcase = (p: IconProps) => (
   <Icon {...p}>
     <rect x="2.5" y="7" width="19" height="13.5" rx="2.5" />

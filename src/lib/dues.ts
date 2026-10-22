@@ -8,7 +8,7 @@ import { duesPayments, users, memberProfiles } from "@/db/schema";
 import { verifyPaystackTransaction } from "./paystack";
 import { notify } from "./notifications";
 import { generateDuesReceiptPdf } from "./receipts";
-import { getPaymentSettings } from "./settings";
+import { duesFor, getPaymentSettings, type PaymentSettings } from "./settings";
 
 export function currentDuesYear(): string {
   return new Date().getFullYear().toString();
@@ -26,7 +26,8 @@ export async function sendDuesReceiptEmail(payment: typeof duesPayments.$inferSe
     if (!user || !profile) return;
 
     const settings = await getPaymentSettings();
-    const summary = await getMemberDuesSummary(payment.userId, settings.duesAmountGhs, payment.year);
+    const duesAmountGhs = duesFor(settings, profile.membershipCategory);
+    const summary = await getMemberDuesSummary(payment.userId, duesAmountGhs, payment.year);
     const balanceGhs = summary.balanceGhs;
 
     const pdf = await generateDuesReceiptPdf({
@@ -38,7 +39,7 @@ export async function sendDuesReceiptEmail(payment: typeof duesPayments.$inferSe
         membershipId: profile.membershipId,
         membershipCategory: profile.membershipCategory,
       },
-      duesAmountGhs: settings.duesAmountGhs,
+      duesAmountGhs,
       totalPaidGhs: summary.totalPaidGhs,
     });
 
@@ -67,6 +68,9 @@ export interface DuesSummary {
   duesAmountGhs: number;
   totalPaidGhs: number;
   balanceGhs: number;
+  // Paid beyond what the member's category owes — shown as credit, never
+  // refunded or carried over automatically.
+  creditGhs: number;
   status: DuesStatus;
   payments: (typeof duesPayments.$inferSelect)[];
 }
@@ -81,6 +85,7 @@ export function summarizeDuesPayments(
 ): DuesSummary {
   const totalPaidGhs = payments.filter((r) => r.status === "success").reduce((sum, r) => sum + r.amountGhs, 0);
   const balanceGhs = Math.max(duesAmountGhs - totalPaidGhs, 0);
+  const creditGhs = Math.max(totalPaidGhs - duesAmountGhs, 0);
   const status: DuesStatus =
     duesAmountGhs <= 0 || totalPaidGhs >= duesAmountGhs ? "paid" : totalPaidGhs > 0 ? "partial" : "unpaid";
 
@@ -89,6 +94,7 @@ export function summarizeDuesPayments(
     duesAmountGhs,
     totalPaidGhs,
     balanceGhs,
+    creditGhs,
     status,
     payments: [...payments].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   };
@@ -156,7 +162,7 @@ export async function getMemberDuesSummary(
 // DB pool (see db/client.ts) once there are 100+ members.
 export async function getAllMemberDuesSummaries(
   userIds: string[],
-  duesAmountGhs: number,
+  duesByUser: Map<string, number>,
   year: string = currentDuesYear()
 ): Promise<Map<string, DuesSummary>> {
   const rows = await db.query.duesPayments.findMany({ where: eq(duesPayments.year, year) });
@@ -168,7 +174,13 @@ export async function getAllMemberDuesSummaries(
   }
   const result = new Map<string, DuesSummary>();
   for (const userId of userIds) {
-    result.set(userId, summarizeDuesPayments(byUser.get(userId) || [], duesAmountGhs, year));
+    result.set(userId, summarizeDuesPayments(byUser.get(userId) || [], duesByUser.get(userId) ?? 0, year));
   }
   return result;
+}
+
+// What one member owes this year, from their current membership category.
+export async function duesAmountForUser(userId: string, settings: PaymentSettings): Promise<number> {
+  const profile = await db.query.memberProfiles.findFirst({ where: eq(memberProfiles.userId, userId) });
+  return duesFor(settings, profile?.membershipCategory);
 }

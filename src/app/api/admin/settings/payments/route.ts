@@ -18,7 +18,9 @@ export async function GET() {
 
   const settings = await getPaymentSettings();
   return NextResponse.json({
-    duesAmountGhs: settings.duesAmountGhs,
+    duesFullProfessionalGhs: settings.duesFullProfessionalGhs,
+    duesAssociateGhs: settings.duesAssociateGhs,
+    duesStudentGhs: settings.duesStudentGhs,
     paystackPublicKey: settings.paystackPublicKey,
     paystackSecretKeySet: !!settings.paystackSecretKey,
   });
@@ -38,7 +40,9 @@ export async function PATCH(req: NextRequest) {
   const input = parsed.data;
 
   await updatePaymentSettings({
-    ...(input.duesAmountGhs !== undefined ? { duesAmountGhs: input.duesAmountGhs } : {}),
+    ...(input.duesFullProfessionalGhs !== undefined ? { duesFullProfessionalGhs: input.duesFullProfessionalGhs } : {}),
+    ...(input.duesAssociateGhs !== undefined ? { duesAssociateGhs: input.duesAssociateGhs } : {}),
+    ...(input.duesStudentGhs !== undefined ? { duesStudentGhs: input.duesStudentGhs } : {}),
     ...(input.paystackPublicKey !== undefined ? { paystackPublicKey: input.paystackPublicKey } : {}),
     ...(input.paystackSecretKey ? { paystackSecretKey: input.paystackSecretKey } : {}),
   });

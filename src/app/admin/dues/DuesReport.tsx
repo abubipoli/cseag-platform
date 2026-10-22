@@ -19,12 +19,14 @@ interface Row {
   duesAmountGhs: number;
   totalPaidGhs: number;
   balanceGhs: number;
+  creditGhs: number;
   status: "paid" | "partial" | "unpaid";
 }
 
 interface Summary {
   year: string;
-  duesAmountGhs: number;
+  duesByCategory: { full_professional: number; associate: number; student: number };
+  totalCreditGhs: number;
   totalCollectedGhs: number;
   totalOutstandingGhs: number;
   paidCount: number;
@@ -221,7 +223,10 @@ export default function DuesReport() {
                       {r.membershipCategory ? MEMBERSHIP_CATEGORY_LABELS[r.membershipCategory] || r.membershipCategory : "—"}
                     </td>
                     <td className="px-5 py-3 text-slate-600 sm:px-6">{ghs(r.totalPaidGhs)}</td>
-                    <td className="px-5 py-3 text-slate-600 sm:px-6">{ghs(r.balanceGhs)}</td>
+                    <td className="px-5 py-3 text-slate-600 sm:px-6">
+                      {ghs(r.balanceGhs)}
+                      {r.creditGhs > 0 && <span className="block text-xs text-sky-700">+{ghs(r.creditGhs)} credit</span>}
+                    </td>
                     <td className="px-5 py-3 sm:px-6">
                       <Badge tone={statusTone(r.status === "paid" ? "active" : r.status === "unpaid" ? "inactive" : "pending")}>
                         {STATUS_LABELS[r.status]}
@@ -283,6 +288,11 @@ export default function DuesReport() {
                 <p className="text-xs text-slate-400">Balance</p>
                 <p className="mt-0.5 font-semibold text-navy-900">{ghs(historyFor.balanceGhs)}</p>
               </div>
+              {historyFor.creditGhs > 0 && (
+                <p className="col-span-3 border-t border-slate-200 pt-3 text-xs text-sky-700">
+                  Paid {ghs(historyFor.creditGhs)} more than this year&rsquo;s dues &mdash; recorded as credit.
+                </p>
+              )}
             </div>
           )}
 

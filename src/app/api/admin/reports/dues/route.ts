@@ -7,7 +7,7 @@ import { db } from "@/db/client";
 import { users, memberProfiles } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
-import { getPaymentSettings } from "@/lib/settings";
+import { duesFor, getPaymentSettings } from "@/lib/settings";
 import { getAllMemberDuesSummaries, currentDuesYear } from "@/lib/dues";
 import { reportResponse, parseReportFormat, type ReportColumn } from "@/lib/reportResponse";
 
@@ -19,6 +19,7 @@ interface DuesRow {
   duesAmountGhs: number;
   totalPaidGhs: number;
   balanceGhs: number;
+  creditGhs: number;
   status: string;
 }
 
@@ -30,6 +31,7 @@ const COLUMNS: ReportColumn<DuesRow>[] = [
   { key: "duesAmountGhs", header: "Dues (GHS)" },
   { key: "totalPaidGhs", header: "Paid (GHS)" },
   { key: "balanceGhs", header: "Balance (GHS)" },
+  { key: "creditGhs", header: "Credit (GHS)" },
   { key: "status", header: "Status" },
 ];
 
@@ -45,9 +47,10 @@ export async function GET(req: NextRequest) {
   const members = await db.query.users.findMany({ where: ne(users.role, "applicant") });
   const profiles = await db.query.memberProfiles.findMany();
   const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
+  const duesByUser = new Map(members.map((m) => [m.id, duesFor(settings, profileByUserId.get(m.id)?.membershipCategory)]));
   const summaries = await getAllMemberDuesSummaries(
     members.map((m) => m.id),
-    settings.duesAmountGhs,
+    duesByUser,
     year
   );
 
@@ -62,6 +65,7 @@ export async function GET(req: NextRequest) {
       duesAmountGhs: summary.duesAmountGhs,
       totalPaidGhs: summary.totalPaidGhs,
       balanceGhs: summary.balanceGhs,
+      creditGhs: summary.creditGhs,
       status: summary.status,
     };
   });

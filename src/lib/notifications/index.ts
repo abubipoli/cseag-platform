@@ -26,6 +26,7 @@ import { createKairosSmsProvider } from "./providers/kairos";
 import type { EmailProvider, SmsProvider, EmailAttachment } from "./types";
 import type { TemplateKey } from "./templates";
 import { resolveTemplate } from "./store";
+import { createExclusive } from "./exclusive";
 
 export function resolveEmailProvider(settings: NotificationSettings): EmailProvider {
   if (settings.smtpHost) {
@@ -66,6 +67,7 @@ export function resolveSmsProvider(settings: NotificationSettings): SmsProvider 
 // applies while sending through the host's own mail server; an external
 // relay has its own, much higher limits.
 const BULK_EMAIL_HOURLY_CAP = 35;
+const bulkEmailLane = createExclusive();
 
 async function emailsSentInLastHour(): Promise<number> {
   const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -98,24 +100,24 @@ export async function notify({ userId, templateKey, email, phone, replyTo, data,
   const rendered = await resolveTemplate(templateKey, data);
   const results: { channel: "email" | "sms"; ok: boolean; held?: boolean }[] = [];
 
-  if (
-    email &&
-    templateKey === "custom" &&
-    settings.smtpHost.endsWith("cyberexpertgh.org") &&
-    (await emailsSentInLastHour()) >= BULK_EMAIL_HOURLY_CAP
-  ) {
-    await db.insert(notifications).values({
-      id: randomUUID(),
-      userId,
-      channel: "email",
-      templateKey,
-      recipient: email,
-      status: "queued",
-      errorMessage: "Held: hourly email limit reached (host allows 50/hour). Use Resend in the next hour.",
-      payload: JSON.stringify({ data, replyTo }),
-    });
-    results.push({ channel: "email", ok: false, held: true });
-  } else if (email) {
+  const capEmail = !!email && templateKey === "custom" && settings.smtpHost.endsWith("cyberexpertgh.org");
+
+  const deliverEmail = async () => {
+    if (!email) return;
+    if (capEmail && (await emailsSentInLastHour()) >= BULK_EMAIL_HOURLY_CAP) {
+      await db.insert(notifications).values({
+        id: randomUUID(),
+        userId,
+        channel: "email",
+        templateKey,
+        recipient: email,
+        status: "queued",
+        errorMessage: "Held: hourly email limit reached (host allows 50/hour). Use Resend in the next hour.",
+        payload: JSON.stringify({ data, replyTo }),
+      });
+      results.push({ channel: "email", ok: false, held: true });
+      return;
+    }
     const result = await emailProvider.send({
       to: email,
       subject: rendered.emailSubject,
@@ -135,7 +137,12 @@ export async function notify({ userId, templateKey, email, phone, replyTo, data,
       payload: JSON.stringify({ data, replyTo }),
     });
     results.push({ channel: "email", ok: result.ok });
-  }
+  };
+
+  // Capped (bulk) email goes through a one-at-a-time lane so the count it
+  // checks is always up to date; everything else stays fully concurrent.
+  if (capEmail) await bulkEmailLane(deliverEmail);
+  else await deliverEmail();
 
   if (phone) {
     const result = await smsProvider.send({ to: phone, body: rendered.sms });

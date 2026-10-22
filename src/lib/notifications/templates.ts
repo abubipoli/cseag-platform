@@ -5,6 +5,7 @@
 // most of the value: one place to change the wording for every applicant.
 
 import { SITE_CONFIG } from "@/lib/constants";
+import { sanitizeEmailHtml } from "./rich-text";
 
 export type TemplateKey =
   | "application_received"
@@ -302,10 +303,13 @@ export function renderTemplate(key: TemplateKey, data: Record<string, string>): 
     case "custom": {
       const subject = data.subject || "A message from CSEAG";
       const message = data.message || "";
+      // messageHtml comes from the rich-text compose box; message stays the
+      // plain-text version for SMS and the text part of the email.
+      const body = data.messageHtml ? sanitizeEmailHtml(data.messageHtml) : messageToHtml(message);
       return {
         emailSubject: subject,
         emailText: data.unsubscribeUrl ? `${message}\n\n---\nUnsubscribe: ${data.unsubscribeUrl}` : message,
-        emailHtml: renderBrandedEmail(subject, messageToHtml(message), data.unsubscribeUrl),
+        emailHtml: renderBrandedEmail(subject, body, data.unsubscribeUrl),
         sms: message.slice(0, 480),
       };
     }

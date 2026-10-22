@@ -9,7 +9,7 @@ import { db } from "@/db/client";
 import { duesPayments, users } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { getPaymentSettings } from "@/lib/settings";
-import { getMemberDuesSummary, currentDuesYear } from "@/lib/dues";
+import { duesAmountForUser, getMemberDuesSummary, currentDuesYear } from "@/lib/dues";
 import { initializePaystackTransaction } from "@/lib/paystack";
 import { getBaseUrl } from "@/lib/base-url";
 import { memberDuesPaySchema } from "@/lib/validation";
@@ -29,11 +29,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Online payment isn't set up yet. Please contact CSEAG." }, { status: 400 });
   }
 
-  const summary = await getMemberDuesSummary(session.userId, settings.duesAmountGhs);
+  const summary = await getMemberDuesSummary(session.userId, await duesAmountForUser(session.userId, settings));
   const requested = parsed.data.amountGhs;
   // Pay any part of the balance at a time (installments) — but never more
   // than what's actually outstanding.
-  const amountGhs = requested ? Math.min(requested, summary.balanceGhs) : summary.balanceGhs || settings.duesAmountGhs;
+  const amountGhs = requested ? Math.min(requested, summary.balanceGhs) : summary.balanceGhs;
   if (amountGhs <= 0) {
     return NextResponse.json({ error: "There's nothing due right now." }, { status: 400 });
   }

@@ -95,6 +95,11 @@ export const memberProfiles = pgTable("member_profiles", {
   // reused or reassigned even if the member later leaves and rejoins.
   // Applicants have none until approved.
   membershipId: text("membership_id").unique(),
+  // Random, unguessable code embedded in the member's QR (/verify/<code>).
+  // Deliberately NOT the membership ID: IDs are sequential, so a URL built
+  // from one would let anyone enumerate every member. Created on first use;
+  // rotating it invalidates any previously printed QR.
+  verificationToken: text("verification_token").unique(),
 
   // Visibility flags: true = shown on the public Experts directory.
   // Sensitive fields (DOB, national ID, physical address) intentionally have
@@ -316,7 +321,14 @@ export const appSettings = pgTable("app_settings", {
   smsSenderId: text("sms_sender_id"),
   // Membership dues (a single fixed annual amount for now) + Paystack keys,
   // so online payment can be turned on from the UI without a redeploy.
+  // Legacy single amount — superseded by the per-category amounts below and
+  // no longer read by the app. Kept so the column (and its history) isn't lost.
   duesAmountGhs: integer("dues_amount_ghs"),
+  // Annual dues per membership category (GHS). Categories without an amount
+  // here (e.g. corporate, or staff with no category) owe nothing.
+  duesFullProfessionalGhs: integer("dues_full_professional_ghs"),
+  duesAssociateGhs: integer("dues_associate_ghs"),
+  duesStudentGhs: integer("dues_student_ghs"),
   paystackPublicKey: text("paystack_public_key"),
   paystackSecretKey: text("paystack_secret_key"),
   // JSON-encoded RolePermissions (see src/lib/permissions.ts) — what the

@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { getPaymentSettings } from "@/lib/settings";
-import { getMemberDuesSummary } from "@/lib/dues";
+import { duesAmountForUser, getMemberDuesSummary } from "@/lib/dues";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const settings = await getPaymentSettings();
-  const summary = await getMemberDuesSummary(id, settings.duesAmountGhs);
+  const summary = await getMemberDuesSummary(id, await duesAmountForUser(id, settings));
 
   return NextResponse.json({
     ...summary,

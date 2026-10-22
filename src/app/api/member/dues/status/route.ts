@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getPaymentSettings } from "@/lib/settings";
-import { getMemberDuesSummary, reconcilePendingDuesPayments } from "@/lib/dues";
+import { duesAmountForUser, getMemberDuesSummary, reconcilePendingDuesPayments } from "@/lib/dues";
 
 export async function GET() {
   const session = await getSession();
@@ -20,7 +20,7 @@ export async function GET() {
     await reconcilePendingDuesPayments(session.userId, settings.paystackSecretKey);
   }
 
-  const summary = await getMemberDuesSummary(session.userId, settings.duesAmountGhs);
+  const summary = await getMemberDuesSummary(session.userId, await duesAmountForUser(session.userId, settings));
 
   return NextResponse.json({
     ...summary,

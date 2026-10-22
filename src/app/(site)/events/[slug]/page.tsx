@@ -64,7 +64,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
         {item.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- static content photo from local uploads/content dir
-          <img src={item.imageUrl} alt="" className="mt-6 h-64 w-full rounded-2xl object-cover sm:h-80" />
+          <img src={item.imageUrl} alt={item.title} className="mt-6 h-auto w-full rounded-2xl" />
         )}
 
         <Linkify text={item.body} className="prose prose-slate mt-6 max-w-none whitespace-pre-line text-slate-700" />

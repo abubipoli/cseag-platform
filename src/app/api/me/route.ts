@@ -20,7 +20,16 @@ export async function GET() {
   const application = await db.query.applications.findFirst({ where: eq(applications.userId, session.userId) });
   const user = await db.query.users.findFirst({ where: eq(users.id, session.userId) });
 
-  return NextResponse.json({ session, profile, application, mfaEnabled: user?.mfaEnabled ?? false });
+  // The verification code behind the member's QR is never exposed to the browser here.
+  const { verificationToken: _omit, ...safeProfile } = profile ?? ({} as NonNullable<typeof profile>);
+  void _omit;
+
+  return NextResponse.json({
+    session,
+    profile: profile ? safeProfile : profile,
+    application,
+    mfaEnabled: user?.mfaEnabled ?? false,
+  });
 }
 
 export async function PATCH(req: NextRequest) {

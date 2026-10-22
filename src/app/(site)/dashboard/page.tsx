@@ -2,38 +2,42 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AREAS_OF_EXPERTISE, MEMBERSHIP_CATEGORY_LABELS, APPLICATION_STATUS_LABELS } from "@/lib/constants";
+import { AREAS_OF_EXPERTISE, GHANA_REGIONS, MEMBERSHIP_CATEGORY_LABELS, APPLICATION_STATUS_LABELS } from "@/lib/constants";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge, statusTone } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { Tabs } from "@/components/ui/Tabs";
 import { Drawer } from "@/components/ui/Drawer";
-import { FieldWrap, Input, PasswordInput, Textarea, Checkbox, Switch } from "@/components/ui/Field";
+import { FieldWrap, Input, PasswordInput, Select, Textarea, Checkbox, Switch } from "@/components/ui/Field";
 import { PasswordRequirements, isStrongPassword } from "@/components/ui/PasswordRequirements";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ServiceRequestChat } from "@/components/ServiceRequestChat";
 import { NewsBell } from "@/components/NewsBell";
 import { NewsTicker } from "@/components/NewsTicker";
+import { ResourceCard } from "@/components/ResourceCard";
 import { MiniCalendar } from "@/components/ui/MiniCalendar";
 import {
   IconBriefcase,
   IconCalendar,
   IconCheckCircle,
   IconClock,
+  IconEdit,
   IconEye,
   IconFileText,
+  IconLayoutDashboard,
   IconLock,
   IconMapPin,
   IconMessageSquare,
   IconShieldCheck,
   IconUsers,
+  IconWallet,
 } from "@/components/ui/icons";
 
 interface Profile {
   fullName: string;
   membershipId: string | null;
   phone: string;
+  region: string | null;
   employer: string | null;
   currentRole: string | null;
   yearsOfExperience: number | null;
@@ -68,6 +72,7 @@ function DashboardPageInner() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Record<string, string | boolean>>({});
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +89,7 @@ function DashboardPageInner() {
           setForm({
             fullName: d.profile.fullName || "",
             phone: d.profile.phone || "",
+            region: d.profile.region || "",
             employer: d.profile.employer || "",
             currentRole: d.profile.currentRole || "",
             yearsOfExperience: d.profile.yearsOfExperience?.toString() || "",
@@ -125,13 +131,34 @@ function DashboardPageInner() {
   const isStudent = profile.membershipCategory === "student";
   // Applicants get status + account security only — everything else is a
   // member benefit that unlocks on approval (see the banner below).
-  const effectiveTab: TabKey = isApplicantOnly && tab !== "overview" && tab !== "security" ? "overview" : tab;
+  const effectiveTab: TabKey =
+    isApplicantOnly && tab !== "overview" && tab !== "profile" && tab !== "security" ? "overview" : tab;
+  const navItems: NavItem[] = isApplicantOnly
+    ? [
+        { value: "overview", label: "Overview", icon: IconLayoutDashboard },
+        { value: "profile", label: "My Profile", icon: IconEdit },
+        { value: "security", label: "Security", icon: IconLock },
+      ]
+    : [
+        { value: "overview", label: "Overview", icon: IconLayoutDashboard },
+        { value: "profile", label: "My Profile", icon: IconEdit },
+        { value: "public", label: "Public Visibility", icon: IconEye },
+        { value: "requests", label: "My Requests", icon: IconMessageSquare },
+        { value: "events", label: "Events", icon: IconCalendar },
+        { value: "dues", label: "Dues", icon: IconWallet },
+        { value: "security", label: "Security", icon: IconLock },
+        { value: "resources", label: "Resources", icon: IconFileText },
+      ];
 
   async function handleSave() {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
     const payload = {
       ...form,
+      // Region must be one of the fixed list or omitted — an empty string would
+      // fail validation and reject the whole save.
+      region: (form.region as string) || undefined,
       yearsOfExperience: form.yearsOfExperience ? Number(form.yearsOfExperience) : undefined,
       areasOfExpertise: expertise,
     };
@@ -141,6 +168,18 @@ function DashboardPageInner() {
       body: JSON.stringify(payload),
     });
     setSaving(false);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      const fields = body?.error?.fieldErrors ? Object.keys(body.error.fieldErrors) : [];
+      setSaveError(
+        res.status === 401
+          ? "Your session has expired. Please log in again, then save."
+          : fields.length > 0
+            ? `Couldn't save — please check: ${fields.join(", ")}.`
+            : "Couldn't save your changes. Please try again."
+      );
+      return;
+    }
     if (res.ok) {
       setSaved(true);
       // Reflect the save immediately (header avatar, category badge, etc.)
@@ -223,7 +262,7 @@ function DashboardPageInner() {
           <NewsBell />
         </div>
 
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6">
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col items-center gap-5 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)] backdrop-blur-sm sm:flex-row sm:text-left">
             <Avatar
               name={profile.fullName}
@@ -253,7 +292,26 @@ function DashboardPageInner() {
         </div>
       </div>
 
-      <div className="mx-auto -mt-3 max-w-4xl px-4 sm:-mt-4 sm:px-6">
+      <div className="mx-auto -mt-6 max-w-6xl px-4 sm:px-6" id="dashboard-tabs">
+        <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+          <SideNav items={navItems} active={effectiveTab} onChange={setTab} />
+
+          {/* relative: lets this column paint above the header it overlaps, like the sidebar */}
+          <div className="relative min-w-0">
+        {effectiveTab === "overview" && (
+          <>
+        <NextEventBanner canViewAll={!isApplicantOnly} onViewAll={() => setTab("events")} />
+
+        {!isApplicantOnly && (
+          <DuesCard
+            onOpen={() => {
+              setTab("dues");
+              // Bring the Dues section into view — on a phone it starts below the fold.
+              setTimeout(() => document.getElementById("dashboard-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+            }}
+          />
+        )}
+
         {application && isApplicantOnly && (
           <Card className="mb-6 border-amber-200 bg-amber-50/60">
             <CardBody className="flex items-start gap-3">
@@ -263,7 +321,11 @@ function DashboardPageInner() {
                 {application.reviewerNotes && <p className="mt-1 text-sm text-slate-600">Note: {application.reviewerNotes}</p>}
                 <p className="mt-1 text-xs text-slate-500">
                   You have limited access while under review. Full member features — including a public profile —
-                  unlock once you&rsquo;re approved.
+                  unlock once you&rsquo;re approved. If any of your details are wrong, you can correct them under{" "}
+                  <button type="button" onClick={() => setTab("profile")} className="font-medium text-accent-700 underline">
+                    My Profile
+                  </button>
+                  .
                 </p>
               </div>
             </CardBody>
@@ -277,32 +339,10 @@ function DashboardPageInner() {
           <QuickStat icon={<IconUsers className="h-4 w-4" />} label="Expertise" value={`${expertise.length} area(s)`} />
           <QuickStat icon={<IconEye className="h-4 w-4" />} label="Directory" value={profile.isListedInDirectory ? "Visible" : "Not yet"} />
         </div>
+          </>
+        )}
 
-        <div className="mt-6">
-          <Tabs<TabKey>
-            active={effectiveTab}
-            onChange={setTab}
-            tabs={
-              isApplicantOnly
-                ? [
-                    { value: "overview", label: "Overview" },
-                    { value: "security", label: "Security" },
-                  ]
-                : [
-                    { value: "overview", label: "Overview" },
-                    { value: "profile", label: "My Profile" },
-                    { value: "public", label: "Public Visibility" },
-                    { value: "requests", label: "My Requests" },
-                    { value: "events", label: "Events" },
-                    { value: "dues", label: "Dues" },
-                    { value: "security", label: "Security" },
-                    { value: "resources", label: "Resources" },
-                  ]
-            }
-          />
-        </div>
-
-        <div className="mt-5">
+        <div className={effectiveTab === "overview" ? "mt-5" : ""}>
           {effectiveTab === "overview" && (
             <Card>
               <CardHeader>
@@ -357,6 +397,16 @@ function DashboardPageInner() {
                     </div>
                     <p className="mt-1.5 text-xs text-slate-400">JPG, PNG, or WebP. Saved when you click Save Changes below.</p>
                     {photoError && <p className="mt-1.5 text-xs text-red-600">{photoError}</p>}
+                    {!isStudent && !isApplicantOnly && (
+                      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1">
+                        <Switch
+                          label="Show this photo in the public Experts directory"
+                          description="Off by default — your photo stays private until you turn this on and save."
+                          checked={form.photoIsPublic as boolean}
+                          onChange={(e) => setForm((f) => ({ ...f, photoIsPublic: e.target.checked }))}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -375,6 +425,20 @@ function DashboardPageInner() {
                     <Input value={form.currentRole as string} onChange={(e) => setForm((f) => ({ ...f, currentRole: e.target.value }))} />
                   </FieldWrap>
                 </div>
+                <FieldWrap label="Location (region)" hint="Where you are based in Ghana">
+                  <Select
+                    className="sm:w-64"
+                    value={(form.region as string) || ""}
+                    onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+                  >
+                    <option value="">Select your location</option>
+                    {GHANA_REGIONS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </Select>
+                </FieldWrap>
                 <FieldWrap label="Years of experience">
                   <Input
                     type="number"
@@ -398,7 +462,7 @@ function DashboardPageInner() {
                     ))}
                   </div>
                 </FieldWrap>
-                <SaveBar saving={saving} saved={saved} onSave={handleSave} />
+                <SaveBar saving={saving} saved={saved} error={saveError} onSave={handleSave} />
               </CardBody>
             </Card>
           )}
@@ -461,7 +525,7 @@ function DashboardPageInner() {
                       onChange={(e) => setForm((f) => ({ ...f, allowPublicContact: e.target.checked }))}
                     />
                   </div>
-                  <SaveBar saving={saving} saved={saved} onSave={handleSave} />
+                  <SaveBar saving={saving} saved={saved} error={saveError} onSave={handleSave} />
                 </CardBody>
               </Card>
 
@@ -520,6 +584,8 @@ function DashboardPageInner() {
 
           {effectiveTab === "resources" && <MemberResources />}
         </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -530,6 +596,173 @@ export default function DashboardPage() {
     <Suspense>
       <DashboardPageInner />
     </Suspense>
+  );
+}
+
+// The soonest upcoming event, placed at the top of the dashboard so members
+// see it without opening the Events tab. Renders nothing when none is scheduled.
+function NextEventBanner({ canViewAll, onViewAll }: { canViewAll: boolean; onViewAll: () => void }) {
+  const [events, setEvents] = useState<EventItem[] | null>(null);
+  const [now] = useState(() => Date.now());
+
+  useEffect(() => {
+    fetch("/api/content?type=event")
+      .then((r) => r.json())
+      .then((d) => setEvents(d.items || []))
+      .catch(() => setEvents([]));
+  }, []);
+
+  const upcoming = (events || [])
+    .filter((e) => e.eventDate && new Date(e.eventDate).getTime() >= now)
+    .sort((a, b) => new Date(a.eventDate as string).getTime() - new Date(b.eventDate as string).getTime());
+  if (upcoming.length === 0) return null;
+
+  const next = upcoming[0];
+  const when = new Date(next.eventDate as string);
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const days = Math.round((new Date(when).setHours(0, 0, 0, 0) - startOfToday.getTime()) / 86400000);
+  const countdown = days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+
+  return (
+    <div className="mb-6 overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-[var(--shadow-card)]">
+      <div className="flex flex-wrap items-center gap-4 border-l-4 border-accent-500 p-4 sm:p-5">
+        <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-accent-50 text-accent-700">
+          <span className="text-[10px] font-bold uppercase leading-none">
+            {when.toLocaleDateString("en-GB", { month: "short" })}
+          </span>
+          <span className="text-lg font-bold leading-tight">{when.getDate()}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-accent-700">
+            Next event
+            <span className="rounded-full bg-accent-500 px-2 py-0.5 text-[10px] text-navy-950">{countdown}</span>
+          </p>
+          <a href={`/events/${next.slug}`} className="mt-0.5 block font-semibold text-navy-900 hover:text-accent-700">
+            {next.title}
+          </a>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+            <span className="flex items-center gap-1">
+              <IconCalendar className="h-3.5 w-3.5" />
+              {when.toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })}
+            </span>
+            {next.eventLocation && (
+              <span className="flex items-center gap-1">
+                <IconMapPin className="h-3.5 w-3.5" /> {next.eventLocation}
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col items-stretch gap-1.5 text-center sm:items-end">
+          <a
+            href={`/events/${next.slug}`}
+            className="inline-flex items-center justify-center rounded-full bg-accent-500 px-4 py-1.5 text-xs font-semibold text-navy-950 hover:bg-accent-400"
+          >
+            View details
+          </a>
+          {canViewAll && upcoming.length > 1 && (
+            <button type="button" onClick={onViewAll} className="text-xs font-medium text-accent-700 hover:text-accent-800">
+              +{upcoming.length - 1} more upcoming
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Dues at a glance on the landing page. It only summarises; paying and the
+// full payment history stay in the Dues tab, which this card opens.
+function DuesCard({ onOpen }: { onOpen: () => void }) {
+  const [dues, setDues] = useState<DuesStatus | null>(null);
+
+  useEffect(() => {
+    fetch("/api/member/dues/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setDues(d))
+      .catch(() => {});
+  }, []);
+
+  // Nothing owed for this category (e.g. staff with no category): no card.
+  if (!dues || dues.duesAmountGhs <= 0) return null;
+
+  const paidUp = dues.status === "paid";
+  const pct = Math.min(100, Math.round((dues.totalPaidGhs / dues.duesAmountGhs) * 100));
+
+  return (
+    <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[var(--shadow-card)]">
+      <div className={`flex flex-wrap items-center gap-4 border-l-4 p-4 sm:p-5 ${paidUp ? "border-accent-500" : "border-amber-400"}`}>
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+            paidUp ? "bg-accent-50 text-accent-700" : "bg-amber-50 text-amber-600"
+          }`}
+        >
+          <IconWallet className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+            Membership dues &middot; {dues.year}
+            <Badge tone={paidUp ? "accent" : dues.status === "partial" ? "amber" : "red"}>{DUES_STATUS_LABELS[dues.status]}</Badge>
+          </p>
+          <p className="mt-0.5 font-semibold text-navy-900">
+            {paidUp
+              ? `You're paid up (GHS ${dues.totalPaidGhs.toLocaleString()})`
+              : `GHS ${dues.balanceGhs.toLocaleString()} outstanding of GHS ${dues.duesAmountGhs.toLocaleString()}`}
+          </p>
+          <div className="mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-100">
+            <div className={`h-full rounded-full ${paidUp ? "bg-accent-500" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          className={`inline-flex shrink-0 items-center justify-center rounded-full px-4 py-1.5 text-xs font-semibold ${
+            paidUp
+              ? "border border-slate-300 bg-white text-slate-700 hover:border-accent-500 hover:text-accent-700"
+              : "bg-accent-500 text-navy-950 hover:bg-accent-400"
+          }`}
+        >
+          {paidUp ? "View payment history" : "Pay dues"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface NavItem {
+  value: TabKey;
+  label: string;
+  icon: (p: { className?: string }) => React.ReactNode;
+}
+
+// Section navigation: a sticky icon sidebar on large screens, and a
+// horizontally scrolling icon bar above the content on phones/tablets.
+function SideNav({ items, active, onChange }: { items: NavItem[]; active: TabKey; onChange: (t: TabKey) => void }) {
+  return (
+    <nav aria-label="Dashboard sections" className="mb-5 lg:sticky lg:top-24 lg:mb-0">
+      <div className="flex gap-1.5 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[var(--shadow-card)] scrollbar-thin lg:flex-col lg:gap-1 lg:overflow-visible lg:p-2">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive = item.value === active;
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => onChange(item.value)}
+              aria-current={isActive ? "page" : undefined}
+              className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors lg:w-full ${
+                isActive
+                  ? "bg-gradient-to-r from-navy-900 to-sky-800 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-navy-900"
+              }`}
+            >
+              <Icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-sky-300" : "text-slate-400"}`} />
+              <span className="whitespace-nowrap">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 
@@ -554,7 +787,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SaveBar({ saving, saved, onSave }: { saving: boolean; saved: boolean; onSave: () => void }) {
+function SaveBar({ saving, saved, error, onSave }: { saving: boolean; saved: boolean; error?: string | null; onSave: () => void }) {
   return (
     <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4">
       <Button onClick={onSave} disabled={saving}>
@@ -565,6 +798,7 @@ function SaveBar({ saving, saved, onSave }: { saving: boolean; saved: boolean; o
           <IconCheckCircle className="h-4 w-4" /> Saved
         </span>
       )}
+      {error && <span className="text-sm font-medium text-red-600">{error}</span>}
     </div>
   );
 }
@@ -741,6 +975,7 @@ interface DuesStatus {
   duesAmountGhs: number;
   totalPaidGhs: number;
   balanceGhs: number;
+  creditGhs: number;
   status: "paid" | "partial" | "unpaid";
   payments: DuesPaymentItem[];
   paystackReady: boolean;
@@ -821,6 +1056,13 @@ function MembershipDues() {
             <p className="mt-0.5 font-semibold text-navy-900">GHS {dues.balanceGhs.toLocaleString()}</p>
           </div>
         </div>
+
+        {dues.creditGhs > 0 && (
+          <p className="rounded-lg bg-sky-50 px-4 py-2.5 text-sm text-sky-800">
+            You&rsquo;ve paid GHS {dues.creditGhs.toLocaleString()} more than this year&rsquo;s dues. It&rsquo;s recorded
+            as credit on your account &mdash; thank you.
+          </p>
+        )}
 
         <Badge tone={dues.status === "paid" ? "accent" : dues.status === "partial" ? "amber" : "red"}>
           {DUES_STATUS_LABELS[dues.status]}
@@ -1153,6 +1395,8 @@ interface ResourceItem {
   summary: string | null;
   fileUrl: string | null;
   isMemberOnly: boolean;
+  publishedAt: string | null;
+  createdAt: string | null;
 }
 
 function MemberResources() {
@@ -1175,24 +1419,9 @@ function MemberResources() {
         ) : items.length === 0 ? (
           <p className="text-sm text-slate-400">No resources published yet.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-5">
             {items.map((r) => (
-              <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 p-3">
-                <div className="flex items-center gap-3">
-                  <IconFileText className="h-5 w-5 text-accent-700" />
-                  <div>
-                    <p className="text-sm font-medium text-navy-900">{r.title}</p>
-                    {r.summary && <p className="text-xs text-slate-500">{r.summary}</p>}
-                  </div>
-                </div>
-                {r.fileUrl ? (
-                  <a href={r.fileUrl} className="text-sm font-semibold text-accent-700 hover:text-accent-800">
-                    Download
-                  </a>
-                ) : (
-                  <span className="text-xs text-slate-300">No file</span>
-                )}
-              </div>
+              <ResourceCard key={r.id} item={r} />
             ))}
           </div>
         )}

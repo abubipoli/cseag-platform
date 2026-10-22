@@ -1,0 +1,2 @@
+ALTER TABLE "member_profiles" ADD COLUMN "verification_token" text;--> statement-breakpoint
+ALTER TABLE "member_profiles" ADD CONSTRAINT "member_profiles_verification_token_unique" UNIQUE("verification_token");

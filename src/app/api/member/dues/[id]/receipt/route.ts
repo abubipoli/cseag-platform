@@ -10,6 +10,7 @@ import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { getPaymentSettings } from "@/lib/settings";
 import { getMemberDuesSummary } from "@/lib/dues";
+import { duesFor } from "@/lib/settings";
 import { generateDuesReceiptPdf } from "@/lib/receipts";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +34,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!user || !profile) return NextResponse.json({ error: "Member record not found" }, { status: 404 });
 
   const settings = await getPaymentSettings();
-  const summary = await getMemberDuesSummary(payment.userId, settings.duesAmountGhs, payment.year);
+  const duesAmountGhs = duesFor(settings, profile.membershipCategory);
+  const summary = await getMemberDuesSummary(payment.userId, duesAmountGhs, payment.year);
 
   const pdf = await generateDuesReceiptPdf({
     payment,
@@ -44,7 +46,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       membershipId: profile.membershipId,
       membershipCategory: profile.membershipCategory,
     },
-    duesAmountGhs: settings.duesAmountGhs,
+    duesAmountGhs,
     totalPaidGhs: summary.totalPaidGhs,
   });
 

@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/Button";
 import { IconArrowRight } from "@/components/ui/icons";
 
 interface Settings {
-  duesAmountGhs: number;
+  duesFullProfessionalGhs: number;
+  duesAssociateGhs: number;
+  duesStudentGhs: number;
   paystackPublicKey: string;
   paystackSecretKeySet: boolean;
 }
 
 export default function PaymentSettingsForm() {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [form, setForm] = useState({ duesAmountGhs: "", paystackPublicKey: "", paystackSecretKey: "" });
+  const [form, setForm] = useState({ duesFullProfessionalGhs: "", duesAssociateGhs: "", duesStudentGhs: "", paystackPublicKey: "", paystackSecretKey: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -25,7 +27,13 @@ export default function PaymentSettingsForm() {
       .then((d: Settings | null) => {
         if (!d) return;
         setSettings(d);
-        setForm((f) => ({ ...f, duesAmountGhs: d.duesAmountGhs ? String(d.duesAmountGhs) : "", paystackPublicKey: d.paystackPublicKey }));
+        setForm((f) => ({
+          ...f,
+          duesFullProfessionalGhs: String(d.duesFullProfessionalGhs ?? 0),
+          duesAssociateGhs: String(d.duesAssociateGhs ?? 0),
+          duesStudentGhs: String(d.duesStudentGhs ?? 0),
+          paystackPublicKey: d.paystackPublicKey,
+        }));
       });
   }
 
@@ -66,19 +74,41 @@ export default function PaymentSettingsForm() {
           <div>
             <h3 className="font-semibold text-navy-900">Membership dues & payments</h3>
             <p className="text-sm text-slate-500">
-              Set the annual dues amount and connect Paystack so members can optionally pay online from their
+              Set the annual dues for each membership category and connect Paystack so members can optionally pay online from their
               dashboard. Payment isn&rsquo;t enforced anywhere — this just gives members a way to see and settle
               what they owe.
             </p>
           </div>
-          <FieldWrap label="Annual dues amount (GHS)" hint="Same amount for every member, e.g. 150" className="sm:w-56">
-            <Input
-              type="number"
-              min={0}
-              value={form.duesAmountGhs}
-              onChange={(e) => setForm((f) => ({ ...f, duesAmountGhs: e.target.value }))}
-            />
-          </FieldWrap>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <FieldWrap label="Full / Professional (GHS)" hint="Annual dues">
+              <Input
+                type="number"
+                min={0}
+                value={form.duesFullProfessionalGhs}
+                onChange={(e) => setForm((f) => ({ ...f, duesFullProfessionalGhs: e.target.value }))}
+              />
+            </FieldWrap>
+            <FieldWrap label="Associate (GHS)" hint="Annual dues">
+              <Input
+                type="number"
+                min={0}
+                value={form.duesAssociateGhs}
+                onChange={(e) => setForm((f) => ({ ...f, duesAssociateGhs: e.target.value }))}
+              />
+            </FieldWrap>
+            <FieldWrap label="Student (GHS)" hint="Annual dues">
+              <Input
+                type="number"
+                min={0}
+                value={form.duesStudentGhs}
+                onChange={(e) => setForm((f) => ({ ...f, duesStudentGhs: e.target.value }))}
+              />
+            </FieldWrap>
+          </div>
+          <p className="text-xs text-slate-400">
+            Each member owes the amount for their own membership category. Changing a member&rsquo;s category changes
+            what they owe; what they&rsquo;ve already paid this year always counts toward it.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <FieldWrap label="Paystack public key" hint="Starts with pk_">
               <Input

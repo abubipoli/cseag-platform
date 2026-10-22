@@ -45,7 +45,13 @@ export async function POST(req: NextRequest) {
         templateKey: "custom",
         email: input.channel !== "sms" ? r.email : undefined,
         phone: input.channel !== "email" ? r.phone : undefined,
-        data: { subject: input.subject, message: input.message.replace("{{name}}", r.fullName) },
+        data: {
+          subject: input.subject,
+          message: input.message.replaceAll("{{name}}", r.fullName),
+          ...(input.messageHtml
+            ? { messageHtml: input.messageHtml.replaceAll("{{name}}", r.fullName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")) }
+            : {}),
+        },
       })
     )
   );

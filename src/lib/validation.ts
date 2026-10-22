@@ -172,6 +172,10 @@ export const adminMemberUpdateSchema = z.object({
     .min(9)
     .regex(/^\+?[0-9\s-]{9,15}$/, "Enter a valid phone number, e.g. +233241234567")
     .optional(),
+  // Corrections an admin can make on a member's behalf (e.g. a mistyped workplace).
+  region: z.enum(GHANA_REGIONS).optional(),
+  employer: z.string().trim().max(200).optional(),
+  currentRole: z.string().trim().max(200).optional(),
 });
 
 export const contentItemSchema = z.object({
@@ -207,6 +211,7 @@ export const broadcastSchema = z.object({
   channel: z.enum(["email", "sms", "both"]),
   subject: z.string().min(1).max(200),
   message: z.string().min(1).max(4000),
+  messageHtml: z.string().max(20000).optional(),
 });
 
 export const notificationSettingsSchema = z.object({
@@ -228,7 +233,9 @@ export const notificationTemplateUpdateSchema = z.object({
 });
 
 export const paymentSettingsSchema = z.object({
-  duesAmountGhs: z.coerce.number().int().min(0).optional(),
+  duesFullProfessionalGhs: z.coerce.number().int().min(0).optional(),
+  duesAssociateGhs: z.coerce.number().int().min(0).optional(),
+  duesStudentGhs: z.coerce.number().int().min(0).optional(),
   paystackPublicKey: z.string().optional(),
   paystackSecretKey: z.string().optional(),
 });

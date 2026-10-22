@@ -6,8 +6,9 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge, statusTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FieldWrap, Input, Textarea, Select, Checkbox } from "@/components/ui/Field";
+import { FieldWrap, Input, Select, Checkbox } from "@/components/ui/Field";
 import { IconMail, IconSend } from "@/components/ui/icons";
+import { RichMessageEditor } from "./RichMessageEditor";
 import { GHANA_REGIONS, MEMBERSHIP_CATEGORY_LABELS } from "@/lib/constants";
 
 interface MemberLite {
@@ -38,7 +39,9 @@ export default function CommunicationsPage() {
     channel: "email" as "email" | "sms" | "both",
     subject: "",
     message: "",
+    messageHtml: "",
   });
+  const [editorKey, setEditorKey] = useState(0);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
@@ -100,6 +103,10 @@ export default function CommunicationsPage() {
       setResult("Select at least one recipient first.");
       return;
     }
+    if (!broadcast.message.trim()) {
+      setResult("Write a message first.");
+      return;
+    }
     setSending(true);
     setResult(null);
     const res = await fetch("/api/admin/notifications/broadcast", {
@@ -118,7 +125,8 @@ export default function CommunicationsPage() {
           ? `Sent to ${data.sent} recipient(s). ${data.held} email(s) were held because the mail host allows only 50 emails per hour. They are marked "queued" in the log below; use Resend in the next hour.`
           : `Sent to ${data.sent} recipient(s).`
       );
-      setBroadcast((b) => ({ ...b, subject: "", message: "" }));
+      setBroadcast((b) => ({ ...b, subject: "", message: "", messageHtml: "" }));
+      setEditorKey((k) => k + 1);
       setSelectedIds(new Set());
       load();
     } else {
@@ -217,7 +225,7 @@ export default function CommunicationsPage() {
                 <Input value={broadcast.subject} onChange={(e) => setBroadcast((b) => ({ ...b, subject: e.target.value }))} required />
               </FieldWrap>
               <FieldWrap label="Message" required hint="Use {{name}} to personalize with the recipient's name.">
-                <Textarea rows={6} value={broadcast.message} onChange={(e) => setBroadcast((b) => ({ ...b, message: e.target.value }))} required />
+                <RichMessageEditor key={editorKey} onChange={(html, text) => setBroadcast((b) => ({ ...b, message: text, messageHtml: html }))} />
               </FieldWrap>
               <Button type="submit" disabled={sending} className="w-full">
                 <IconSend className="h-4 w-4" /> {sending ? "Sending..." : "Send"}
